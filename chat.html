@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat — Codify Vibeathon 2026</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            background: #0a0a0f;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(10px);
+            background: rgba(10,10,15,0.8);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header a {
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        header a:hover { color: #00f0ff; }
+
+        .divider { color: rgba(255,255,255,0.15); }
+
+        header h1 {
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #00f0ff, #7b2dff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #00f0ff;
+            animation: blink 2s ease infinite;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .message.user { flex-direction: row-reverse; }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .message.user .avatar {
+            background: linear-gradient(135deg, #7b2dff, #ff2d7b);
+            color: white;
+        }
+
+        .message.assistant .avatar {
+            background: linear-gradient(135deg, #00f0ff22, #7b2dff22);
+            border: 1px solid rgba(0,240,255,0.3);
+            color: #00f0ff;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 0.85rem 1.1rem;
+            border-radius: 16px;
+            font-size: 0.93rem;
+            line-height: 1.6;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, rgba(123,45,255,0.25), rgba(255,45,123,0.15));
+            border: 1px solid rgba(123,45,255,0.3);
+            border-top-right-radius: 4px;
+        }
+
+        .message.assistant .bubble {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-top-left-radius: 4px;
+        }
+
+        .typing .bubble {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: 1rem 1.1rem;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(0,240,255,0.5);
+            animation: bounce 1.2s ease infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: rgba(255,255,255,0.2);
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .empty-icon { font-size: 2.5rem; opacity: 0.4; }
+        .empty-state p { font-size: 0.9rem; letter-spacing: 1px; }
+
+        footer {
+            padding: 1rem 2rem 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+            transition: border-color 0.2s;
+        }
+
+        .input-row:focus-within {
+            border-color: rgba(0,240,255,0.35);
+        }
+
+        textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 0.93rem;
+            line-height: 1.5;
+            resize: none;
+            max-height: 120px;
+            padding: 0.3rem 0;
+        }
+
+        textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+        button {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #00f0ff, #7b2dff);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        button:hover { opacity: 0.85; }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        button svg { width: 16px; height: 16px; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/">← Home</a>
+        <span class="divider">/</span>
+        <h1>Chat</h1>
+        <div class="status">
+            <div class="status-dot"></div>
+            Claude Haiku
+        </div>
+    </header>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">⚡</div>
+            <p>Send a message to get started</p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="input-row">
+            <textarea
+                id="input"
+                placeholder="Message Claude..."
+                rows="1"
+                autofocus
+            ></textarea>
+            <button id="sendBtn" title="Send">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        const container = document.getElementById('chatContainer');
+        const emptyState = document.getElementById('emptyState');
+
+        // Auto-resize textarea
+        input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        });
+
+        // Send on Enter (Shift+Enter for newline)
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+            }
+        });
+
+        sendBtn.addEventListener('click', send);
+
+        function addMessage(role, text) {
+            emptyState?.remove();
+            const msg = document.createElement('div');
+            msg.className = `message ${role}`;
+            const initials = role === 'user' ? 'ME' : 'AI';
+            msg.innerHTML = `
+                <div class="avatar">${initials}</div>
+                <div class="bubble">${text.replace(/\n/g, '<br>')}</div>
+            `;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+            return msg;
+        }
+
+        function addTyping() {
+            emptyState?.remove();
+            const msg = document.createElement('div');
+            msg.className = 'message assistant typing';
+            msg.innerHTML = `
+                <div class="avatar">AI</div>
+                <div class="bubble">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+            return msg;
+        }
+
+        async function send() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            addMessage('user', text);
+            const typing = addTyping();
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }),
+                });
+
+                const data = await res.json();
+                typing.remove();
+
+                if (!res.ok) throw new Error(data.detail || 'API error');
+                addMessage('assistant', data.reply);
+            } catch (err) {
+                typing.remove();
+                addMessage('assistant', `⚠️ Error: ${err.message}`);
+            } finally {
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+    </script>
+</body>
+</html>
