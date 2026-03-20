@@ -11,7 +11,12 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/api", tags=["Chat"])
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+def get_client() -> anthropic.Anthropic:
+    """Return an Anthropic client, raising clearly if the key is missing."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set.")
+    return anthropic.Anthropic(api_key=api_key)
 
 
 class ChatRequest(BaseModel):
@@ -40,6 +45,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
     """
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    try:
+        client = get_client()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
