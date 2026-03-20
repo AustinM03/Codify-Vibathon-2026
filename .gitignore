@@ -1,0 +1,100 @@
+# ============================================================
+# Codify Vibeathon 2026 — .gitignore
+# Python / Node / Secrets / Large Files
+# ============================================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+.eggs/
+*.pyx.c
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Cython build artifacts
+*.c
+!src/**/*.c
+# *.html is NOT ignored — we serve HTML pages
+
+# ---------- Node ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.yarn/
+
+# ---------- Environment & Secrets ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.secret
+credentials.json
+service-account*.json
+*_credentials*
+*.keystore
+
+# ---------- API Keys / Tokens ----------
+# Vibeathon rule: no committed secrets
+secrets/
+.secrets/
+config/local.yaml
+config/local.json
+
+# ---------- IDE & OS ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ---------- Large Files (>100MB rule) ----------
+*.zip
+*.tar.gz
+*.tar.bz2
+*.rar
+*.7z
+*.iso
+*.dmg
+*.pkl
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.gguf
+*.ckpt
+data/raw/
+models/weights/
+
+# ---------- Deployment ----------
+*.log
+*.pid
+*.sock
+.terraform/
+*.tfstate*
+
+# ---------- Testing / Coverage ----------
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
