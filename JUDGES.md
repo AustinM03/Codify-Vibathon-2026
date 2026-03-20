@@ -82,14 +82,20 @@ TBD — will be populated with system diagram as we build
 ## How to Run
 
 ```bash
-# To be completed — will include setup, dependencies, and deployment instructions
+git clone https://github.com/AustinM03/Codify-Vibathon-2026.git
+cd Codify-Vibathon-2026
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+# API: http://localhost:8000
+# Docs: http://localhost:8000/docs
 ```
 
 ---
 
 ## Live Demo
 
-> **URL:** *To be deployed*
+> **URL:** https://codefi-vibathon-2026-max-ausin-spri.vercel.app/
 
 ---
 
