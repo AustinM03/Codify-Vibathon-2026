@@ -3,6 +3,9 @@
 # Python / Node / Secrets / Large Files
 # ============================================================
 
+# ---------- Claude Code (local only) ----------
+.claude/
+
 # ---------- Python ----------
 __pycache__/
 *.py[cod]
