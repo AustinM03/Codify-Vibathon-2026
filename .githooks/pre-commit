@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# ============================================================
+# Pre-commit hook: The Bouncer
+# Blocks: direct commits to main, API keys/secrets, files >100MB
+# Codify Vibeathon 2026 compliance
+# ============================================================
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+PASS=true
+MAX_FILE_SIZE=$((100 * 1024 * 1024))  # 100MB in bytes
+
+echo "🔒 Running The Bouncer (pre-commit checks)..."
+
+# --- Check 0: No direct commits to main ---
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
+if [ "$BRANCH" = "main" ]; then
+    echo -e "${RED}BLOCKED: Direct commits to 'main' are not allowed.${NC}"
+    echo -e "${YELLOW}  → Create a feature branch: git checkout -b feature/your-feature${NC}"
+    echo -e "${YELLOW}  → Then open a PR to merge into main.${NC}"
+    PASS=false
+fi
+
+# --- Check 1: Large files (>100MB) ---
+while IFS= read -r file; do
+    if [ -f "$file" ]; then
+        file_size=$(wc -c < "$file" | tr -d ' ')
+        if [ "$file_size" -gt "$MAX_FILE_SIZE" ]; then
+            echo -e "${RED}BLOCKED: $file is $(( file_size / 1024 / 1024 ))MB (limit: 100MB)${NC}"
+            PASS=false
+        fi
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+# --- Check 2: Secrets / API Keys ---
+SECRET_PATTERNS=(
+    'AKIA[0-9A-Z]{16}'                          # AWS Access Key
+    'sk-[a-zA-Z0-9]{20,}'                        # OpenAI / Anthropic keys
+    'ghp_[a-zA-Z0-9]{36}'                        # GitHub PAT
+    'gho_[a-zA-Z0-9]{36}'                        # GitHub OAuth
+    'glpat-[a-zA-Z0-9\-]{20,}'                   # GitLab PAT
+    'xox[bpors]-[a-zA-Z0-9\-]+'                  # Slack tokens
+    'sk_live_[a-zA-Z0-9]+'                        # Stripe live key
+    'rk_live_[a-zA-Z0-9]+'                        # Stripe restricted key
+    'SG\.[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+'      # SendGrid
+    'AIza[0-9A-Za-z_\-]{35}'                      # Google API Key
+    'ya29\.[0-9A-Za-z_\-]+'                       # Google OAuth
+    'PRIVATE KEY'                                  # Private keys
+    'password\s*=\s*["\x27][^"\x27]{8,}'          # Hardcoded passwords
+    'secret\s*=\s*["\x27][^"\x27]{8,}'            # Hardcoded secrets
+    'token\s*=\s*["\x27][^"\x27]{8,}'             # Hardcoded tokens
+)
+
+while IFS= read -r file; do
+    # Skip binary files, this hook itself, and gitignore
+    if [ -f "$file" ] && file "$file" | grep -q text && [[ "$file" != ".githooks/"* ]]; then
+        for pattern in "${SECRET_PATTERNS[@]}"; do
+            if git diff --cached -- "$file" | grep -qEi "$pattern"; then
+                echo -e "${RED}BLOCKED: Potential secret in $file (pattern: $pattern)${NC}"
+                PASS=false
+            fi
+        done
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+# --- Check 3: Forbidden file extensions ---
+FORBIDDEN_EXTS=(.env .pem .key .keystore .p12 .pfx)
+while IFS= read -r file; do
+    for ext in "${FORBIDDEN_EXTS[@]}"; do
+        if [[ "$file" == *"$ext" ]]; then
+            echo -e "${RED}BLOCKED: Forbidden file type: $file${NC}"
+            PASS=false
+        fi
+    done
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+# --- Verdict ---
+if [ "$PASS" = true ]; then
+    echo -e "${GREEN}✅ The Bouncer says: You're good. Commit allowed.${NC}"
+    exit 0
+else
+    echo -e "${RED}❌ The Bouncer says: Fix the issues above before committing.${NC}"
+    exit 1
+fi

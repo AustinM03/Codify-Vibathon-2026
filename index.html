@@ -82,6 +82,17 @@
             animation: fadeUp 1s ease 0.5s both;
         }
 
+        .chat-link {
+            display: inline-block;
+            margin-top: 1.2rem;
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            transition: color 0.2s;
+        }
+        .chat-link:hover { color: #00f0ff; }
+
         .badge::before {
             content: '';
             display: inline-block;
@@ -124,6 +135,7 @@
         <h1>Hello, World.</h1>
         <p class="subtitle">Codify Vibeathon 2026 &mdash; Springfield, MO</p>
         <div class="badge">System Online</div>
+        <a href="/chat.html" class="chat-link">Try the Chat →</a>
     </div>
 
     <script>
