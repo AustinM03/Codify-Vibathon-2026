@@ -250,10 +250,10 @@
     </div>
 
     <!-- ======== Pink Cat-Girl (school uniform) ======== -->
-    <div id="anime-girl-wrapper" title="Pat my ears! (=nyan=)">
-        <div id="speech-bubble"></div>
+    <div id="anime-girl-wrapper" role="button" tabindex="0" aria-label="Pink cat-girl – click body to react, click head to pet her ears" title="Pat my ears! (=nyan=)">
+        <div id="speech-bubble" role="status" aria-live="polite"></div>
 
-        <svg id="anime-svg" viewBox="0 0 160 300" xmlns="http://www.w3.org/2000/svg" aria-label="Kawaii pink cat-girl in school uniform">
+        <svg id="anime-svg" viewBox="0 0 160 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
                 <radialGradient id="skinGrad" cx="50%" cy="40%" r="55%">
                     <stop offset="0%" stop-color="#fde8d8"/>
@@ -416,7 +416,8 @@
             <path d="M58,32 Q75,24 92,30" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" class="hair-shine" opacity="0.3"/>
 
             <!-- invisible pet zone (head + ears hit area) -->
-            <ellipse id="pet-zone" cx="80" cy="60" rx="52" ry="58" fill="transparent" stroke="none"/>
+            <ellipse id="pet-zone" cx="80" cy="60" rx="52" ry="58" fill="transparent" stroke="none"
+                     role="button" tabindex="0" aria-label="Pet her ears"/>
         </svg>
     </div>
 
@@ -542,6 +543,7 @@
             function wiggleEars() {
                 leftEar.classList.remove('ear-wiggle');
                 rightEar.classList.remove('ear-wiggle');
+                // Force reflow to restart the CSS animation from the beginning
                 void leftEar.offsetWidth;
                 leftEar.classList.add('ear-wiggle');
                 rightEar.classList.add('ear-wiggle');
@@ -563,6 +565,7 @@
             function triggerClick() {
                 showBubble(clickMessages[clickIdx++ % clickMessages.length], 3000);
                 svg.classList.remove('clicked');
+                // Force reflow to restart the CSS animation from the beginning
                 void svg.offsetWidth;
                 svg.classList.add('clicked');
                 mouth.setAttribute('d', surprisedMouth);
@@ -570,8 +573,13 @@
                 spawnParticle();
             }
 
+            // clicking head/ear zone = petting; stopPropagation prevents bubbling to wrapper
             petZone.addEventListener('click', (e) => { e.stopPropagation(); triggerPet(); });
-            wrapper.addEventListener('click', (e) => { if (e.target !== petZone) triggerClick(); });
+            petZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerPet(); } });
+
+            // clicking body = general reaction
+            wrapper.addEventListener('click', triggerClick);
+            wrapper.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerClick(); } });
 
             wrapper.addEventListener('mouseenter', () => {
                 if (!hintShown) {
