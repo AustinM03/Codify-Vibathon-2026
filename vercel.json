@@ -16,6 +16,7 @@
     { "src": "/docs", "dest": "api/index.py" },
     { "src": "/openapi.json", "dest": "api/index.py" },
     { "src": "/chat.html", "dest": "chat.html" },
+    { "src": "/anime-girl.html", "dest": "anime-girl.html" },
     { "src": "/", "dest": "index.html" }
   ]
 }
