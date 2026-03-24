@@ -209,13 +209,6 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard,
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
     <aside style={{ width: 232, minWidth: 232, height: '100%', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '1.1rem 1rem', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-        <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', flexShrink: 0 }}>🚀</div>
-        <div>
-          <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em' }}>PromptReady</div>
-          <div style={{ color: '#3d3d3d', fontSize: '0.68rem' }}>AI App Builder</div>
-        </div>
-      </div>
       <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: '1px solid #171717' }}>
         <button onClick={onDashboard}
           style={{ width: '100%', background: 'none', border: 'none', borderRadius: '6px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
