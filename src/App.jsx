@@ -569,7 +569,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
               {/* Suggestion chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.65rem' }}>
                 {q.suggestions?.map((chip, cIdx) => {
-                  const selected = currentAnswer.split(',').map(s => s.trim()).filter(Boolean)
+                  const selected = currentAnswer.split('\n').map(s => s.trim()).filter(Boolean)
                   const isSelected = selected.includes(chip)
                   return (
                     <button key={cIdx}
@@ -577,10 +577,10 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                         setAnswers(prev => {
                           const key = `${categoryIndex}-${qIdx}`
                           const curr = prev[key] ?? ''
-                          const sel = curr.split(',').map(s => s.trim()).filter(Boolean)
+                          const sel = curr.split('\n').map(s => s.trim()).filter(Boolean)
                           const already = sel.includes(chip)
                           const next = already ? sel.filter(s => s !== chip) : [...sel, chip]
-                          return { ...prev, [key]: next.join(', ') }
+                          return { ...prev, [key]: next.join('\n') }
                         })
                       }}
                       style={{
