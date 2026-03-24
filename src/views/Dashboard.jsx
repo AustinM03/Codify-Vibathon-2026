@@ -28,6 +28,24 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
   const [sessions, setSessions] = useState([])
   const [lastCategories, setLastCategories] = useState({}) // sessionId → category
   const [loading, setLoading] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState(null) // sessionId awaiting confirm
+  const [deleting, setDeleting] = useState(null)           // sessionId being deleted
+
+  async function handleDelete(e, id) {
+    e.stopPropagation()
+    if (confirmDelete === id) {
+      // Second click — actually delete
+      setDeleting(id)
+      await supabase.from('questionnaire_responses').delete().eq('session_id', id)
+      await supabase.from('sessions').delete().eq('id', id)
+      setSessions(prev => prev.filter(s => s.id !== id))
+      setLastCategories(prev => { const next = { ...prev }; delete next[id]; return next })
+      setConfirmDelete(null)
+      setDeleting(null)
+    } else {
+      setConfirmDelete(id)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -129,15 +147,36 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
             return (
               <div key={s.id}
-                onClick={() => onOpenSession(s.id, s.raw_idea)}
+                onClick={() => { if (confirmDelete === s.id) { setConfirmDelete(null); return } onOpenSession(s.id, s.raw_idea) }}
                 style={{
-                  background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px',
-                  padding: '1.25rem 1.3rem', cursor: 'pointer',
+                  background: '#111', border: `1px solid ${confirmDelete === s.id ? '#ef444455' : '#1e1e1e'}`, borderRadius: '12px',
+                  padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.15s, box-shadow 0.15s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = '#0095ff44'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,149,255,0.08)' }}
-                onMouseOut={e => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.boxShadow = 'none' }}>
+                onMouseEnter={e => { if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#0095ff44'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,149,255,0.08)' } }}
+                onMouseLeave={e => { if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.boxShadow = 'none' } setConfirmDelete(prev => prev === s.id ? null : prev) }}>
+
+                {/* Delete button */}
+                <button
+                  onClick={e => handleDelete(e, s.id)}
+                  disabled={deleting === s.id}
+                  title={confirmDelete === s.id ? 'Click again to confirm delete' : 'Delete project'}
+                  style={{
+                    position: 'absolute', top: '0.75rem', right: '0.75rem',
+                    background: confirmDelete === s.id ? '#ef4444' : 'none',
+                    border: confirmDelete === s.id ? 'none' : '1px solid #2a2a2a',
+                    borderRadius: '5px', cursor: 'pointer',
+                    color: confirmDelete === s.id ? '#fff' : '#3a3a3a',
+                    fontSize: confirmDelete === s.id ? '0.65rem' : '0.8rem',
+                    padding: confirmDelete === s.id ? '0.2rem 0.45rem' : '0.2rem 0.35rem',
+                    fontWeight: confirmDelete === s.id ? 600 : 400,
+                    transition: 'all 0.15s', lineHeight: 1.4,
+                  }}
+                  onMouseEnter={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' } }}
+                  onMouseLeave={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#3a3a3a' } }}>
+                  {deleting === s.id ? '…' : confirmDelete === s.id ? 'Delete?' : '🗑'}
+                </button>
 
                 {/* Title */}
                 <div>
