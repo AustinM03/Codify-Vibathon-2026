@@ -179,15 +179,15 @@ function StepRow({ step, isActive, isCompleted, onClick }) {
   const clickable = isCompleted || isActive
   return (
     <div onClick={clickable ? onClick : undefined} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none', transition: 'background 0.12s' }}
-      onMouseOver={e => { if (clickable) e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.15)' : 'rgba(255,255,255,0.03)' }}
-      onMouseOut={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
-      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a' }}>
+      onMouseEnter={e => { if (clickable) e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.18)' : 'rgba(255,255,255,0.04)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a', pointerEvents: 'none' }}>
         {isCompleted ? '✓' : step.phase}
       </div>
-      <span style={{ fontSize: '0.845rem', color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400 }}>
+      <span style={{ fontSize: '0.845rem', color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
         {step.label}
       </span>
-      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#0095ff', flexShrink: 0 }} />}
+      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#0095ff', flexShrink: 0, pointerEvents: 'none' }} />}
     </div>
   )
 }
@@ -318,30 +318,41 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     return acc
   }, [])
 
-  // Jump to a category and pre-fill saved answers (fires on initial resume + sidebar clicks)
+  // Pre-fill ALL saved answers once questions have loaded from the API
   useEffect(() => {
-    if (!jumpRequest?.category || categories.length === 0) return
-    const idx = categories.findIndex(c => c.name === jumpRequest.category)
-    if (idx < 0) return
-    setCategoryIndex(idx)
+    if (questions.length === 0) return
+    const cats = questions.reduce((acc, q) => {
+      if (!acc.find(c => c.name === q.category)) acc.push({ name: q.category, questions: [] })
+      acc.find(c => c.name === q.category).questions.push(q)
+      return acc
+    }, [])
     supabase
       .from('questionnaire_responses')
-      .select('question, answer')
+      .select('category, question, answer')
       .eq('session_id', sessionId)
-      .eq('category', jumpRequest.category)
       .then(({ data }) => {
         if (!data?.length) return
-        const cat = categories[idx]
         setAnswers(prev => {
           const updated = { ...prev }
           data.forEach(row => {
-            const qIdx = cat.questions.findIndex(q => q.question === row.question)
-            if (qIdx >= 0) updated[`${idx}-${qIdx}`] = row.answer
+            const catIdx = cats.findIndex(c => c.name === row.category)
+            if (catIdx < 0) return
+            // match by question text; fall back to order position
+            let qIdx = cats[catIdx].questions.findIndex(q => q.question === row.question)
+            if (qIdx < 0) return
+            updated[`${catIdx}-${qIdx}`] = row.answer
           })
           return updated
         })
       })
-  }, [jumpRequest, questions]) // jumpRequest changes on sidebar click; questions changes on load
+  }, [questions])
+
+  // Jump to a specific category when sidebar step is clicked or on resume
+  useEffect(() => {
+    if (!jumpRequest?.category || categories.length === 0) return
+    const idx = categories.findIndex(c => c.name === jumpRequest.category)
+    if (idx >= 0) setCategoryIndex(idx)
+  }, [jumpRequest, questions])
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -757,7 +768,7 @@ export default function App() {
   const handleStepClick = useCallback((stepId) => {
     const step = STEPS.find(s => s.id === stepId)
     if (!step) return
-    setJumpRequest({ category: step.label, nonce: Date.now() })
+    setJumpRequest({ category: step.label, nonce: Math.random() })
   }, [])
 
   const handleLogout = useCallback(async () => {
