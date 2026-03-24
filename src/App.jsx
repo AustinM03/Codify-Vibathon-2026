@@ -219,18 +219,10 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard 
           <span style={{ fontSize: '0.67rem', color: '#333' }}>Progress</span>
           <span style={{ fontSize: '0.67rem', color: '#444' }}>{completedSteps.length} / 7</span>
         </div>
-        <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+        <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden', marginBottom: '0.75rem' }}>
           <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.4s ease' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '0.68rem', color: '#3a3a3a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={userEmail}>{userEmail}</div>
-          <button onClick={onLogout} title="Sign out"
-            style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: '5px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.65rem', padding: '0.2rem 0.45rem', flexShrink: 0, transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#3a3a3a' }}>
-            Sign out
-          </button>
-        </div>
+        <div style={{ fontSize: '0.68rem', color: '#3a3a3a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={userEmail}>{userEmail}</div>
       </div>
     </aside>
   )
