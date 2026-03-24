@@ -101,3 +101,5 @@ htmlcov/
 .pytest_cache/
 .tox/
 .nox/
+.vercel
+.env*.local
