@@ -68,7 +68,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
   if (loading) {
     return (
-      <main style={{ flex: 1, height: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0.75rem' }}>
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ width: 28, height: 28, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <p style={{ color: '#333', fontSize: '0.8rem' }}>Loading your projects...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -80,7 +80,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
   if (sessions.length === 0) {
     return (
-      <main style={{ flex: 1, height: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
         <div style={{ textAlign: 'center', maxWidth: 400, padding: '2rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.5rem', letterSpacing: '-0.02em' }}>No projects yet</h2>
@@ -99,7 +99,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
   }
 
   return (
-    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#191919', fontFamily: ff }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', fontFamily: ff }}>
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '3rem 2.5rem 3rem' }}>
 
         {/* Header */}

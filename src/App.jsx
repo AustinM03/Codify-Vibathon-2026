@@ -261,7 +261,7 @@ function IntakeScreen({ onSuccess, user }) {
   }
 
   return (
-    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: '#555', background: '#161616', border: '1px solid #252525', borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
@@ -398,7 +398,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiLoading) {
     return (
-      <main style={{ flex: 1, height: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ width: 32, height: 32, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <p style={{ color: '#333', fontSize: '0.85rem' }}>Generating your adaptive questionnaire...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -408,7 +408,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiError) {
     return (
-      <main style={{ flex: 1, height: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ maxWidth: 420, textAlign: 'center' }}>
           <div style={{ color: '#f87171', marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠️</div>
           <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
@@ -426,7 +426,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const phaseNum = STEPS.findIndex(s => s.id === CATEGORY_TO_STEP[currentCategory.name]) + 1
 
   return (
-    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem' }}>
 
         {/* Header */}
@@ -573,7 +573,7 @@ function BlueprintPanel({ blueprint }) {
   const entries = Object.entries(blueprint)
   return (
     <aside style={{
-      width: 260, minWidth: 260, height: '100vh', overflowY: 'auto',
+      width: 260, minWidth: 260, height: '100%', overflowY: 'auto',
       background: '#111', borderLeft: '1px solid #1a1a1a',
       display: 'flex', flexDirection: 'column',
     }}>
@@ -631,7 +631,7 @@ function BlueprintPanel({ blueprint }) {
 
 function CompleteScreen() {
   return (
-    <main style={{ flex: 1, height: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', maxWidth: 500, padding: '2rem' }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.75rem', letterSpacing: '-0.02em' }}>Questionnaire Complete</h1>
@@ -731,23 +731,45 @@ export default function App() {
   if (!user) return <LoginScreen />
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
-      <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} />
-      {view === 'dashboard' && <Dashboard user={user} onOpenSession={handleOpenSession} onNewProject={handleNewProject} />}
-      {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
-      {view === 'questionnaire' && (
-        <>
-          <QuestionnaireScreen
-            sessionId={sessionId}
-            rawIdea={rawIdea}
-            user={user}
-            onStepComplete={handleStepComplete}
-            onAllComplete={handleAllComplete}
-          />
-          <BlueprintPanel blueprint={blueprint} />
-        </>
-      )}
-      {view === 'complete' && <CompleteScreen />}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
+      <header style={{ flexShrink: 0, height: 52, background: '#111', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
+        <button onClick={handleGoToDashboard}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '7px', transition: 'background 0.15s' }}
+          onMouseOver={e => (e.currentTarget.style.background = '#0095ff11')}
+          onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🚀</div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
+            <div style={{ color: '#3d3d3d', fontSize: '0.62rem' }}>AI App Builder</div>
+          </div>
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '0.72rem', color: '#3a3a3a', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
+          <button onClick={handleLogout}
+            style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: '5px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#3a3a3a' }}>
+            Sign out
+          </button>
+        </div>
+      </header>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+        {view === 'dashboard' && <Dashboard user={user} onOpenSession={handleOpenSession} onNewProject={handleNewProject} />}
+        {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
+        {view === 'questionnaire' && (
+          <>
+            <QuestionnaireScreen
+              sessionId={sessionId}
+              rawIdea={rawIdea}
+              user={user}
+              onStepComplete={handleStepComplete}
+              onAllComplete={handleAllComplete}
+            />
+            <BlueprintPanel blueprint={blueprint} />
+          </>
+        )}
+        {view === 'complete' && <CompleteScreen />}
+      </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   )
