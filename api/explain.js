@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { MODELS, CATEGORY_MODELS } from './models.js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -32,7 +33,7 @@ Return ONLY the plain text explanation. No JSON, no formatting, no quotes around
 
   try {
     const message = await client.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: CATEGORY_MODELS[category] ?? MODELS.BALANCED,
       max_tokens: 256,
       messages: [{ role: 'user', content: prompt }],
     })

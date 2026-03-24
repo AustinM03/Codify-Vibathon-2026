@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { MODELS } from './models.js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -65,8 +66,8 @@ Return ONLY a valid JSON array — no markdown, no explanation, no code fences. 
 
   try {
     const message = await client.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 2048,
+      model: MODELS.POWERFUL,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     })
 
