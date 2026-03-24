@@ -319,10 +319,20 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     async function fetchQuestions() {
       setApiLoading(true); setApiError('')
       try {
+        // Fetch all previous answers for this session so Claude can build on them
+        const { data: history } = await supabase
+          .from('questionnaire_responses')
+          .select('category, question, answer')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true })
+
         const res = await fetch('/api/questionnaire', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw_idea: rawIdea }),
+          body: JSON.stringify({
+            raw_idea: rawIdea,
+            history: history ?? [],
+          }),
         })
         const text = await res.text()
         let json

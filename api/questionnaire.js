@@ -7,18 +7,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea } = req.body ?? {}
+  const { raw_idea, history } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
   }
 
+  const previousAnswers = Array.isArray(history) && history.length > 0
+    ? history.map(h => `[${h.category}] Q: ${h.question}\nA: ${h.answer}`).join('\n\n')
+    : null
+
+  const historySection = previousAnswers
+    ? `\nHere is everything the user has already told you across previous steps — treat this as shared memory and DO NOT ask about anything already covered here:\n\n${previousAnswers}\n\nUse this context to personalise new questions. Reference their specific answers naturally (e.g. "Since you mentioned this is for a coffee shop, how should customers…"). Build on what they said — never repeat it.`
+    : ''
+
   const prompt = `You are a warm, friendly business consultant helping everyday people — not engineers — turn their app idea into a clear plan. You speak like a helpful human advisor, never a programmer.
 
 The person wants to build:
 "${raw_idea.slice(0, 2000)}"
-
-Your job is to ask only the questions that are NOT already answered by their description above. If their idea makes something obvious, skip that question entirely.
+${historySection}
+Your job is to ask only the questions that are NOT already answered by their description or previous answers above. If something is already clear, skip it entirely.
 
 Organize your questions into these 7 categories (use EXACTLY these category names):
 1. Problem
@@ -48,7 +56,7 @@ STRICT RULES — you must follow all of these:
    - "Keep it simple — just an email and password"
    - "No sign-in needed, it's open to everyone"
 
-5. Skip any category that the user's description already fully answers.
+5. Skip any category that the user's description or previous answers already fully cover.
 6. Aim for 1–3 questions per included category.
 7. Each question must have 3–4 suggestion chips.
 
