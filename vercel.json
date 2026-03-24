@@ -23,6 +23,11 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/extract.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/generate.js",
       "src": "api/validate.js",
       "use": "@vercel/node"
     }
@@ -31,6 +36,8 @@
     { "src": "/api/questionnaire", "dest": "api/questionnaire.js" },
     { "src": "/api/explain", "dest": "api/explain.js" },
     { "src": "/api/test-claude", "dest": "api/test-claude.js" },
+    { "src": "/api/extract", "dest": "api/extract.js" },
+    { "src": "/api/generate", "dest": "api/generate.js" },
     { "src": "/api/validate", "dest": "api/validate.js" },
     { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/health", "dest": "api/index.py" },
