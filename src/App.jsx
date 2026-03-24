@@ -379,10 +379,16 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
               {/* Suggestion chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.65rem' }}>
                 {q.suggestions?.map((chip, cIdx) => {
-                  const isSelected = currentAnswer === chip
+                  const selected = currentAnswer.split(',').map(s => s.trim()).filter(Boolean)
+                  const isSelected = selected.includes(chip)
                   return (
                     <button key={cIdx}
-                      onClick={() => setAnswer(categoryIndex, qIdx, isSelected ? '' : chip)}
+                      onClick={() => {
+                        const next = isSelected
+                          ? selected.filter(s => s !== chip)
+                          : [...selected, chip]
+                        setAnswer(categoryIndex, qIdx, next.join(', '))
+                      }}
                       style={{
                         padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '999px', cursor: 'pointer',
                         border: `1px solid ${isSelected ? '#0095ff' : '#252525'}`,
