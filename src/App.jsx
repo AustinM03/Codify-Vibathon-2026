@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabaseClient'
+import Dashboard from './views/Dashboard'
 
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
@@ -188,7 +189,7 @@ function StepRow({ step, isActive, isCompleted }) {
   )
 }
 
-function Sidebar({ activeStep, completedSteps, userEmail, onLogout }) {
+function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
     <aside style={{ width: 232, minWidth: 232, height: '100vh', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -198,6 +199,14 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout }) {
           <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em' }}>PromptReady</div>
           <div style={{ color: '#3d3d3d', fontSize: '0.68rem' }}>AI App Builder</div>
         </div>
+      </div>
+      <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: '1px solid #171717' }}>
+        <button onClick={onDashboard}
+          style={{ width: '100%', background: 'none', border: 'none', borderRadius: '6px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
+          onMouseOver={e => { e.currentTarget.style.color = '#00d4ff'; e.currentTarget.style.background = '#0095ff11' }}
+          onMouseOut={e => { e.currentTarget.style.color = '#3a3a3a'; e.currentTarget.style.background = 'none' }}>
+          <span>◀</span><span>My Projects</span>
+        </button>
       </div>
       <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: '#333', textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
@@ -639,7 +648,7 @@ function CompleteScreen() {
 export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
-  const [view, setView] = useState('intake')   // 'intake' | 'questionnaire' | 'complete'
+  const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'complete'
   const [sessionId, setSessionId] = useState(null)
   const [rawIdea, setRawIdea] = useState('')
   const [completedSteps, setCompletedSteps] = useState([])
@@ -682,7 +691,29 @@ export default function App() {
   }, [])
 
   const handleAllComplete = useCallback(() => {
-    setView('complete')
+    setView('dashboard')
+  }, [])
+
+  const handleNewProject = useCallback(() => {
+    setSessionId(null)
+    setRawIdea('')
+    setCompletedSteps([])
+    setActiveStep('problem')
+    setBlueprint({})
+    setView('intake')
+  }, [])
+
+  const handleOpenSession = useCallback((id, idea) => {
+    setSessionId(id)
+    setRawIdea(idea)
+    setCompletedSteps([])
+    setActiveStep('problem')
+    setBlueprint({})
+    setView('questionnaire')
+  }, [])
+
+  const handleGoToDashboard = useCallback(() => {
+    setView('dashboard')
   }, [])
 
   const handleLogout = useCallback(async () => {
@@ -701,7 +732,8 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
-      <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} />
+      <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} />
+      {view === 'dashboard' && <Dashboard user={user} onOpenSession={handleOpenSession} onNewProject={handleNewProject} />}
       {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
       {view === 'questionnaire' && (
         <>
