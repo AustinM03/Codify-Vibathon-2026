@@ -378,9 +378,28 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     setActiveCatName(jumpRequest?.category ?? categories[0]?.name ?? null)
   }, [questions])
 
-  // React to sidebar step clicks
+  // React to sidebar step clicks — auto-save current category before jumping
   useEffect(() => {
     if (!jumpRequest?.category) return
+    // If there's an active category with questions, save answers and mark complete if any input exists
+    if (currentCategory && !catSkipped) {
+      const rows = currentCategory.questions.map((q, qIdx) => ({
+        session_id: sessionId,
+        category: currentCategory.name,
+        question: q.question,
+        answer: answers[`${categoryIndex}-${qIdx}`]?.trim() || '',
+      }))
+      const hasAnyAnswer = rows.some(r => r.answer)
+      ;(async () => {
+        await supabase.from('questionnaire_responses').delete()
+          .eq('session_id', sessionId).eq('category', currentCategory.name)
+        await supabase.from('questionnaire_responses').insert(rows)
+        if (hasAnyAnswer) {
+          const stepId = CATEGORY_TO_STEP[currentCategory.name]
+          if (stepId) onStepComplete(stepId, currentCategory.name, rows)
+        }
+      })()
+    }
     setActiveCatName(jumpRequest.category)
   }, [jumpRequest])
 
