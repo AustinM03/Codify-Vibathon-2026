@@ -208,9 +208,14 @@ function IntakeScreen({ onSuccess }) {
     setLoading(true)
     setError('')
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     const { data, error: dbError } = await supabase
       .from('sessions')
-      .insert([{ raw_idea: idea.trim() }])
+      .insert([{
+        raw_idea: idea.trim(),
+        user_id: user?.id ?? null,
+      }])
       .select()
 
     setLoading(false)
