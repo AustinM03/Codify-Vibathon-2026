@@ -175,9 +175,12 @@ function LoginScreen() {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function StepRow({ step, isActive, isCompleted }) {
+function StepRow({ step, isActive, isCompleted, onClick }) {
+  const clickable = isCompleted || isActive
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: 'default', userSelect: 'none' }}>
+    <div onClick={clickable ? onClick : undefined} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none', transition: 'background 0.12s' }}
+      onMouseOver={e => { if (clickable) e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.15)' : 'rgba(255,255,255,0.03)' }}
+      onMouseOut={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
       <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a' }}>
         {isCompleted ? '✓' : step.phase}
       </div>
@@ -189,7 +192,7 @@ function StepRow({ step, isActive, isCompleted }) {
   )
 }
 
-function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard }) {
+function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard, onStepClick }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
     <aside style={{ width: 232, minWidth: 232, height: '100%', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -211,7 +214,7 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard 
       <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: '#333', textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
         {STEPS.map(step => (
-          <StepRow key={step.id} step={step} isActive={activeStep === step.id} isCompleted={completedSteps.includes(step.id)} />
+          <StepRow key={step.id} step={step} isActive={activeStep === step.id} isCompleted={completedSteps.includes(step.id)} onClick={() => onStepClick?.(step.id)} />
         ))}
       </div>
       <div style={{ padding: '0.9rem 1rem', borderTop: '1px solid #1a1a1a' }}>
@@ -282,7 +285,7 @@ function IntakeScreen({ onSuccess, user }) {
 
 // ─── Questionnaire Screen ─────────────────────────────────────────────────────
 
-function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete, initialCategoryName }) {
+function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete, jumpRequest }) {
   const [questions, setQuestions] = useState([])   // [{category, question, suggestions}]
   const [apiLoading, setApiLoading] = useState(true)
   const [apiError, setApiError] = useState('')
@@ -315,12 +318,30 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     return acc
   }, [])
 
-  // Jump to the resume point once questions have loaded
+  // Jump to a category and pre-fill saved answers (fires on initial resume + sidebar clicks)
   useEffect(() => {
-    if (!initialCategoryName || categories.length === 0) return
-    const idx = categories.findIndex(c => c.name === initialCategoryName)
-    if (idx > 0) setCategoryIndex(idx)
-  }, [questions, initialCategoryName]) // categories derived from questions; re-run when either changes
+    if (!jumpRequest?.category || categories.length === 0) return
+    const idx = categories.findIndex(c => c.name === jumpRequest.category)
+    if (idx < 0) return
+    setCategoryIndex(idx)
+    supabase
+      .from('questionnaire_responses')
+      .select('question, answer')
+      .eq('session_id', sessionId)
+      .eq('category', jumpRequest.category)
+      .then(({ data }) => {
+        if (!data?.length) return
+        const cat = categories[idx]
+        setAnswers(prev => {
+          const updated = { ...prev }
+          data.forEach(row => {
+            const qIdx = cat.questions.findIndex(q => q.question === row.question)
+            if (qIdx >= 0) updated[`${idx}-${qIdx}`] = row.answer
+          })
+          return updated
+        })
+      })
+  }, [jumpRequest, questions]) // jumpRequest changes on sidebar click; questions changes on load
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -377,6 +398,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       answer: answers[`${categoryIndex}-${qIdx}`]?.trim() || '',
     }))
 
+    // Delete existing rows first so re-edits don't create duplicates
+    await supabase.from('questionnaire_responses').delete()
+      .eq('session_id', sessionId).eq('category', currentCategory.name)
     const { error } = await supabase.from('questionnaire_responses').insert(rows)
     if (error) { console.error('Save error:', error) }
 
@@ -653,7 +677,7 @@ export default function App() {
   const [activeStep, setActiveStep] = useState('problem')
   const [toast, setToast] = useState(null)
   const [blueprint, setBlueprint] = useState({})  // category → string[]
-  const [resumeCategory, setResumeCategory] = useState(null)
+  const [jumpRequest, setJumpRequest] = useState({ category: null, nonce: 0 })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -699,7 +723,7 @@ export default function App() {
     setCompletedSteps([])
     setActiveStep('problem')
     setBlueprint({})
-    setResumeCategory(null)
+    setJumpRequest({ category: null, nonce: 0 })
     setView('intake')
   }, [])
 
@@ -722,12 +746,18 @@ export default function App() {
     setCompletedSteps(completedStepIds)
     setActiveStep(nextCat ? CATEGORY_TO_STEP[nextCat] : 'problem')
     setBlueprint({})
-    setResumeCategory(nextCat)
+    setJumpRequest({ category: nextCat, nonce: Date.now() })
     setView('questionnaire')
   }, [])
 
   const handleGoToDashboard = useCallback(() => {
     setView('dashboard')
+  }, [])
+
+  const handleStepClick = useCallback((stepId) => {
+    const step = STEPS.find(s => s.id === stepId)
+    if (!step) return
+    setJumpRequest({ category: step.label, nonce: Date.now() })
   }, [])
 
   const handleLogout = useCallback(async () => {
@@ -772,7 +802,7 @@ export default function App() {
         {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
         {view === 'questionnaire' && (
           <>
-            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} />
+            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} onStepClick={handleStepClick} />
             <QuestionnaireScreen
               key={sessionId}
               sessionId={sessionId}
@@ -780,7 +810,7 @@ export default function App() {
               user={user}
               onStepComplete={handleStepComplete}
               onAllComplete={handleAllComplete}
-              initialCategoryName={resumeCategory}
+              jumpRequest={jumpRequest}
             />
           </>
         )}
