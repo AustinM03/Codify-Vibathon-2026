@@ -192,7 +192,7 @@ function StepRow({ step, isActive, isCompleted }) {
 function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
-    <aside style={{ width: 232, minWidth: 232, height: '100vh', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <aside style={{ width: 232, minWidth: 232, height: '100%', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: '1.1rem 1rem', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
         <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', flexShrink: 0 }}>🚀</div>
         <div>
@@ -781,6 +781,7 @@ export default function App() {
         {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
         {view === 'questionnaire' && (
           <>
+            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} />
             <QuestionnaireScreen
               key={sessionId}
               sessionId={sessionId}
