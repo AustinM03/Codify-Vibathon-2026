@@ -176,10 +176,9 @@ function LoginScreen() {
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 function StepRow({ step, isActive, isCompleted, onClick }) {
-  const clickable = isCompleted || isActive
   return (
-    <div onClick={clickable ? onClick : undefined} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none', transition: 'background 0.12s' }}
-      onMouseEnter={e => { if (clickable) e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.18)' : 'rgba(255,255,255,0.04)' }}
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.12s' }}
+      onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.18)' : 'rgba(255,255,255,0.04)' }}
       onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
       <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a', pointerEvents: 'none' }}>
         {isCompleted ? '✓' : step.phase}
