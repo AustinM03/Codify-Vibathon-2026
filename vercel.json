@@ -2,6 +2,11 @@
   "version": 2,
   "builds": [
     {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
       "src": "api/index.py",
       "use": "@vercel/python"
     },
@@ -12,10 +17,6 @@
     {
       "src": "api/test-claude.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -25,7 +26,7 @@
     { "src": "/health", "dest": "api/index.py" },
     { "src": "/docs", "dest": "api/index.py" },
     { "src": "/openapi.json", "dest": "api/index.py" },
-    { "src": "/chat.html", "dest": "chat.html" },
-    { "src": "/", "dest": "index.html" }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
