@@ -766,7 +766,20 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
   useEffect(() => {
     async function generate() {
       try {
-        // 1. Load all saved answers for this session
+        // 1. Check if a build plan already exists for this session
+        const { data: existing } = await supabase
+          .from('build_plans')
+          .select('title, summary, prompt, features, tech_stack, user_stories')
+          .eq('session_id', sessionId)
+          .maybeSingle()
+
+        if (existing) {
+          setResult(existing)
+          setStatus('done')
+          return
+        }
+
+        // 2. Load all saved answers for this session
         const { data: rows } = await supabase
           .from('questionnaire_responses')
           .select('category, question, answer')
@@ -777,7 +790,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
 
         const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
 
-        // 2. Extract structured signal from raw idea (Sonnet)
+        // 3. Extract structured signal from raw idea (Sonnet)
         let extracted = null
         try {
           const extRes = await fetch('/api/extract', {
@@ -788,7 +801,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
           if (extRes.ok) extracted = await extRes.json()
         } catch { /* non-fatal — generate will run its own fallback */ }
 
-        // 3. Generate full build artifact (Opus)
+        // 4. Generate full build artifact (Opus)
         const genRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -796,6 +809,17 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
         })
         const json = await genRes.json()
         if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
+
+        // 5. Persist the build plan so we never regenerate it
+        await supabase.from('build_plans').upsert({
+          session_id: sessionId,
+          title: json.title,
+          summary: json.summary,
+          prompt: json.prompt,
+          features: json.features,
+          tech_stack: json.tech_stack,
+          user_stories: json.user_stories,
+        }, { onConflict: 'session_id' })
 
         setResult(json)
         setStatus('done')
