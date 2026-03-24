@@ -384,10 +384,14 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                   return (
                     <button key={cIdx}
                       onClick={() => {
-                        const next = isSelected
-                          ? selected.filter(s => s !== chip)
-                          : [...selected, chip]
-                        setAnswer(categoryIndex, qIdx, next.join(', '))
+                        setAnswers(prev => {
+                          const key = `${categoryIndex}-${qIdx}`
+                          const curr = prev[key] ?? ''
+                          const sel = curr.split(',').map(s => s.trim()).filter(Boolean)
+                          const already = sel.includes(chip)
+                          const next = already ? sel.filter(s => s !== chip) : [...sel, chip]
+                          return { ...prev, [key]: next.join(', ') }
+                        })
                       }}
                       style={{
                         padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '999px', cursor: 'pointer',
