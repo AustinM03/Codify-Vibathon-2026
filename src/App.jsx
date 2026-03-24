@@ -47,13 +47,27 @@ function LoginScreen() {
   const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
 
+  const pwRules = [
+    { label: 'At least 8 characters', ok: password.length >= 8 },
+    { label: 'One uppercase letter', ok: /[A-Z]/.test(password) },
+    { label: 'One number', ok: /[0-9]/.test(password) },
+  ]
+  const pwValid = pwRules.every(r => r.ok)
+  const confirmMatch = confirm === password
+
   async function handleSubmit(e) {
     e.preventDefault()
-    setLoading(true); setError(''); setInfo('')
+    setError(''); setInfo('')
+    if (mode === 'signup') {
+      if (!pwValid) { setError('Password does not meet the requirements below.'); return }
+      if (!confirmMatch) { setError('Passwords do not match.'); return }
+    }
+    setLoading(true)
     if (mode === 'signup') {
       const { error: err } = await supabase.auth.signUp({ email, password })
       if (err) { setError(err.message) }
@@ -70,6 +84,11 @@ function LoginScreen() {
     borderRadius: '8px', color: '#e2e2e2', padding: '0.75rem 0.9rem',
     fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none',
     transition: 'border-color 0.15s', display: 'block',
+  }
+
+  function switchMode() {
+    setMode(m => m === 'signin' ? 'signup' : 'signin')
+    setError(''); setInfo(''); setPassword(''); setConfirm('')
   }
 
   return (
@@ -98,10 +117,41 @@ function LoginScreen() {
           <input type="email" required value={email} onChange={e => { setEmail(e.target.value); setError('') }} placeholder="you@example.com"
             style={{ ...inputStyle, marginBottom: '1rem' }}
             onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+
           <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Password</label>
           <input type="password" required value={password} onChange={e => { setPassword(e.target.value); setError('') }} placeholder="••••••••"
-            style={{ ...inputStyle, marginBottom: '1.4rem' }}
+            style={{ ...inputStyle, marginBottom: mode === 'signup' ? '0.6rem' : '1.4rem' }}
             onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+
+          {/* Password requirements — signup only */}
+          {mode === 'signup' && (
+            <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              {pwRules.map(r => (
+                <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.75rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: r.ok ? '#4ade80' : '#3a3a3a' }}>{r.ok ? '✓' : '○'}</span>
+                  <span style={{ color: r.ok ? '#4ade80' : '#3a3a3a', transition: 'color 0.15s' }}>{r.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Confirm password — signup only */}
+          {mode === 'signup' && (
+            <>
+              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Confirm Password</label>
+              <input type="password" required={mode === 'signup'} value={confirm} onChange={e => { setConfirm(e.target.value); setError('') }} placeholder="••••••••"
+                style={{ ...inputStyle, marginBottom: '0.4rem', borderColor: confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525' }}
+                onFocus={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#0095ff')}
+                onBlur={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525')} />
+              {confirm.length > 0 && (
+                <div style={{ fontSize: '0.75rem', marginBottom: '1rem', color: confirmMatch ? '#4ade80' : '#f87171' }}>
+                  {confirmMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+                </div>
+              )}
+              {confirm.length === 0 && <div style={{ marginBottom: '1rem' }} />}
+            </>
+          )}
+
           {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem' }}>{error}</div>}
           {info && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid #22c55e', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#4ade80', fontSize: '0.8rem', marginBottom: '1rem' }}>{info}</div>}
           <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 18px rgba(0,149,255,0.4)', transition: 'background 0.15s' }}
@@ -112,7 +162,7 @@ function LoginScreen() {
         </form>
         <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: '#333' }}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-          <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}
+          <button onClick={switchMode}
             style={{ background: 'none', border: 'none', color: '#0095ff', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
             {mode === 'signin' ? 'Sign up' : 'Sign in'}
           </button>
