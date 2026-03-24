@@ -164,17 +164,17 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                   title={confirmDelete === s.id ? 'Click again to confirm delete' : 'Delete project'}
                   style={{
                     position: 'absolute', top: '0.75rem', right: '0.75rem',
-                    background: confirmDelete === s.id ? '#ef4444' : 'none',
-                    border: confirmDelete === s.id ? 'none' : '1px solid #2a2a2a',
+                    background: confirmDelete === s.id ? '#ef4444' : '#3f1212',
+                    border: 'none',
                     borderRadius: '5px', cursor: 'pointer',
-                    color: confirmDelete === s.id ? '#fff' : '#3a3a3a',
+                    color: confirmDelete === s.id ? '#fff' : '#f87171',
                     fontSize: confirmDelete === s.id ? '0.65rem' : '0.8rem',
                     padding: confirmDelete === s.id ? '0.2rem 0.45rem' : '0.2rem 0.35rem',
                     fontWeight: confirmDelete === s.id ? 600 : 400,
                     transition: 'all 0.15s', lineHeight: 1.4,
                   }}
-                  onMouseEnter={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' } }}
-                  onMouseLeave={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#3a3a3a' } }}>
+                  onMouseEnter={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.background = '#7f1d1d'; e.currentTarget.style.color = '#fca5a5' } }}
+                  onMouseLeave={e => { e.stopPropagation(); if (confirmDelete !== s.id) { e.currentTarget.style.background = '#3f1212'; e.currentTarget.style.color = '#f87171' } }}>
                   {deleting === s.id ? '…' : confirmDelete === s.id ? 'Delete?' : '🗑'}
                 </button>
 
