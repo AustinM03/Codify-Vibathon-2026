@@ -34,10 +34,30 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
     e.stopPropagation()
     if (!window.confirm('Delete this project? This cannot be undone.')) return
     setDeleting(id)
-    const { error: respErr } = await supabase.from('questionnaire_responses').delete().eq('session_id', id)
-    if (respErr) { console.error('Failed to delete responses:', respErr); setDeleting(null); return }
-    const { error: sessErr } = await supabase.from('sessions').delete().eq('id', id)
-    if (sessErr) { console.error('Failed to delete session:', sessErr); setDeleting(null); return }
+
+    // Delete responses first (foreign key dependency)
+    const { error: respErr } = await supabase
+      .from('questionnaire_responses')
+      .delete()
+      .eq('session_id', id)
+    if (respErr) {
+      alert('Could not delete project responses: ' + respErr.message)
+      setDeleting(null)
+      return
+    }
+
+    // Delete the session, scoped to this user to satisfy RLS
+    const { error: sessErr, count } = await supabase
+      .from('sessions')
+      .delete({ count: 'exact' })
+      .eq('id', id)
+      .eq('user_id', user.id)
+    if (sessErr || count === 0) {
+      alert(sessErr ? 'Could not delete project: ' + sessErr.message : 'Delete failed — you may not have permission.')
+      setDeleting(null)
+      return
+    }
+
     setSessions(prev => prev.filter(s => s.id !== id))
     setLastCategories(prev => { const next = { ...prev }; delete next[id]; return next })
     setDeleting(null)
