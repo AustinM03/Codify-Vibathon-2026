@@ -17,6 +17,20 @@ const CATEGORY_TO_STEP = {
   Auth: 'auth', Data: 'data', Integrations: 'integrations', Logic: 'logic',
 }
 
+// Friendly display names shown to the user — internal keys stay unchanged
+const CATEGORY_DISPLAY = {
+  Problem:      'Problem',
+  Features:     'Features',
+  Design:       'Design',
+  Auth:         'User Accounts',
+  Data:         'Information',
+  Integrations: 'App Connections',
+  Logic:        'Policies',
+}
+function displayName(cat) {
+  return CATEGORY_DISPLAY[cat] ?? cat
+}
+
 // Normalize whatever Claude writes to the canonical STEPS label
 const CATEGORY_NORM = {
   problem: 'Problem', 'problem statement': 'Problem', 'problem definition': 'Problem',
@@ -198,7 +212,7 @@ function StepRow({ step, isActive, isCompleted, onClick }) {
         {isCompleted ? '✓' : step.phase}
       </div>
       <span style={{ fontSize: '0.845rem', color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
-        {step.label}
+        {displayName(step.label)}
       </span>
       {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#0095ff', flexShrink: 0, pointerEvents: 'none' }} />}
     </div>
@@ -508,7 +522,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     }
   }
 
-  const btnLabel = saving ? 'Saving...' : isLastCategory ? 'Complete Questionnaire ✓' : `Next: ${nextCatName ?? ''} →`
+  const btnLabel = saving ? 'Saving...' : isLastCategory ? 'Complete Questionnaire ✓' : `Next: ${displayName(nextCatName ?? '')} →`
 
   if (apiLoading) {
     return (
@@ -547,16 +561,16 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: '#555', background: '#161616', border: '1px solid #252525', borderRadius: '999px', padding: '0.25rem 0.8rem', letterSpacing: '0.02em' }}>
             <span>📋</span>
-            <span>Phase {phaseNum} — {currentCategory.name}</span>
+            <span>Phase {phaseNum} — {displayName(currentCategory.name)}</span>
           </div>
           <span style={{ fontSize: '0.7rem', color: '#333' }}>{categoryIndex + 1} of {categories.length}</span>
         </div>
 
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.5rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-          {currentCategory.name}
+          {displayName(currentCategory.name)}
         </h1>
         <p style={{ color: '#5e5e5e', fontSize: '0.9rem', margin: '0 0 2rem', lineHeight: 1.65 }}>
-          Answer these questions to help define the {currentCategory.name.toLowerCase()} requirements for your app.
+          Answer these questions to help define the {displayName(currentCategory.name).toLowerCase()} requirements for your app.
         </p>
 
         <div style={{ height: '1px', background: '#1e1e1e', marginBottom: '2rem' }} />

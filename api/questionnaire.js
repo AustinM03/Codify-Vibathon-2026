@@ -29,7 +29,7 @@ The person wants to build:
 ${historySection}
 Your job is to ask questions that help you fully understand their vision across all 7 areas. Use any previous answers they gave as context to make your questions more personalised and relevant — but still ask about every category.
 
-Organize your questions into these 7 categories (use EXACTLY these category names):
+Organize your questions into these 7 categories (use EXACTLY these category names as JSON keys):
 1. Problem
 2. Features
 3. Design
@@ -38,16 +38,23 @@ Organize your questions into these 7 categories (use EXACTLY these category name
 6. Integrations
 7. Logic
 
+IMPORTANT — when writing questions and suggestions, refer to these categories using these friendly names instead of the raw technical terms:
+- "Auth" → call it "User Accounts" (e.g. "Let's talk about User Accounts — how should people sign in?")
+- "Data" → call it "Information" (e.g. "For the Information section — what does your app need to keep track of?")
+- "Integrations" → call it "App Connections" (e.g. "Under App Connections — does your app need to link with any other tools?")
+- "Logic" → call it "Policies" (e.g. "For the Policies section — what rules should your app follow?")
+The JSON "category" key must still be the original technical name (e.g. "Auth", "Data"), but all question text and suggestion chips must use the friendly name.
+
 STRICT RULES — you must follow all of these:
 
 1. NO TECH JARGON. Never use words like: frontend, backend, database, auth, authentication, API, schema, SQL, query, OAuth, deploy, server, or any other technical term. If you find yourself about to write one, translate it to plain English first.
 
 2. TRANSLATE TECH CONCEPTS like this:
-   - Instead of "Auth / Authentication" → ask "How should people sign in to your app?"
-   - Instead of "Database / Data storage" → ask "What information does your app need to keep track of?"
+   - Instead of "Auth / Authentication" → ask "How should people sign in to your app? (User Accounts section)"
+   - Instead of "Database / Data storage" → ask "What information does your app need to keep track of? (Information section)"
    - Instead of "Frontend / UI" → ask "What should the app look like and feel like to use?"
-   - Instead of "API / Integrations" → ask "Does your app need to connect to any other tools or services people already use?"
-   - Instead of "Logic / Business logic" → ask "What are the most important rules your app needs to follow?"
+   - Instead of "API / Integrations" → ask "Does your app need to connect to any other tools or services? (App Connections section)"
+   - Instead of "Logic / Business logic" → ask "What are the most important rules or policies your app needs to follow? (Policies section)"
 
 3. EVERY QUESTION must open with one plain-English sentence explaining WHY this question matters for their idea — like a consultant would explain it to a client.
 

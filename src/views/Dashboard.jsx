@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 
 const CATEGORY_ORDER = ['Problem', 'Features', 'Design', 'Auth', 'Data', 'Integrations', 'Logic']
+const CATEGORY_DISPLAY = {
+  Problem:      'Problem',
+  Features:     'Features',
+  Design:       'Design',
+  Auth:         'User Accounts',
+  Data:         'Information',
+  Integrations: 'App Connections',
+  Logic:        'Policies',
+}
 const CATEGORY_META = {
   Problem:      { icon: '🎯', color: '#7c3aed' },
   Features:     { icon: '⚡', color: '#0095ff' },
@@ -202,7 +211,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                   {meta ? (
                     <>
                       <span style={{ fontSize: '0.8rem' }}>{meta.icon}</span>
-                      <span style={{ fontSize: '0.72rem', color: meta.color, fontWeight: 500 }}>Last: {lastCat}</span>
+                      <span style={{ fontSize: '0.72rem', color: meta.color, fontWeight: 500 }}>Last: {CATEGORY_DISPLAY[lastCat] ?? lastCat}</span>
                     </>
                   ) : (
                     <>
