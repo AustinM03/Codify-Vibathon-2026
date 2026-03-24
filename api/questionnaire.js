@@ -67,7 +67,7 @@ Return ONLY a valid JSON array — no markdown, no explanation, no code fences. 
   try {
     const message = await client.messages.create({
       model: MODELS.POWERFUL,
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     })
 
