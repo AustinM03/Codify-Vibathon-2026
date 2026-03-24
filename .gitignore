@@ -103,3 +103,6 @@ htmlcov/
 .nox/
 .vercel
 .env*.local
+
+.env
+.env.local
