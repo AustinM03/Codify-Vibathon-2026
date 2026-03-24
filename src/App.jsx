@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabaseClient'
 
 const STEPS = [
@@ -236,10 +236,10 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const [questions, setQuestions] = useState([])   // [{category, question, suggestions}]
   const [apiLoading, setApiLoading] = useState(true)
   const [apiError, setApiError] = useState('')
+  const [retryCount, setRetryCount] = useState(0)
   const [categoryIndex, setCategoryIndex] = useState(0)
   const [answers, setAnswers] = useState({})        // key: `${catIdx}-${qIdx}` → string
   const [saving, setSaving] = useState(false)
-  const hasFetched = useRef(false)
 
   // Group questions by category order
   const categories = questions.reduce((acc, q) => {
@@ -249,9 +249,6 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   }, [])
 
   useEffect(() => {
-    if (hasFetched.current) return
-    hasFetched.current = true
-
     async function fetchQuestions() {
       setApiLoading(true); setApiError('')
       try {
@@ -260,8 +257,14 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ raw_idea: rawIdea }),
         })
-        const json = await res.json()
-        if (!res.ok) throw new Error(json.error ?? 'Failed to generate questions')
+        const text = await res.text()
+        let json
+        try {
+          json = JSON.parse(text)
+        } catch {
+          throw new Error(`API returned non-JSON (status ${res.status}). Is 'vercel dev' running on port 3000?`)
+        }
+        if (!res.ok) throw new Error(json.error ?? `Request failed (${res.status})`)
         setQuestions(json.questions)
       } catch (err) {
         setApiError(err.message)
@@ -270,7 +273,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       }
     }
     fetchQuestions()
-  }, [rawIdea])
+  }, [rawIdea, retryCount])
 
   const currentCategory = categories[categoryIndex]
   const isLastCategory = categoryIndex === categories.length - 1
@@ -323,7 +326,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         <div style={{ maxWidth: 420, textAlign: 'center' }}>
           <div style={{ color: '#f87171', marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠️</div>
           <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
-          <button onClick={() => { hasFetched.current = false; setApiLoading(true); setApiError('') }}
+          <button onClick={() => setRetryCount(c => c + 1)}
             style={{ padding: '0.6rem 1.25rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
             Try Again
           </button>
