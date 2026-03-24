@@ -1,243 +1,402 @@
-﻿import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabaseClient'
 
-function ParticleCanvas() {
-  const canvasRef = useRef(null)
+const STEPS = [
+  { id: 'problem',      label: 'Problem',      phase: 1 },
+  { id: 'features',     label: 'Features',     phase: 2 },
+  { id: 'design',       label: 'Design',       phase: 3 },
+  { id: 'auth',         label: 'Auth',         phase: 4 },
+  { id: 'data',         label: 'Data',         phase: 5 },
+  { id: 'integrations', label: 'Integrations', phase: 6 },
+  { id: 'logic',        label: 'Logic',        phase: 7 },
+]
 
+function Toast({ message, onDismiss }) {
   useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    let animId
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    const particles = Array.from({ length: 140 }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      r: Math.random() * 1.4 + 0.3,
-      dx: (Math.random() - 0.5) * 0.25,
-      dy: (Math.random() - 0.5) * 0.25,
-      alpha: Math.random() * 0.5 + 0.15,
-    }))
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      particles.forEach(p => {
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`
-        ctx.fill()
-        p.x += p.dx
-        p.y += p.dy
-        if (p.x < 0 || p.x > canvas.width) p.dx *= -1
-        if (p.y < 0 || p.y > canvas.height) p.dy *= -1
-      })
-      animId = requestAnimationFrame(draw)
-    }
-    draw()
-
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
-    }
-  }, [])
+    const t = setTimeout(onDismiss, 4500)
+    return () => clearTimeout(t)
+  }, [onDismiss])
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}
-    />
+    <div style={{
+      position: 'fixed',
+      bottom: '1.75rem',
+      right: '1.75rem',
+      background: '#0a1a0a',
+      border: '1px solid #22c55e',
+      borderRadius: '10px',
+      padding: '0.9rem 1.25rem',
+      color: '#4ade80',
+      fontSize: '0.875rem',
+      zIndex: 9999,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '0.65rem',
+      maxWidth: '340px',
+      animation: 'slideIn 0.2s ease',
+    }}>
+      <span style={{ fontSize: '1.1rem', marginTop: '1px' }}>✅</span>
+      <div>
+        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Session saved successfully</div>
+        <div style={{ color: '#86efac', fontSize: '0.77rem', wordBreak: 'break-all', opacity: 0.85 }}>{message}</div>
+      </div>
+    </div>
+  )
+}
+
+function StepRow({ step, isActive, isCompleted }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.7rem',
+      padding: '0.44rem 0.65rem',
+      borderRadius: '6px',
+      background: isActive ? 'rgba(124,58,237,0.13)' : 'transparent',
+      marginBottom: '2px',
+      cursor: isActive ? 'default' : 'not-allowed',
+      userSelect: 'none',
+    }}>
+      <div style={{
+        width: 22,
+        height: 22,
+        borderRadius: '50%',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.68rem',
+        fontWeight: 700,
+        background: isCompleted ? '#16a34a' : isActive ? '#7c3aed' : 'transparent',
+        border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e',
+        color: isCompleted || isActive ? '#fff' : '#3a3a3a',
+      }}>
+        {isCompleted ? '✓' : step.phase}
+      </div>
+      <span style={{
+        fontSize: '0.845rem',
+        color: isActive ? '#c4b5fd' : isCompleted ? '#86efac' : '#3a3a3a',
+        fontWeight: isActive ? 600 : 400,
+      }}>
+        {step.label}
+      </span>
+      {isActive && (
+        <div style={{
+          marginLeft: 'auto',
+          width: 5,
+          height: 5,
+          borderRadius: '50%',
+          background: '#7c3aed',
+          flexShrink: 0,
+        }} />
+      )}
+    </div>
+  )
+}
+
+function Sidebar({ activeStep, completedSteps }) {
+  const progress = (completedSteps.length / STEPS.length) * 100
+
+  return (
+    <aside style={{
+      width: 232,
+      minWidth: 232,
+      height: '100vh',
+      background: '#111',
+      borderRight: '1px solid #1e1e1e',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+    }}>
+      {/* Logo */}
+      <div style={{
+        padding: '1.1rem 1rem',
+        borderBottom: '1px solid #1e1e1e',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+      }}>
+        <div style={{
+          width: 30,
+          height: 30,
+          background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          borderRadius: '7px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.95rem',
+          flexShrink: 0,
+        }}>
+          🚀
+        </div>
+        <div>
+          <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em' }}>PromptReady</div>
+          <div style={{ color: '#3d3d3d', fontSize: '0.68rem' }}>AI App Builder</div>
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1 }}>
+        <div style={{
+          fontSize: '0.61rem',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          color: '#333',
+          textTransform: 'uppercase',
+          padding: '0 0.4rem',
+          marginBottom: '0.6rem',
+        }}>
+          Build Phases
+        </div>
+        {STEPS.map(step => (
+          <StepRow
+            key={step.id}
+            step={step}
+            isActive={activeStep === step.id}
+            isCompleted={completedSteps.includes(step.id)}
+          />
+        ))}
+      </div>
+
+      {/* Progress footer */}
+      <div style={{
+        padding: '0.9rem 1rem',
+        borderTop: '1px solid #1a1a1a',
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.45rem',
+        }}>
+          <span style={{ fontSize: '0.67rem', color: '#333' }}>Progress</span>
+          <span style={{ fontSize: '0.67rem', color: '#444' }}>{completedSteps.length} / 7</span>
+        </div>
+        <div style={{
+          height: 3,
+          background: '#1e1e1e',
+          borderRadius: '2px',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${progress}%`,
+            height: '100%',
+            background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
+            borderRadius: '2px',
+            transition: 'width 0.4s ease',
+          }} />
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function IntakeScreen({ onSuccess }) {
+  const [idea, setIdea] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [focused, setFocused] = useState(false)
+
+  const borderColor = error ? '#ef4444' : focused ? '#7c3aed' : '#252525'
+
+  async function handleSubmit() {
+    if (!idea.trim()) {
+      setError('Please describe your app idea before continuing.')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    const { data, error: dbError } = await supabase
+      .from('sessions')
+      .insert([{ raw_idea: idea.trim() }])
+      .select()
+
+    setLoading(false)
+
+    if (dbError) {
+      console.error('Insert error:', dbError)
+      setError(dbError.message)
+      return
+    }
+
+    const sessionId = data?.[0]?.id ?? 'unknown'
+    console.log('Session created:', data?.[0])
+    console.log('Session ID:', sessionId)
+    onSuccess(sessionId)
+    setIdea('')
+  }
+
+  return (
+    <main style={{
+      flex: 1,
+      height: '100vh',
+      overflowY: 'auto',
+      background: '#191919',
+      display: 'flex',
+      justifyContent: 'center',
+    }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem' }}>
+
+        {/* Phase badge */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          fontSize: '0.71rem',
+          color: '#555',
+          background: '#161616',
+          border: '1px solid #252525',
+          borderRadius: '999px',
+          padding: '0.25rem 0.8rem',
+          marginBottom: '1.4rem',
+          letterSpacing: '0.02em',
+        }}>
+          <span>🎯</span>
+          <span>Phase 1 — Problem Definition</span>
+        </div>
+
+        {/* Heading */}
+        <h1 style={{
+          fontSize: '2.1rem',
+          fontWeight: 700,
+          color: '#ebebeb',
+          margin: '0 0 0.55rem',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.2,
+        }}>
+          Project Initialization
+        </h1>
+        <p style={{
+          color: '#5e5e5e',
+          fontSize: '0.95rem',
+          margin: '0 0 2rem',
+          lineHeight: 1.65,
+        }}>
+          Describe your vision. We'll break it down into a complete build plan across all 7 phases.
+        </p>
+
+        <div style={{ height: '1px', background: '#1e1e1e', marginBottom: '2rem' }} />
+
+        {/* Textarea */}
+        <label style={{
+          display: 'block',
+          fontSize: '0.71rem',
+          fontWeight: 600,
+          color: '#555',
+          marginBottom: '0.55rem',
+          letterSpacing: '0.07em',
+          textTransform: 'uppercase',
+        }}>
+          Your App Idea
+        </label>
+
+        <textarea
+          value={idea}
+          onChange={e => { setIdea(e.target.value); if (error) setError('') }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Describe your app idea in as much detail as possible..."
+          rows={9}
+          style={{
+            width: '100%',
+            background: '#111',
+            border: `1.5px solid ${borderColor}`,
+            borderRadius: '10px',
+            color: '#e2e2e2',
+            padding: '1rem 1.1rem',
+            fontSize: '0.95rem',
+            fontFamily: 'inherit',
+            resize: 'vertical',
+            outline: 'none',
+            lineHeight: 1.7,
+            display: 'block',
+            transition: 'border-color 0.15s',
+          }}
+        />
+
+        {/* Error / char count row */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '0.45rem',
+          marginBottom: '1.5rem',
+          minHeight: '1.1rem',
+        }}>
+          {error
+            ? <span style={{ fontSize: '0.78rem', color: '#f87171' }}>{error}</span>
+            : <span />
+          }
+          <span style={{ fontSize: '0.71rem', color: '#333', marginLeft: 'auto' }}>
+            {idea.length} chars
+          </span>
+        </div>
+
+        {/* Submit button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '0.875rem',
+            background: loading ? '#4c1d95' : '#7c3aed',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            letterSpacing: '0.015em',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            transition: 'background 0.15s, box-shadow 0.15s',
+            boxShadow: loading ? 'none' : '0 2px 18px rgba(124,58,237,0.4)',
+          }}
+          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#6d28d9' }}
+          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#7c3aed' }}
+        >
+          {loading ? 'Saving...' : 'Start Building →'}
+        </button>
+
+        <p style={{
+          fontSize: '0.71rem',
+          color: '#2e2e2e',
+          textAlign: 'center',
+          marginTop: '1rem',
+          lineHeight: 1.6,
+        }}>
+          Your idea will be saved and analyzed to generate a complete build plan across all 7 phases.
+        </p>
+      </div>
+    </main>
   )
 }
 
 export default function App() {
-  const [status, setStatus] = useState('')
-  const [isError, setIsError] = useState(false)
-  const [auditStatus, setAuditStatus] = useState('')
-  const [auditIsVuln, setAuditIsVuln] = useState(false)
+  const [completedSteps, setCompletedSteps] = useState([])
+  const [toast, setToast] = useState(null)
 
-  async function testWrite() {
-    setStatus('Writing...')
-    setIsError(false)
-    const { data, error } = await supabase
-      .from('sessions')
-      .insert([{ raw_idea: 'An app that tracks how many times my cat meows.' }])
-    if (error) {
-      console.error('Insert error:', error)
-      setStatus(`Error: ${error.message}`)
-      setIsError(true)
-    } else {
-      console.log('Insert success:', data)
-      setStatus('Success! Record inserted.')
-    }
-  }
+  const handleSuccess = useCallback((sessionId) => {
+    setCompletedSteps(prev => [...new Set([...prev, 'problem'])])
+    setToast(`session_id: ${sessionId}`)
+  }, [])
 
-  async function runAudit() {
-    setAuditStatus('Auditing...')
-    setAuditIsVuln(false)
-    const { data, error } = await supabase.from('sessions').select('*')
-    if (error) {
-      setAuditStatus(`Audit error: ${error.message}`)
-      setAuditIsVuln(false)
-      return
-    }
-    if (data && data.length > 1) {
-      setAuditIsVuln(true)
-      setAuditStatus(`VULNERABILITY: Data is public. Found ${data.length} records from all sessions.`)
-    } else {
-      setAuditIsVuln(false)
-      setAuditStatus('SECURE: Row Level Security is active.')
-    }
-  }
+  const dismissToast = useCallback(() => setToast(null), [])
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#05050a',
       display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      textAlign: 'center',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden',
-      position: 'relative',
+      height: '100vh',
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      background: '#191919',
     }}>
-      <ParticleCanvas />
-
-      <div style={{ position: 'relative', zIndex: 1, padding: '2rem' }}>
-        <h1 style={{
-          fontSize: 'clamp(3.5rem, 11vw, 6.5rem)',
-          fontWeight: 900,
-          margin: '0 0 0.6rem',
-          background: 'linear-gradient(90deg, #a855f7, #ec4899)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.1,
-        }}>
-          Hello, World.
-        </h1>
-
-        <p style={{
-          fontSize: '0.75rem',
-          letterSpacing: '0.22em',
-          color: '#6b7280',
-          textTransform: 'uppercase',
-          margin: '0 0 2.2rem',
-        }}>
-          Codify Vibeathon 2026 — Springfield, MO
-        </p>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '1.1rem',
-          marginBottom: '1.2rem',
-          flexWrap: 'wrap',
-        }}>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.35rem 1rem',
-            border: '1px solid #0d9488',
-            borderRadius: '999px',
-            fontSize: '0.75rem',
-            color: '#5eead4',
-            letterSpacing: '0.08em',
-            background: 'rgba(13,148,136,0.08)',
-          }}>
-            <span style={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: '#22c55e',
-              boxShadow: '0 0 6px #22c55e',
-              display: 'inline-block',
-            }} />
-            SYSTEM ONLINE
-          </span>
-
-          <a
-            href="/chat.html"
-            style={{ color: '#9ca3af', fontSize: '0.9rem', textDecoration: 'none' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#fff')}
-            onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
-          >
-            Try the Chat →
-          </a>
-        </div>
-
-        <button
-          onClick={testWrite}
-          style={{
-            padding: '0.55rem 1.75rem',
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            borderRadius: '8px',
-            border: '1px solid #374151',
-            background: 'rgba(255,255,255,0.04)',
-            color: '#d1d5db',
-            letterSpacing: '0.04em',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.09)')}
-          onMouseOut={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-        >
-          Test Database Write
-        </button>
-
-        {status && (
-          <p style={{
-            marginTop: '1rem',
-            fontSize: '0.85rem',
-            color: isError ? '#f87171' : '#4ade80',
-          }}>
-            {status}
-          </p>
-        )}
-
-        <button
-          onClick={runAudit}
-          style={{
-            marginTop: '0.75rem',
-            padding: '0.55rem 1.75rem',
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            borderRadius: '8px',
-            border: '1px solid #374151',
-            background: 'rgba(255,255,255,0.04)',
-            color: '#d1d5db',
-            letterSpacing: '0.04em',
-            display: 'block',
-            margin: '0.75rem auto 0',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.09)')}
-          onMouseOut={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-        >
-          Security Audit
-        </button>
-
-        {auditStatus && (
-          <p style={{
-            marginTop: '1rem',
-            fontSize: '0.85rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            background: auditIsVuln ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.12)',
-            border: `1px solid ${auditIsVuln ? '#ef4444' : '#22c55e'}`,
-            color: auditIsVuln ? '#f87171' : '#4ade80',
-          }}>
-            {auditStatus}
-          </p>
-        )}
-      </div>
+      <Sidebar activeStep="problem" completedSteps={completedSteps} />
+      <IntakeScreen onSuccess={handleSuccess} />
+      {toast && <Toast message={toast} onDismiss={dismissToast} />}
     </div>
   )
 }
