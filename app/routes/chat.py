@@ -8,6 +8,7 @@ import os
 import anthropic
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from app.config import FeatureModels
 
 router = APIRouter(prefix="/api", tags=["Chat"])
 
@@ -52,7 +53,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         raise HTTPException(status_code=503, detail=str(e))
 
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model=FeatureModels.chat,
         max_tokens=1024,
         system="You are a helpful assistant for the Codify Vibeathon 2026 project. Be concise and useful.",
         messages=[{"role": "user", "content": request.message}],
