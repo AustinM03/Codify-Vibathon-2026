@@ -53,7 +53,7 @@ function StepRow({ step, isActive, isCompleted }) {
       gap: '0.7rem',
       padding: '0.44rem 0.65rem',
       borderRadius: '6px',
-      background: isActive ? 'rgba(124,58,237,0.13)' : 'transparent',
+      background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent',
       marginBottom: '2px',
       cursor: isActive ? 'default' : 'not-allowed',
       userSelect: 'none',
@@ -68,7 +68,7 @@ function StepRow({ step, isActive, isCompleted }) {
         justifyContent: 'center',
         fontSize: '0.68rem',
         fontWeight: 700,
-        background: isCompleted ? '#16a34a' : isActive ? '#7c3aed' : 'transparent',
+        background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent',
         border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e',
         color: isCompleted || isActive ? '#fff' : '#3a3a3a',
       }}>
@@ -76,7 +76,7 @@ function StepRow({ step, isActive, isCompleted }) {
       </div>
       <span style={{
         fontSize: '0.845rem',
-        color: isActive ? '#c4b5fd' : isCompleted ? '#86efac' : '#3a3a3a',
+        color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a',
         fontWeight: isActive ? 600 : 400,
       }}>
         {step.label}
@@ -87,7 +87,7 @@ function StepRow({ step, isActive, isCompleted }) {
           width: 5,
           height: 5,
           borderRadius: '50%',
-          background: '#7c3aed',
+          background: '#0095ff',
           flexShrink: 0,
         }} />
       )}
@@ -120,7 +120,7 @@ function Sidebar({ activeStep, completedSteps }) {
         <div style={{
           width: 30,
           height: 30,
-          background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
           borderRadius: '7px',
           display: 'flex',
           alignItems: 'center',
@@ -182,7 +182,7 @@ function Sidebar({ activeStep, completedSteps }) {
           <div style={{
             width: `${progress}%`,
             height: '100%',
-            background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
+            background: 'linear-gradient(90deg, #0095ff, #00d4ff)',
             borderRadius: '2px',
             transition: 'width 0.4s ease',
           }} />
@@ -198,7 +198,7 @@ function IntakeScreen({ onSuccess }) {
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
 
-  const borderColor = error ? '#ef4444' : focused ? '#7c3aed' : '#252525'
+  const borderColor = error ? '#ef4444' : focused ? '#0095ff' : '#252525'
 
   async function handleSubmit() {
     if (!idea.trim()) {
@@ -341,7 +341,7 @@ function IntakeScreen({ onSuccess }) {
           style={{
             width: '100%',
             padding: '0.875rem',
-            background: loading ? '#4c1d95' : '#7c3aed',
+            background: loading ? '#004e8a' : '#0095ff',
             color: '#fff',
             border: 'none',
             borderRadius: '10px',
@@ -354,10 +354,10 @@ function IntakeScreen({ onSuccess }) {
             justifyContent: 'center',
             gap: '0.5rem',
             transition: 'background 0.15s, box-shadow 0.15s',
-            boxShadow: loading ? 'none' : '0 2px 18px rgba(124,58,237,0.4)',
+            boxShadow: loading ? 'none' : '0 2px 22px rgba(0,149,255,0.5)',
           }}
-          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#6d28d9' }}
-          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#7c3aed' }}
+          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#007acc' }}
+          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#0095ff' }}
         >
           {loading ? 'Saving...' : 'Start Building →'}
         </button>
