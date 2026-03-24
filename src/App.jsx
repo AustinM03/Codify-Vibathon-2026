@@ -724,17 +724,204 @@ function BlueprintPanel({ blueprint }) {
   )
 }
 
-// ─── Complete Screen ──────────────────────────────────────────────────────────
+// ─── Result Screen ────────────────────────────────────────────────────────────
 
-function CompleteScreen() {
+function ResultScreen({ sessionId, rawIdea, onDashboard }) {
+  const [status, setStatus] = useState('loading') // 'loading' | 'done' | 'error'
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    async function generate() {
+      try {
+        // 1. Load all saved answers for this session
+        const { data: rows } = await supabase
+          .from('questionnaire_responses')
+          .select('category, question, answer')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true })
+
+        if (!rows?.length) throw new Error('No answers found for this session.')
+
+        const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
+
+        // 2. Extract structured signal from raw idea (Sonnet)
+        let extracted = null
+        try {
+          const extRes = await fetch('/api/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ raw_idea: rawIdea }),
+          })
+          if (extRes.ok) extracted = await extRes.json()
+        } catch { /* non-fatal — generate will run its own fallback */ }
+
+        // 3. Generate full build artifact (Opus)
+        const genRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
+        })
+        const json = await genRes.json()
+        if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
+
+        setResult(json)
+        setStatus('done')
+      } catch (err) {
+        setError(err.message)
+        setStatus('error')
+      }
+    }
+    generate()
+  }, [sessionId, rawIdea])
+
+  function copyPrompt() {
+    navigator.clipboard.writeText(result.prompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+
+  if (status === 'loading') {
+    return (
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.25rem', fontFamily: ff }}>
+        <div style={{ width: 36, height: 36, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#e2e2e2', fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>Generating your build plan...</p>
+          <p style={{ color: '#333', fontSize: '0.78rem', margin: 0 }}>Claude is synthesizing all your answers into a complete specification</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </main>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
+        <div style={{ textAlign: 'center', maxWidth: 440, padding: '2rem' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚠️</div>
+          <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{error}</p>
+          <button onClick={onDashboard}
+            style={{ padding: '0.65rem 1.5rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>
+            Back to Dashboard
+          </button>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center', maxWidth: 500, padding: '2rem' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.75rem', letterSpacing: '-0.02em' }}>Questionnaire Complete</h1>
-        <p style={{ color: '#5e5e5e', fontSize: '0.95rem', lineHeight: 1.65 }}>
-          All your answers have been saved. Your full build plan is ready to generate.
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', fontFamily: ff }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '999px', padding: '0.2rem 0.7rem' }}>
+            Build Plan Ready
+          </div>
+        </div>
+        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.4rem', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+          {result.title}
+        </h1>
+        <p style={{ color: '#6a6a6a', fontSize: '0.95rem', lineHeight: 1.7, margin: '0 0 2.5rem', maxWidth: 620 }}>
+          {result.summary}
         </p>
+
+        <div style={{ height: 1, background: '#1e1e1e', marginBottom: '2.5rem' }} />
+
+        {/* AI Coding Prompt — hero section */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
+            <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#555', textTransform: 'uppercase', marginBottom: '0.2rem' }}>AI Coding Prompt</div>
+              <div style={{ fontSize: '0.75rem', color: '#333' }}>Paste this into Cursor, Copilot, or ChatGPT to start building</div>
+            </div>
+            <button onClick={copyPrompt}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.5rem 1rem', fontSize: '0.78rem', fontWeight: 600,
+                background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(0,149,255,0.1)',
+                color: copied ? '#4ade80' : '#0095ff',
+                border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(0,149,255,0.25)'}`,
+                borderRadius: '7px', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+              }}>
+              <span>{copied ? '✓' : '⎘'}</span>
+              <span>{copied ? 'Copied!' : 'Copy Prompt'}</span>
+            </button>
+          </div>
+          <div style={{
+            background: '#0d0d0d', border: '1px solid #222', borderRadius: '10px',
+            padding: '1.5rem', fontFamily: "'Courier New', Courier, monospace",
+            fontSize: '0.82rem', color: '#c9d1d9', lineHeight: 1.75,
+            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            maxHeight: '420px', overflowY: 'auto',
+          }}>
+            {result.prompt}
+          </div>
+        </div>
+
+        {/* Features + Tech Stack row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+
+          {/* Features */}
+          <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#0095ff', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Core Features</div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {result.features.map((f, i) => (
+                <li key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                  <span style={{ color: '#0095ff', flexShrink: 0, marginTop: '1px', fontSize: '0.75rem' }}>›</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.82rem', lineHeight: 1.55 }}>{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tech Stack */}
+          <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#00d4ff', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Recommended Tech Stack</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {result.tech_stack.map((t, i) => (
+                <span key={i} style={{
+                  fontSize: '0.75rem', color: '#60c8ff',
+                  background: 'rgba(0,149,255,0.07)', border: '1px solid rgba(0,149,255,0.18)',
+                  borderRadius: '999px', padding: '0.25rem 0.7rem',
+                }}>
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* User Stories */}
+        <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '2.5rem' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#a78bfa', textTransform: 'uppercase', marginBottom: '0.9rem' }}>User Stories</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            {result.user_stories.map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                <span style={{ color: '#a78bfa', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                <span style={{ color: '#9ca3af', fontSize: '0.82rem', lineHeight: 1.6 }}>{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+          <button onClick={copyPrompt}
+            style={{ padding: '0.8rem 1.75rem', background: copied ? '#16a34a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)', transition: 'all 0.15s' }}>
+            {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
+          </button>
+          <button onClick={onDashboard}
+            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#555', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#aaa' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555' }}>
+            Back to Projects
+          </button>
+        </div>
+
       </div>
     </main>
   )
@@ -789,7 +976,7 @@ export default function App() {
   }, [])
 
   const handleAllComplete = useCallback(() => {
-    setView('dashboard')
+    setView('result')
   }, [])
 
   const handleNewProject = useCallback(() => {
@@ -889,7 +1076,7 @@ export default function App() {
             />
           </>
         )}
-        {view === 'complete' && <CompleteScreen />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
