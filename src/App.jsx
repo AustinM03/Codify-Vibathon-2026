@@ -895,6 +895,52 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
           </div>
         </div>
 
+        {/* Build Traps */}
+        {result.build_traps?.length > 0 && (
+          <div style={{ background: '#111', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Watch Out — Build Traps</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {result.build_traps.map((trap, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.05)', borderRadius: '7px', padding: '0.6rem 0.75rem' }}>
+                  <span style={{ flexShrink: 0, fontSize: '0.85rem' }}>⚠️</span>
+                  <span style={{ color: '#d97706', fontSize: '0.82rem', lineHeight: 1.6 }}>{trap}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Build in Phases */}
+        {result.phases && (
+          <div style={{ background: '#111', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Suggested Build Order</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#4ade80', marginBottom: '0.5rem' }}>Phase 1 — Start here</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {result.phases.phase1.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#22c55e', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                      <span style={{ color: '#86efac', fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.5rem' }}>Phase 2 — Add next</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {result.phases.phase2.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#333', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                      <span style={{ color: '#444', fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* User Stories */}
         <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '2.5rem' }}>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#a78bfa', textTransform: 'uppercase', marginBottom: '0.9rem' }}>User Stories</div>
