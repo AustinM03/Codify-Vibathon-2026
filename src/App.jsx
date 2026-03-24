@@ -328,19 +328,25 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     }, [])
     supabase
       .from('questionnaire_responses')
-      .select('category, question, answer')
+      .select('category, answer')
       .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
       .then(({ data }) => {
         if (!data?.length) return
-        setAnswers(prev => {
-          const updated = { ...prev }
-          data.forEach(row => {
-            const catIdx = cats.findIndex(c => c.name === row.category)
+        // Group answers by category in insertion order
+        const byCat = {}
+        data.forEach(row => {
+          if (!byCat[row.category]) byCat[row.category] = []
+          byCat[row.category].push(row.answer)
+        })
+        setAnswers(() => {
+          const updated = {}
+          Object.entries(byCat).forEach(([catName, savedAnswers]) => {
+            const catIdx = cats.findIndex(c => c.name === catName)
             if (catIdx < 0) return
-            // match by question text; fall back to order position
-            let qIdx = cats[catIdx].questions.findIndex(q => q.question === row.question)
-            if (qIdx < 0) return
-            updated[`${catIdx}-${qIdx}`] = row.answer
+            savedAnswers.forEach((answer, qIdx) => {
+              updated[`${catIdx}-${qIdx}`] = answer
+            })
           })
           return updated
         })
