@@ -417,6 +417,21 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   useEffect(() => {
     async function fetchQuestions() {
+      // Use cached questions if available (avoids re-generating on every re-open)
+      if (retryCount === 0) {
+        try {
+          const cached = localStorage.getItem(`questions_${sessionId}`)
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setQuestions(parsed)
+              setApiLoading(false)
+              return
+            }
+          }
+        } catch { /* bad cache entry — fall through to API */ }
+      }
+
       setApiLoading(true); setApiError('')
       try {
         // Fetch all previous answers for this session so Claude can build on them
@@ -442,7 +457,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           throw new Error(`API returned non-JSON (status ${res.status}). Is 'vercel dev' running on port 3000?`)
         }
         if (!res.ok) throw new Error(json.error ?? `Request failed (${res.status})`)
-        setQuestions(json.questions.map(q => ({ ...q, category: normalizeCategory(q.category) })))
+        const normalized = json.questions.map(q => ({ ...q, category: normalizeCategory(q.category) }))
+        localStorage.setItem(`questions_${sessionId}`, JSON.stringify(normalized))
+        setQuestions(normalized)
       } catch (err) {
         setApiError(err.message)
       } finally {
@@ -998,7 +1015,8 @@ export default function App() {
 
     const answeredCats = new Set(responses?.map(r => r.category) ?? [])
     const categoryOrder = STEPS.map(s => s.label) // ['Problem','Features',...]
-    const nextCat = categoryOrder.find(c => !answeredCats.has(c)) ?? null
+    const isComplete = categoryOrder.every(c => answeredCats.has(c))
+    const nextCat = isComplete ? null : (categoryOrder.find(c => !answeredCats.has(c)) ?? null)
     const completedStepIds = categoryOrder
       .filter(c => answeredCats.has(c))
       .map(c => CATEGORY_TO_STEP[c])
@@ -1006,10 +1024,16 @@ export default function App() {
     setSessionId(id)
     setRawIdea(idea)
     setCompletedSteps(completedStepIds)
-    setActiveStep(nextCat ? CATEGORY_TO_STEP[nextCat] : 'problem')
+    setActiveStep(nextCat ? CATEGORY_TO_STEP[nextCat] : STEPS[0].id)
     setBlueprint({})
-    setJumpRequest({ category: nextCat, nonce: Date.now() })
-    setView('questionnaire')
+
+    if (isComplete) {
+      // All questions answered — go straight to the result/build-plan screen
+      setView('result')
+    } else {
+      setJumpRequest({ category: nextCat, nonce: Date.now() })
+      setView('questionnaire')
+    }
   }, [])
 
   const handleGoToDashboard = useCallback(() => {
