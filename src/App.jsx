@@ -392,11 +392,12 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   }, [jumpRequest])
 
   // If a category was skipped by Claude, silently advance instead of showing a dead-end screen
+  // Guard with questions.length > 0 to avoid firing while the API is still loading
   useEffect(() => {
-    if (!catSkipped) return
+    if (!catSkipped || questions.length === 0) return
     if (nextCatName) setActiveCatName(nextCatName)
     else onAllComplete()
-  }, [catSkipped])
+  }, [catSkipped, questions.length])
 
   useEffect(() => {
     async function fetchQuestions() {
