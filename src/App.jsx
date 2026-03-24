@@ -64,7 +64,7 @@ function LoginScreen() {
     e.preventDefault()
     setError(''); setInfo('')
     if (mode === 'signup') {
-      if (!pwValid) { setError('Password does not meet the requirements below.'); return }
+      if (!pwValid) { setError('Password does not meet the requirements.'); return }
       if (!confirmMatch) { setError('Passwords do not match.'); return }
     }
     setLoading(true)
@@ -290,6 +290,23 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const [categoryIndex, setCategoryIndex] = useState(0)
   const [answers, setAnswers] = useState({})        // key: `${catIdx}-${qIdx}` → string
   const [saving, setSaving] = useState(false)
+  const [explanations, setExplanations] = useState({})   // key: `${catIdx}-${qIdx}` → {loading, text}
+
+  async function fetchExplanation(catIdx, qIdx, question, category) {
+    const key = `${catIdx}-${qIdx}`
+    setExplanations(prev => ({ ...prev, [key]: { loading: true, text: '' } }))
+    try {
+      const res = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, category }),
+      })
+      const json = await res.json()
+      setExplanations(prev => ({ ...prev, [key]: { loading: false, text: json.explanation ?? json.error ?? 'Could not load explanation.' } }))
+    } catch {
+      setExplanations(prev => ({ ...prev, [key]: { loading: false, text: 'Could not load explanation right now.' } }))
+    }
+  }
 
   // Group questions by category order
   const categories = questions.reduce((acc, q) => {
@@ -420,11 +437,41 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         {currentCategory.questions.map((q, qIdx) => {
           const answerKey = `${categoryIndex}-${qIdx}`
           const currentAnswer = answers[answerKey] ?? ''
+          const explKey = `${categoryIndex}-${qIdx}`
+          const expl = explanations[explKey]
           return (
             <div key={qIdx} style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#9ca3af', marginBottom: '0.6rem', lineHeight: 1.5 }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#9ca3af', marginBottom: '0.5rem', lineHeight: 1.5 }}>
                 {qIdx + 1}. {q.question}
               </label>
+
+              {/* I'm not sure button + explanation */}
+              {!expl ? (
+                <button
+                  onClick={() => fetchExplanation(categoryIndex, qIdx, q.question, currentCategory.name)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: 'none', color: '#444', fontSize: '0.73rem', cursor: 'pointer', padding: '0 0 0.65rem', transition: 'color 0.12s' }}
+                  onMouseOver={e => (e.currentTarget.style.color = '#0095ff')}
+                  onMouseOut={e => (e.currentTarget.style.color = '#444')}>
+                  <span style={{ fontSize: '0.8rem' }}>💡</span> I&apos;m not sure what this means
+                </button>
+              ) : (
+                <div style={{ background: '#0d1a2b', border: '1px solid #0e3a6e', borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '0.65rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>💡</span>
+                  <div style={{ flex: 1 }}>
+                    {expl.loading ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3a7fc1', fontSize: '0.78rem' }}>
+                        <div style={{ width: 12, height: 12, border: '2px solid #1e4a7a', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                        Thinking of a good analogy...
+                      </div>
+                    ) : (
+                      <>
+                        <p style={{ color: '#93c5fd', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 0.4rem' }}>{expl.text}</p>
+                        <button onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[explKey]; return n })} style={{ background: 'none', border: 'none', color: '#2a5a8a', fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>Dismiss</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Suggestion chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.65rem' }}>
