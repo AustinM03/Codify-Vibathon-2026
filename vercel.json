@@ -6,11 +6,21 @@
       "use": "@vercel/python"
     },
     {
+      "src": "api/questionnaire.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/test-claude.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "*.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    { "src": "/api/questionnaire", "dest": "api/questionnaire.js" },
+    { "src": "/api/test-claude", "dest": "api/test-claude.js" },
     { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/health", "dest": "api/index.py" },
     { "src": "/docs", "dest": "api/index.py" },
