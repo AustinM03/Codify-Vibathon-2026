@@ -378,29 +378,33 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     setActiveCatName(jumpRequest?.category ?? categories[0]?.name ?? null)
   }, [questions])
 
-  // React to sidebar step clicks — auto-save current category before jumping
+  // React to sidebar step clicks — auto-save current category before navigating
   useEffect(() => {
     if (!jumpRequest?.category) return
-    // If there's an active category with questions, save answers and mark complete if any input exists
-    if (currentCategory && !catSkipped) {
+    // If questions haven't loaded yet or no current category, just navigate (nothing to save)
+    if (!currentCategory || questions.length === 0) {
+      setActiveCatName(jumpRequest.category)
+      return
+    }
+    ;(async () => {
       const rows = currentCategory.questions.map((q, qIdx) => ({
         session_id: sessionId,
         category: currentCategory.name,
         question: q.question,
         answer: answers[`${categoryIndex}-${qIdx}`]?.trim() || '',
       }))
-      const hasAnyAnswer = rows.some(r => r.answer)
-      ;(async () => {
-        await supabase.from('questionnaire_responses').delete()
-          .eq('session_id', sessionId).eq('category', currentCategory.name)
-        await supabase.from('questionnaire_responses').insert(rows)
+      await supabase.from('questionnaire_responses').delete()
+        .eq('session_id', sessionId).eq('category', currentCategory.name)
+      const { error } = await supabase.from('questionnaire_responses').insert(rows)
+      if (!error) {
+        const hasAnyAnswer = rows.some(r => r.answer)
         if (hasAnyAnswer) {
           const stepId = CATEGORY_TO_STEP[currentCategory.name]
           if (stepId) onStepComplete(stepId, currentCategory.name, rows)
         }
-      })()
-    }
-    setActiveCatName(jumpRequest.category)
+      }
+      setActiveCatName(jumpRequest.category)
+    })()
   }, [jumpRequest])
 
   // If a category was skipped by Claude, silently advance instead of showing a dead-end screen
