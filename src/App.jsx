@@ -745,8 +745,8 @@ export default function App() {
   const handleIntakeSuccess = useCallback(({ sessionId: id, rawIdea: idea }) => {
     setSessionId(id)
     setRawIdea(idea)
-    setCompletedSteps(prev => [...new Set([...prev, 'problem'])])
-    setActiveStep('features')
+    setCompletedSteps([])
+    setActiveStep('problem')
     setToast(`session_id: ${id}`)
     setView('questionnaire')
   }, [])
