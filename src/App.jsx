@@ -364,7 +364,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     if (error) { console.error('Save error:', error) }
 
     const stepId = CATEGORY_TO_STEP[currentCategory.name]
-    if (stepId) onStepComplete(stepId)
+    if (stepId) onStepComplete(stepId, currentCategory.name, rows)
 
     setSaving(false)
 
@@ -538,6 +538,76 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   )
 }
 
+// ─── Blueprint Panel ────────────────────────────────────────────────────────────
+
+const BLUEPRINT_META = {
+  Problem:      { icon: '🎯', label: 'Problem Statement',  color: '#7c3aed' },
+  Features:     { icon: '⚡', label: 'Feature List',        color: '#0095ff' },
+  Design:       { icon: '🎨', label: 'Style Guide',         color: '#ec4899' },
+  Auth:         { icon: '🔑', label: 'Access Rules',        color: '#f59e0b' },
+  Data:         { icon: '🗄️', label: 'File Cabinet',        color: '#10b981' },
+  Integrations: { icon: '🔌', label: 'Connected Services',  color: '#06b6d4' },
+  Logic:        { icon: '⚙️', label: 'App Rules',           color: '#f97316' },
+}
+
+function BlueprintPanel({ blueprint }) {
+  const entries = Object.entries(blueprint)
+  return (
+    <aside style={{
+      width: 260, minWidth: 260, height: '100vh', overflowY: 'auto',
+      background: '#111', borderLeft: '1px solid #1a1a1a',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{ padding: '1.4rem 1.1rem 0.8rem', borderBottom: '1px solid #1a1a1a' }}>
+        <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#333', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Live Blueprint</div>
+        <div style={{ fontSize: '0.72rem', color: '#2e2e2e' }}>Your plan builds as you answer</div>
+      </div>
+
+      <div style={{ padding: '1rem 0.9rem', flex: 1 }}>
+        {entries.length === 0 && (
+          <div style={{ textAlign: 'center', paddingTop: '2.5rem' }}>
+            <div style={{ fontSize: '1.6rem', marginBottom: '0.6rem', opacity: 0.3 }}>📐</div>
+            <p style={{ fontSize: '0.72rem', color: '#2a2a2a', lineHeight: 1.6 }}>Your building blocks will appear here as you complete each section.</p>
+          </div>
+        )}
+        {entries.map(([category, summary]) => {
+          const meta = BLUEPRINT_META[category] ?? { icon: '📦', label: category, color: '#555' }
+          return (
+            <div key={category} style={{
+              background: '#161616', border: `1px solid ${meta.color}22`,
+              borderLeft: `3px solid ${meta.color}`,
+              borderRadius: '8px', padding: '0.75rem 0.9rem',
+              marginBottom: '0.65rem', animation: 'slideIn 0.25s ease',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.95rem' }}>{meta.icon}</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, letterSpacing: '0.03em' }}>{meta.label}</span>
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 0.5rem', listStyle: 'none' }}>
+                {summary.map((line, i) => (
+                  <li key={i} style={{ fontSize: '0.71rem', color: '#4a4a4a', lineHeight: 1.55, display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
+                    <span style={{ color: meta.color, opacity: 0.6, flexShrink: 0, marginTop: '0.1rem' }}>›</span>
+                    <span style={{ color: '#555' }}>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })}
+      </div>
+
+      {entries.length > 0 && (
+        <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid #1a1a1a' }}>
+          <div style={{ fontSize: '0.67rem', color: '#2a2a2a', textAlign: 'center' }}>{entries.length} of 7 blocks complete</div>
+          <div style={{ height: 2, background: '#1e1e1e', borderRadius: '2px', marginTop: '0.4rem', overflow: 'hidden' }}>
+            <div style={{ width: `${(entries.length / 7) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', transition: 'width 0.4s ease' }} />
+          </div>
+        </div>
+      )}
+    </aside>
+  )
+}
+
 // ─── Complete Screen ──────────────────────────────────────────────────────────
 
 function CompleteScreen() {
@@ -565,6 +635,7 @@ export default function App() {
   const [completedSteps, setCompletedSteps] = useState([])
   const [activeStep, setActiveStep] = useState('problem')
   const [toast, setToast] = useState(null)
+  const [blueprint, setBlueprint] = useState({})  // category → string[]
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -586,11 +657,18 @@ export default function App() {
     setView('questionnaire')
   }, [])
 
-  const handleStepComplete = useCallback((stepId) => {
+  const handleStepComplete = useCallback((stepId, categoryName, categoryAnswers) => {
     setCompletedSteps(prev => [...new Set([...prev, stepId])])
     const idx = STEPS.findIndex(s => s.id === stepId)
     const next = STEPS[idx + 1]
     if (next) setActiveStep(next.id)
+    // Build blueprint summary lines from the answers for this category
+    const lines = categoryAnswers
+      .filter(a => a.answer?.trim())
+      .map(a => a.answer.trim().slice(0, 60) + (a.answer.trim().length > 60 ? '…' : ''))
+    if (lines.length > 0) {
+      setBlueprint(prev => ({ ...prev, [categoryName]: lines }))
+    }
   }, [])
 
   const handleAllComplete = useCallback(() => {
@@ -616,13 +694,16 @@ export default function App() {
       <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} />
       {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
       {view === 'questionnaire' && (
-        <QuestionnaireScreen
-          sessionId={sessionId}
-          rawIdea={rawIdea}
-          user={user}
-          onStepComplete={handleStepComplete}
-          onAllComplete={handleAllComplete}
-        />
+        <>
+          <QuestionnaireScreen
+            sessionId={sessionId}
+            rawIdea={rawIdea}
+            user={user}
+            onStepComplete={handleStepComplete}
+            onAllComplete={handleAllComplete}
+          />
+          <BlueprintPanel blueprint={blueprint} />
+        </>
       )}
       {view === 'complete' && <CompleteScreen />}
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
