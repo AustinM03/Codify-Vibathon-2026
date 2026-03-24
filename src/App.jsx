@@ -391,6 +391,13 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     setActiveCatName(jumpRequest.category)
   }, [jumpRequest])
 
+  // If a category was skipped by Claude, silently advance instead of showing a dead-end screen
+  useEffect(() => {
+    if (!catSkipped) return
+    if (nextCatName) setActiveCatName(nextCatName)
+    else onAllComplete()
+  }, [catSkipped])
+
   useEffect(() => {
     async function fetchQuestions() {
       setApiLoading(true); setApiError('')
@@ -494,37 +501,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     )
   }
 
-  if (!currentCategory && !catSkipped) return null
-
-  // Placeholder for categories Claude determined weren't needed
-  if (catSkipped) {
-    const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-    return (
-      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
-        <div style={{ maxWidth: 520, padding: '2rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✅</div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.6rem', letterSpacing: '-0.02em' }}>{activeCatName} — Already Covered</h2>
-          <p style={{ color: '#4a4a4a', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '1.75rem' }}>
-            Based on your description and previous answers, PromptReady determined this section didn&apos;t need any additional questions. Use the sidebar to jump to another section, or continue below.
-          </p>
-          {nextCatName && (
-            <button onClick={() => setActiveCatName(nextCatName)}
-              style={{ padding: '0.75rem 1.5rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)' }}
-              onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
-              onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
-              Next: {nextCatName} →
-            </button>
-          )}
-          {!nextCatName && (
-            <button onClick={onAllComplete}
-              style={{ padding: '0.75rem 1.5rem', background: '#22c55e', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
-              Complete Questionnaire ✓
-            </button>
-          )}
-        </div>
-      </main>
-    )
-}
+  if (!currentCategory) return null
 
   const phaseNum = STEPS.findIndex(s => s.id === CATEGORY_TO_STEP[currentCategory.name]) + 1
 

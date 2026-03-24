@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 The person wants to build:
 "${raw_idea.slice(0, 2000)}"
 ${historySection}
-Your job is to ask only the questions that are NOT already answered by their description or previous answers above. If something is already clear, skip it entirely.
+Your job is to ask questions that help you fully understand their vision across all 7 areas. Use any previous answers they gave as context to make your questions more personalised and relevant — but still ask about every category.
 
 Organize your questions into these 7 categories (use EXACTLY these category names):
 1. Problem
