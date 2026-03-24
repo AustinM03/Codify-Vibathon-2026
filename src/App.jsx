@@ -303,7 +303,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const [apiLoading, setApiLoading] = useState(true)
   const [apiError, setApiError] = useState('')
   const [retryCount, setRetryCount] = useState(0)
-  const [categoryIndex, setCategoryIndex] = useState(0)
+  const [activeCatName, setActiveCatName] = useState(null)  // name-based; null until questions load
   const [answers, setAnswers] = useState({})        // key: `${catIdx}-${qIdx}` → string
   const [saving, setSaving] = useState(false)
   const [explanations, setExplanations] = useState({})   // key: `${catIdx}-${qIdx}` → {loading, text}
@@ -330,6 +330,18 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     acc.find(c => c.name === q.category).questions.push(q)
     return acc
   }, [])
+
+  // Derive numeric index from name (for answer keys, render counters, etc.)
+  const categoryIndex = categories.findIndex(c => c.name === activeCatName)
+  const currentCategory = categoryIndex >= 0 ? categories[categoryIndex] : null
+  // True when the user navigated to a step Claude chose to skip entirely
+  const catSkipped = activeCatName !== null && categoryIndex < 0
+
+  // Next category in canonical STEPS order, skipping any Claude omitted
+  const stepLabels = STEPS.map(s => s.label)
+  const curStepIdx = stepLabels.indexOf(activeCatName ?? '')
+  const nextCatName = stepLabels.slice(curStepIdx + 1).find(l => categories.find(c => c.name === l)) ?? null
+  const isLastCategory = !nextCatName
 
   // Pre-fill ALL saved answers once questions have loaded from the API
   useEffect(() => {
@@ -366,12 +378,18 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       })
   }, [questions])
 
-  // Jump to a specific category when sidebar step is clicked or on resume
+  // Set initial active category once questions arrive
   useEffect(() => {
-    if (!jumpRequest?.category || categories.length === 0) return
-    const idx = categories.findIndex(c => c.name === jumpRequest.category)
-    if (idx >= 0) setCategoryIndex(idx)
-  }, [jumpRequest, questions])
+    if (questions.length === 0) return
+    // Honor a pending jumpRequest; otherwise default to first category
+    setActiveCatName(jumpRequest?.category ?? categories[0]?.name ?? null)
+  }, [questions])
+
+  // React to sidebar step clicks
+  useEffect(() => {
+    if (!jumpRequest?.category) return
+    setActiveCatName(jumpRequest.category)
+  }, [jumpRequest])
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -410,14 +428,17 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     fetchQuestions()
   }, [rawIdea, retryCount])
 
-  const currentCategory = categories[categoryIndex]
-  const isLastCategory = categoryIndex === categories.length - 1
-
   function setAnswer(catIdx, qIdx, value) {
     setAnswers(prev => ({ ...prev, [`${catIdx}-${qIdx}`]: value }))
   }
 
   async function handleNext() {
+    // Skipped category — just navigate forward, nothing to save
+    if (catSkipped) {
+      if (nextCatName) setActiveCatName(nextCatName)
+      else onAllComplete()
+      return
+    }
     if (!currentCategory) return
     setSaving(true)
 
@@ -442,11 +463,11 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     if (isLastCategory) {
       onAllComplete()
     } else {
-      setCategoryIndex(i => i + 1)
+      setActiveCatName(nextCatName)
     }
   }
 
-  const btnLabel = saving ? 'Saving...' : isLastCategory ? 'Complete Questionnaire ✓' : `Next: ${categories[categoryIndex + 1]?.name ?? ''} →`
+  const btnLabel = saving ? 'Saving...' : isLastCategory ? 'Complete Questionnaire ✓' : `Next: ${nextCatName ?? ''} →`
 
   if (apiLoading) {
     return (
@@ -473,7 +494,37 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     )
   }
 
-  if (!currentCategory) return null
+  if (!currentCategory && !catSkipped) return null
+
+  // Placeholder for categories Claude determined weren't needed
+  if (catSkipped) {
+    const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    return (
+      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
+        <div style={{ maxWidth: 520, padding: '2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✅</div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.6rem', letterSpacing: '-0.02em' }}>{activeCatName} — Already Covered</h2>
+          <p style={{ color: '#4a4a4a', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '1.75rem' }}>
+            Based on your description and previous answers, PromptReady determined this section didn&apos;t need any additional questions. Use the sidebar to jump to another section, or continue below.
+          </p>
+          {nextCatName && (
+            <button onClick={() => setActiveCatName(nextCatName)}
+              style={{ padding: '0.75rem 1.5rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)' }}
+              onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
+              onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
+              Next: {nextCatName} →
+            </button>
+          )}
+          {!nextCatName && (
+            <button onClick={onAllComplete}
+              style={{ padding: '0.75rem 1.5rem', background: '#22c55e', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+              Complete Questionnaire ✓
+            </button>
+          )}
+        </div>
+      </main>
+    )
+}
 
   const phaseNum = STEPS.findIndex(s => s.id === CATEGORY_TO_STEP[currentCategory.name]) + 1
 
