@@ -791,7 +791,6 @@ export default function App() {
               onAllComplete={handleAllComplete}
               initialCategoryName={resumeCategory}
             />
-            <BlueprintPanel blueprint={blueprint} />
           </>
         )}
         {view === 'complete' && <CompleteScreen />}
