@@ -21,12 +21,17 @@
     {
       "src": "api/test-claude.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/validate.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     { "src": "/api/questionnaire", "dest": "api/questionnaire.js" },
     { "src": "/api/explain", "dest": "api/explain.js" },
     { "src": "/api/test-claude", "dest": "api/test-claude.js" },
+    { "src": "/api/validate", "dest": "api/validate.js" },
     { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/health", "dest": "api/index.py" },
     { "src": "/docs", "dest": "api/index.py" },
