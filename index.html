@@ -125,10 +125,296 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
+
+        /* == Pink Cat-Girl == */
+        #anime-girl-wrapper {
+            position: fixed;
+            bottom: 0;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #speech-bubble {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            background: rgba(10, 10, 20, 0.92);
+            border: 1.5px solid rgba(255, 150, 220, 0.7);
+            border-radius: 16px;
+            padding: 10px 16px;
+            color: #ffcef3;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 18px rgba(255, 100, 200, 0.35), 0 0 6px rgba(255, 100, 200, 0.2) inset;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #speech-bubble.visible {
+            transform: translateX(-50%) scale(1);
+        }
+        #speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: rgba(255, 150, 220, 0.7);
+            border-bottom: 0;
+        }
+
+        #anime-svg {
+            width: 170px;
+            height: auto;
+            filter: drop-shadow(0 0 18px rgba(255, 100, 220, 0.55)) drop-shadow(0 0 6px rgba(123, 45, 255, 0.4));
+            animation: girlBob 3s ease-in-out infinite;
+            transition: filter 0.2s ease, transform 0.15s ease;
+        }
+        #anime-svg:hover {
+            filter: drop-shadow(0 0 28px rgba(255, 100, 220, 0.9)) drop-shadow(0 0 10px rgba(0, 240, 255, 0.5));
+            transform: scale(1.04);
+        }
+        #anime-svg.clicked {
+            animation: girlJump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, girlBob 3s ease-in-out 0.45s infinite;
+        }
+
+        .eye-blink { animation: eyeBlink 4s ease-in-out infinite; }
+        .eye-blink.right { animation-delay: 0.07s; }
+        .blush { animation: blushPulse 2.5s ease-in-out infinite; }
+        .hair-shine { animation: hairShine 3s ease-in-out infinite; }
+        .sparkle { animation: sparkleTwinkle 2s ease-in-out infinite; }
+        .sparkle:nth-child(2) { animation-delay: 0.4s; }
+        .sparkle:nth-child(3) { animation-delay: 0.8s; }
+
+        #left-ear  { transform-origin: 52px 60px; }
+        #right-ear { transform-origin: 108px 60px; }
+        #left-ear.ear-wiggle  { animation: leftEarWiggle  0.6s ease-in-out; }
+        #right-ear.ear-wiggle { animation: rightEarWiggle 0.6s ease-in-out 0.05s; }
+
+        @keyframes leftEarWiggle {
+            0%, 100% { transform: rotate(0deg); }
+            20%       { transform: rotate(-14deg); }
+            50%       { transform: rotate(9deg); }
+            75%       { transform: rotate(-5deg); }
+        }
+        @keyframes rightEarWiggle {
+            0%, 100% { transform: rotate(0deg); }
+            20%       { transform: rotate(14deg); }
+            50%       { transform: rotate(-9deg); }
+            75%       { transform: rotate(5deg); }
+        }
+
+        #pet-zone { cursor: pointer; }
+
+        @keyframes girlBob {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-10px); }
+        }
+        @keyframes girlJump {
+            0%   { transform: translateY(0px) scale(1); }
+            40%  { transform: translateY(-30px) scale(1.06); }
+            100% { transform: translateY(0px) scale(1); }
+        }
+        @keyframes eyeBlink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95%            { transform: scaleY(0.08); }
+        }
+        @keyframes blushPulse {
+            0%, 100% { opacity: 0.55; }
+            50%       { opacity: 0.9; }
+        }
+        @keyframes hairShine {
+            0%, 100% { opacity: 0.25; }
+            50%       { opacity: 0.55; }
+        }
+        @keyframes sparkleTwinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+            50%       { opacity: 1;  transform: scale(1)   rotate(180deg); }
+        }
     </style>
 </head>
 <body>
     <canvas id="bg"></canvas>
+
+    <!-- ======== Pink Cat-Girl (school uniform) ======== -->
+    <div id="anime-girl-wrapper" tabindex="0" aria-label="Pink cat-girl – click body to react, click head to pet her ears" title="Pat my ears! (=nyan=)">
+        <div id="speech-bubble" role="status" aria-live="polite"></div>
+
+        <svg id="anime-svg" viewBox="0 0 160 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+                <radialGradient id="skinGrad" cx="50%" cy="40%" r="55%">
+                    <stop offset="0%" stop-color="#fde8d8"/>
+                    <stop offset="100%" stop-color="#f9c9a8"/>
+                </radialGradient>
+                <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffb7c5"/>
+                    <stop offset="50%" stop-color="#f472b6"/>
+                    <stop offset="100%" stop-color="#db2777"/>
+                </linearGradient>
+                <linearGradient id="vestGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#2d2d35"/>
+                    <stop offset="100%" stop-color="#1a1a22"/>
+                </linearGradient>
+                <radialGradient id="eyeHL" cx="30%" cy="30%" r="50%">
+                    <stop offset="0%" stop-color="white" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="white" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+            </defs>
+
+            <!-- sparkle stars -->
+            <g class="sparkle" style="transform-origin:18px 60px">
+                <path d="M18,54 L19.5,58 L24,58 L20.5,61 L22,65 L18,62 L14,65 L15.5,61 L12,58 L16.5,58 Z" fill="#fde68a" opacity="0.9"/>
+            </g>
+            <g class="sparkle" style="transform-origin:145px 80px">
+                <path d="M145,74 L146.2,77.5 L150,77.5 L147,79.5 L148.2,83 L145,81 L141.8,83 L143,79.5 L140,77.5 L143.8,77.5 Z" fill="#a5f3fc" opacity="0.9"/>
+            </g>
+            <g class="sparkle" style="transform-origin:135px 45px">
+                <path d="M135,41 L136,43.5 L139,43.5 L136.8,45 L137.8,47.5 L135,46 L132.2,47.5 L133.2,45 L131,43.5 L134,43.5 Z" fill="#f9a8d4" opacity="0.9"/>
+            </g>
+
+            <!-- legs -->
+            <rect x="57" y="238" width="18" height="55" rx="6" fill="#fde8d8"/>
+            <rect x="85" y="238" width="18" height="55" rx="6" fill="#fde8d8"/>
+            <!-- white knee socks -->
+            <rect x="55" y="268" width="22" height="28" rx="4" fill="white"/>
+            <rect x="83" y="268" width="22" height="28" rx="4" fill="white"/>
+            <!-- dark shoes -->
+            <ellipse cx="66" cy="296" rx="14" ry="6" fill="#1a1a22"/>
+            <ellipse cx="94" cy="296" rx="14" ry="6" fill="#1a1a22"/>
+            <ellipse cx="64" cy="293" rx="10" ry="4" fill="#2d2d45"/>
+            <ellipse cx="92" cy="293" rx="10" ry="4" fill="#2d2d45"/>
+
+            <!-- dark pleated skirt -->
+            <path d="M42,190 Q38,215 34,243 Q56,257 80,255 Q104,257 126,243 Q122,215 118,190 Z" fill="#1a1a22"/>
+            <line x1="46" y1="192" x2="42" y2="245" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="57" y1="192" x2="55" y2="249" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="68" y1="193" x2="67" y2="252" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="79" y1="193" x2="79" y2="253" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="90" y1="193" x2="91" y2="253" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="101" y1="193" x2="103" y2="252" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+            <line x1="112" y1="192" x2="115" y2="249" stroke="#2d2d3a" stroke-width="1.2" opacity="0.7"/>
+
+            <!-- white shirt -->
+            <path d="M45,155 Q39,175 37,190 Q58,198 80,196 Q102,198 123,190 Q121,175 115,155 Z" fill="white"/>
+            <path d="M45,155 Q30,162 24,182 Q31,190 40,187 Q43,170 48,160 Z" fill="white"/>
+            <path d="M115,155 Q130,162 136,182 Q129,190 120,187 Q117,170 112,160 Z" fill="white"/>
+
+            <!-- dark vest / waistcoat -->
+            <path d="M51,155 Q45,173 43,190 Q61,198 80,196 Q99,198 117,190 Q115,173 109,155 Z" fill="url(#vestGrad)"/>
+            <!-- vest V-opening -->
+            <path d="M67,153 Q80,170 93,153" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.9"/>
+            <!-- chest pocket -->
+            <rect x="52" y="160" width="13" height="9" rx="1.5" stroke="#38384a" stroke-width="0.8" fill="#222230" opacity="0.8"/>
+            <line x1="54" y1="160" x2="63" y2="160" stroke="white" stroke-width="1" opacity="0.6"/>
+            <!-- buttons (brass) -->
+            <circle cx="80" cy="171" r="3" fill="#c8a040"/>
+            <circle cx="80" cy="180" r="3" fill="#c8a040"/>
+            <circle cx="80" cy="189" r="3" fill="#c8a040"/>
+            <path d="M51,155 Q46,175 44,191" stroke="#38384a" stroke-width="0.8" fill="none" opacity="0.7"/>
+            <path d="M109,155 Q114,175 116,191" stroke="#38384a" stroke-width="0.8" fill="none" opacity="0.7"/>
+
+            <!-- pink bow tie -->
+            <path d="M70,153 Q76,146 80,152 Q84,146 90,153 Q84,158 80,152 Q76,158 70,153 Z" fill="#f472b6"/>
+            <circle cx="80" cy="152" r="3.5" fill="#ec4899"/>
+            <path d="M77,154 Q72,163 69,161" stroke="#f472b6" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M83,154 Q88,163 91,161" stroke="#f472b6" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M62,152 L70,153" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+            <path d="M98,152 L90,153" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+            <!-- arms -->
+            <path d="M120,184 Q132,170 136,153" stroke="#fde8d8" stroke-width="12" stroke-linecap="round" fill="none"/>
+            <circle cx="136" cy="151" r="9" fill="#fde8d8"/>
+            <ellipse cx="131" cy="178" rx="9" ry="4" fill="white" opacity="0.7" transform="rotate(20,131,178)"/>
+            <path d="M40,186 Q32,200 34,214" stroke="#fde8d8" stroke-width="12" stroke-linecap="round" fill="none"/>
+            <circle cx="34" cy="216" r="9" fill="#fde8d8"/>
+            <ellipse cx="29" cy="184" rx="9" ry="4" fill="white" opacity="0.7" transform="rotate(-15,29,184)"/>
+
+            <!-- neck -->
+            <rect x="72" y="140" width="16" height="18" rx="6" fill="url(#skinGrad)"/>
+
+            <!-- back hair -->
+            <path d="M36,90 Q22,130 25,185 Q30,200 40,194 Q44,165 42,135 Q46,110 55,95 Z" fill="url(#hairGrad)" opacity="0.88"/>
+            <path d="M124,90 Q138,130 135,185 Q130,200 120,194 Q116,165 118,135 Q114,110 105,95 Z" fill="url(#hairGrad)" opacity="0.88"/>
+
+            <!-- head / face base -->
+            <ellipse cx="80" cy="92" rx="44" ry="48" fill="url(#skinGrad)"/>
+
+            <!-- CAT EARS -->
+            <g id="left-ear">
+                <polygon points="38,62 50,20 66,58" fill="#f472b6"/>
+                <polygon points="43,58 50,27 63,55" fill="#ffcce0" opacity="0.8"/>
+                <ellipse cx="50" cy="30" rx="4.5" ry="3.5" fill="white" opacity="0.45"/>
+            </g>
+            <g id="right-ear">
+                <polygon points="94,58 110,20 122,62" fill="#f472b6"/>
+                <polygon points="97,55 110,27 117,58" fill="#ffcce0" opacity="0.8"/>
+                <ellipse cx="110" cy="30" rx="4.5" ry="3.5" fill="white" opacity="0.45"/>
+            </g>
+
+            <!-- blush -->
+            <ellipse cx="50" cy="103" rx="11" ry="7" fill="#f9a8d4" class="blush" opacity="0.55"/>
+            <ellipse cx="110" cy="103" rx="11" ry="7" fill="#f9a8d4" class="blush" opacity="0.55"/>
+
+            <!-- left eye -->
+            <g class="eye-blink left" style="transform-origin:60px 91px">
+                <ellipse cx="60" cy="91" rx="12" ry="13" fill="white"/>
+                <ellipse cx="60" cy="92" rx="9" ry="10" fill="#7b1a1a"/>
+                <ellipse cx="60" cy="92" rx="5.5" ry="6.5" fill="#3d0000"/>
+                <circle cx="55" cy="87" r="3.5" fill="url(#eyeHL)"/>
+                <circle cx="63" cy="94" r="1.8" fill="white" opacity="0.55"/>
+                <path d="M49,81 Q54,75 60,77 Q66,75 71,81" stroke="#2a0000" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                <line x1="49" y1="82" x2="46" y2="78" stroke="#2a0000" stroke-width="1.4" stroke-linecap="round"/>
+                <line x1="71" y1="82" x2="74" y2="78" stroke="#2a0000" stroke-width="1.4" stroke-linecap="round"/>
+            </g>
+
+            <!-- right eye -->
+            <g class="eye-blink right" style="transform-origin:100px 91px">
+                <ellipse cx="100" cy="91" rx="12" ry="13" fill="white"/>
+                <ellipse cx="100" cy="92" rx="9" ry="10" fill="#7b1a1a"/>
+                <ellipse cx="100" cy="92" rx="5.5" ry="6.5" fill="#3d0000"/>
+                <circle cx="95" cy="87" r="3.5" fill="url(#eyeHL)"/>
+                <circle cx="103" cy="94" r="1.8" fill="white" opacity="0.55"/>
+                <path d="M89,81 Q95,75 100,77 Q106,75 111,81" stroke="#2a0000" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                <line x1="89" y1="82" x2="86" y2="78" stroke="#2a0000" stroke-width="1.4" stroke-linecap="round"/>
+                <line x1="111" y1="82" x2="114" y2="78" stroke="#2a0000" stroke-width="1.4" stroke-linecap="round"/>
+            </g>
+
+            <!-- eyebrows -->
+            <path d="M49,77 Q59,72 70,75" stroke="#6b1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <path d="M90,75 Q101,72 111,77" stroke="#6b1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+
+            <!-- nose -->
+            <path d="M78,107 Q80,111 82,107" stroke="#e8a080" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+
+            <!-- mouth -->
+            <path id="mouth" d="M70,117 Q80,128 90,117" stroke="#e75480" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+            <ellipse cx="80" cy="124" rx="6" ry="4.5" fill="#f9a8d4" opacity="0.7"/>
+
+            <!-- front hair -->
+            <path d="M36,90 Q32,52 52,37 Q66,22 80,20 Q94,22 108,37 Q128,52 124,90 Q114,58 80,55 Q46,58 36,90 Z" fill="url(#hairGrad)"/>
+            <path d="M36,90 Q34,72 40,57 Q46,44 54,50 Q48,63 49,85 Z" fill="url(#hairGrad)"/>
+            <path d="M49,85 Q54,50 67,53 Q62,68 64,93 Z" fill="#f9b8d0"/>
+            <path d="M111,85 Q106,50 93,53 Q98,68 96,93 Z" fill="#f9b8d0"/>
+            <path d="M124,90 Q126,72 120,57 Q114,44 106,50 Q112,63 111,85 Z" fill="url(#hairGrad)"/>
+            <path d="M58,32 Q75,24 92,30" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" class="hair-shine" opacity="0.3"/>
+
+            <!-- invisible pet zone (head + ears hit area) -->
+            <ellipse id="pet-zone" cx="80" cy="60" rx="52" ry="58" fill="transparent" stroke="none"
+                     tabindex="0" aria-label="Pet her ears"/>
+        </svg>
+    </div>
 
     <div class="container">
         <div class="pulse-ring"></div>
@@ -206,6 +492,129 @@
         window.addEventListener('resize', resize);
         init();
         animate();
+
+        // Cat-Girl Interaction
+        (function () {
+            const wrapper  = document.getElementById('anime-girl-wrapper');
+            const svg      = document.getElementById('anime-svg');
+            const bubble   = document.getElementById('speech-bubble');
+            const mouth    = document.getElementById('mouth');
+            const petZone  = document.getElementById('pet-zone');
+            const leftEar  = document.getElementById('left-ear');
+            const rightEar = document.getElementById('right-ear');
+
+            const petMessages = [
+                'N-nya~! (*/w\\*)',
+                'Purrrr~ ♡',
+                'Ehehe, that tickles~ (ʺɳʻ*)',
+                'M-more headpats please! >///<',
+                'Nyaa~! ♡ ♡ ♡',
+                'H-headpats are the best... UwU',
+                "I'm not a cat! ...Maybe. (≥w≤)",
+                "S-stop it, it's embarrassing! >///<",
+                'Mrow~ ♪ ( ´▽`)',
+                'Pat pat~ nyaaa! ♡',
+                'You\u2019re so warm~ (=nyan=)',
+                'Vibeathon 2026! Let\u2019s go! ⚡',
+            ];
+
+            const clickMessages = [
+                'Konnichiwa! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧',
+                'Kawaii desu ne~ ♡',
+                'Ganbare! You can do it! ✨',
+                'Sugoi! You clicked me! (*≥ω≤)',
+                'Eeeh?! Again?! (ꨰᑗꨰ)',
+                'Moe moe kyun~ ♥',
+                'Nani?! (ﾟДﾟ)ﾉ',
+                'Hai hai~ ٩(◕‿◕｡)۶',
+                'Keep coding, senpai~ (づ｡◕‿‿◕｡)づ',
+            ];
+
+            const happyMouth     = 'M70,117 Q80,128 90,117';
+            const surprisedMouth = 'M73,115 Q80,125 87,115';
+            const petMouth       = 'M68,116 Q80,130 92,116';
+
+            let petIdx = 0, clickIdx = 0;
+            let bubbleTimer = null, earTimer = null;
+            let hintShown = false;
+
+            function showBubble(text, ms) {
+                clearTimeout(bubbleTimer);
+                bubble.textContent = text;
+                bubble.classList.add('visible');
+                bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), ms || 2800);
+            }
+
+            function wiggleEars() {
+                leftEar.classList.remove('ear-wiggle');
+                rightEar.classList.remove('ear-wiggle');
+                void leftEar.offsetWidth;
+                leftEar.classList.add('ear-wiggle');
+                rightEar.classList.add('ear-wiggle');
+                clearTimeout(earTimer);
+                earTimer = setTimeout(() => {
+                    leftEar.classList.remove('ear-wiggle');
+                    rightEar.classList.remove('ear-wiggle');
+                }, 700);
+            }
+
+            function triggerPet() {
+                showBubble(petMessages[petIdx++ % petMessages.length], 3000);
+                wiggleEars();
+                mouth.setAttribute('d', petMouth);
+                setTimeout(() => mouth.setAttribute('d', happyMouth), 800);
+                spawnParticle();
+            }
+
+            function triggerClick() {
+                showBubble(clickMessages[clickIdx++ % clickMessages.length], 3000);
+                svg.classList.remove('clicked');
+                void svg.offsetWidth;
+                svg.classList.add('clicked');
+                mouth.setAttribute('d', surprisedMouth);
+                setTimeout(() => mouth.setAttribute('d', happyMouth), 600);
+                spawnParticle();
+            }
+
+            petZone.addEventListener('click', (e) => { e.stopPropagation(); triggerPet(); });
+            petZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerPet(); } });
+
+            wrapper.addEventListener('click', triggerClick);
+            wrapper.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerClick(); } });
+
+            wrapper.addEventListener('mouseenter', () => {
+                if (!hintShown) {
+                    showBubble('Pat my ears! ✨', 2200);
+                    hintShown = true;
+                }
+            });
+
+            let hoverThrottle = false;
+            petZone.addEventListener('mousemove', () => {
+                if (hoverThrottle) return;
+                hoverThrottle = true;
+                wiggleEars();
+                setTimeout(() => { hoverThrottle = false; }, 700);
+            });
+
+            const symbols = ['♥', '✿', '✧', '★', '♪', '🐾'];
+            function spawnParticle() {
+                const rect = wrapper.getBoundingClientRect();
+                const el = document.createElement('div');
+                el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                el.style.cssText =
+                    'position:fixed;left:' + (rect.left + rect.width / 2 - 10) + 'px;' +
+                    'bottom:' + (window.innerHeight - rect.top + 10) + 'px;' +
+                    'font-size:1.4rem;color:hsl(' + (Math.random() * 60 + 300) + ',100%,75%);' +
+                    'pointer-events:none;z-index:999;animation:heartFloat 1.2s ease-out forwards;';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 1300);
+            }
+
+            const ks = document.createElement('style');
+            ks.textContent = '@keyframes heartFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.5)}}';
+            document.head.appendChild(ks);
+        })();
     </script>
 </body>
 </html>
