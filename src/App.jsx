@@ -118,7 +118,7 @@ function LoginScreen() {
         borderRadius: '14px', boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem' }}>
-          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🚀</div>
+          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #e53e3e, #ff6b6b)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🚀</div>
           <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.95rem' }}>PromptReady</div>
         </div>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.4rem', letterSpacing: '-0.02em' }}>
@@ -131,12 +131,12 @@ function LoginScreen() {
           <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Email</label>
           <input type="email" required value={email} onChange={e => { setEmail(e.target.value); setError('') }} placeholder="you@example.com"
             style={{ ...inputStyle, marginBottom: '1rem' }}
-            onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+            onFocus={e => (e.target.style.borderColor = '#e53e3e')} onBlur={e => (e.target.style.borderColor = '#252525')} />
 
           <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Password</label>
           <input type="password" required value={password} onChange={e => { setPassword(e.target.value); setError('') }} placeholder="••••••••"
             style={{ ...inputStyle, marginBottom: mode === 'signup' ? '0.6rem' : '1.4rem' }}
-            onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+            onFocus={e => (e.target.style.borderColor = '#e53e3e')} onBlur={e => (e.target.style.borderColor = '#252525')} />
 
           {/* Password requirements — signup only */}
           {mode === 'signup' && (
@@ -156,7 +156,7 @@ function LoginScreen() {
               <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Confirm Password</label>
               <input type="password" required={mode === 'signup'} value={confirm} onChange={e => { setConfirm(e.target.value); setError('') }} placeholder="••••••••"
                 style={{ ...inputStyle, marginBottom: '0.4rem', borderColor: confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525' }}
-                onFocus={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#0095ff')}
+                onFocus={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#e53e3e')}
                 onBlur={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525')} />
               {confirm.length > 0 && (
                 <div style={{ fontSize: '0.75rem', marginBottom: '1rem', color: confirmMatch ? '#4ade80' : '#f87171' }}>
@@ -169,16 +169,16 @@ function LoginScreen() {
 
           {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem' }}>{error}</div>}
           {info && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid #22c55e', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#4ade80', fontSize: '0.8rem', marginBottom: '1rem' }}>{info}</div>}
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 18px rgba(0,149,255,0.4)', transition: 'background 0.15s' }}
-            onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#007acc' }}
-            onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#0095ff' }}>
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? '#742a2a' : '#e53e3e', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 18px rgba(229,62,62,0.4)', transition: 'background 0.15s' }}
+            onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#c53030' }}
+            onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#e53e3e' }}>
             {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In →' : 'Create Account →'}
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: '#333' }}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <button onClick={switchMode}
-            style={{ background: 'none', border: 'none', color: '#0095ff', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
+            style={{ background: 'none', border: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
             {mode === 'signin' ? 'Sign up' : 'Sign in'}
           </button>
         </p>
@@ -191,16 +191,16 @@ function LoginScreen() {
 
 function StepRow({ step, isActive, isCompleted, onClick }) {
   return (
-    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.12s' }}
-      onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.18)' : 'rgba(255,255,255,0.04)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
-      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a', pointerEvents: 'none' }}>
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(229,62,62,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.12s' }}
+      onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(229,62,62,0.18)' : 'rgba(255,255,255,0.04)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(229,62,62,0.1)' : 'transparent' }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#e53e3e' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a', pointerEvents: 'none' }}>
         {isCompleted ? '✓' : step.phase}
       </div>
-      <span style={{ fontSize: '0.845rem', color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
+      <span style={{ fontSize: '0.845rem', color: isActive ? '#fca5a5' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
         {step.label}
       </span>
-      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#0095ff', flexShrink: 0, pointerEvents: 'none' }} />}
+      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#e53e3e', flexShrink: 0, pointerEvents: 'none' }} />}
     </div>
   )
 }
@@ -212,7 +212,7 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard,
       <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: '1px solid #171717' }}>
         <button onClick={onDashboard}
           style={{ width: '100%', background: 'none', border: 'none', borderRadius: '6px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
-          onMouseOver={e => { e.currentTarget.style.color = '#00d4ff'; e.currentTarget.style.background = '#0095ff11' }}
+          onMouseOver={e => { e.currentTarget.style.color = '#ff6b6b'; e.currentTarget.style.background = '#e53e3e11' }}
           onMouseOut={e => { e.currentTarget.style.color = '#3a3a3a'; e.currentTarget.style.background = 'none' }}>
           <span>◀</span><span>My Projects</span>
         </button>
@@ -229,7 +229,7 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard,
           <span style={{ fontSize: '0.67rem', color: '#444' }}>{completedSteps.length} / 7</span>
         </div>
         <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
-          <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.4s ease' }} />
+          <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #e53e3e, #ff6b6b)', borderRadius: '2px', transition: 'width 0.4s ease' }} />
         </div>
       </div>
     </aside>
@@ -244,7 +244,7 @@ function IntakeScreen({ onSuccess, user }) {
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
 
-  const borderColor = error ? '#ef4444' : focused ? '#0095ff' : '#252525'
+  const borderColor = error ? '#ef4444' : focused ? '#e53e3e' : '#252525'
 
   async function handleSubmit() {
     if (!idea.trim()) { setError('Please describe your app idea before continuing.'); return }
@@ -278,9 +278,9 @@ function IntakeScreen({ onSuccess, user }) {
           <span style={{ fontSize: '0.71rem', color: '#333', marginLeft: 'auto' }}>{idea.length} chars</span>
         </div>
         <button onClick={handleSubmit} disabled={loading}
-          style={{ width: '100%', padding: '0.875rem', background: loading ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: loading ? 'none' : '0 2px 22px rgba(0,149,255,0.5)' }}
-          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#007acc' }}
-          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#0095ff' }}>
+          style={{ width: '100%', padding: '0.875rem', background: loading ? '#742a2a' : '#e53e3e', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: loading ? 'none' : '0 2px 22px rgba(229,62,62,0.5)' }}
+          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#c53030' }}
+          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#e53e3e' }}>
           {loading ? 'Saving...' : 'Start Building →'}
         </button>
         <p style={{ fontSize: '0.71rem', color: '#2e2e2e', textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>Your idea will be saved and analyzed to generate a complete build plan across all 7 phases.</p>
@@ -473,7 +473,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   if (apiLoading) {
     return (
       <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 32, height: 32, border: '3px solid #1e1e1e', borderTopColor: '#e53e3e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <p style={{ color: '#333', fontSize: '0.85rem' }}>Generating your adaptive questionnaire...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </main>
@@ -487,7 +487,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           <div style={{ color: '#f87171', marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠️</div>
           <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
           <button onClick={() => setRetryCount(c => c + 1)}
-            style={{ padding: '0.6rem 1.25rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+            style={{ padding: '0.6rem 1.25rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
             Try Again
           </button>
         </div>
@@ -523,7 +523,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
         {/* Category progress bar */}
         <div style={{ height: 2, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden', marginBottom: '2rem' }}>
-          <div style={{ width: `${((categoryIndex + 1) / categories.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', transition: 'width 0.4s ease' }} />
+          <div style={{ width: `${((categoryIndex + 1) / categories.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #e53e3e, #ff6b6b)', transition: 'width 0.4s ease' }} />
         </div>
 
         {/* Questions */}
@@ -543,23 +543,23 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                 <button
                   onClick={() => fetchExplanation(categoryIndex, qIdx, q.question, currentCategory.name)}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: 'none', color: '#444', fontSize: '0.73rem', cursor: 'pointer', padding: '0 0 0.65rem', transition: 'color 0.12s' }}
-                  onMouseOver={e => (e.currentTarget.style.color = '#0095ff')}
+                  onMouseOver={e => (e.currentTarget.style.color = '#e53e3e')}
                   onMouseOut={e => (e.currentTarget.style.color = '#444')}>
                   <span style={{ fontSize: '0.8rem' }}>💡</span> I&apos;m not sure what this means
                 </button>
               ) : (
-                <div style={{ background: '#0d1a2b', border: '1px solid #0e3a6e', borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '0.65rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                <div style={{ background: '#1a0909', border: '1px solid #6e0e0e', borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '0.65rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>💡</span>
                   <div style={{ flex: 1 }}>
                     {expl.loading ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3a7fc1', fontSize: '0.78rem' }}>
-                        <div style={{ width: 12, height: 12, border: '2px solid #1e4a7a', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#c53030', fontSize: '0.78rem' }}>
+                        <div style={{ width: 12, height: 12, border: '2px solid #7a1e1e', borderTopColor: '#e53e3e', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
                         Thinking of a good analogy...
                       </div>
                     ) : (
                       <>
-                        <p style={{ color: '#93c5fd', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 0.4rem' }}>{expl.text}</p>
-                        <button onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[explKey]; return n })} style={{ background: 'none', border: 'none', color: '#2a5a8a', fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>Dismiss</button>
+                        <p style={{ color: '#fca5a5', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 0.4rem' }}>{expl.text}</p>
+                        <button onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[explKey]; return n })} style={{ background: 'none', border: 'none', color: '#8a2a2a', fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>Dismiss</button>
                       </>
                     )}
                   </div>
@@ -585,9 +585,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                       }}
                       style={{
                         padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '999px', cursor: 'pointer',
-                        border: `1px solid ${isSelected ? '#0095ff' : '#252525'}`,
-                        background: isSelected ? 'rgba(0,149,255,0.12)' : '#161616',
-                        color: isSelected ? '#60c8ff' : '#555',
+                        border: `1px solid ${isSelected ? '#e53e3e' : '#252525'}`,
+                        background: isSelected ? 'rgba(229,62,62,0.12)' : '#161616',
+                        color: isSelected ? '#fca5a5' : '#555',
                         transition: 'all 0.12s',
                       }}>
                       {chip}
@@ -608,7 +608,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                   fontSize: '0.875rem', fontFamily: 'inherit', resize: 'vertical',
                   outline: 'none', lineHeight: 1.6, display: 'block', transition: 'border-color 0.15s',
                 }}
-                onFocus={e => (e.target.style.borderColor = '#0095ff')}
+                onFocus={e => (e.target.style.borderColor = '#e53e3e')}
                 onBlur={e => (e.target.style.borderColor = '#252525')}
               />
             </div>
@@ -617,9 +617,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
         {/* Nav */}
         <button onClick={handleNext} disabled={saving}
-          style={{ width: '100%', padding: '0.875rem', background: saving ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: saving ? 'none' : '0 2px 22px rgba(0,149,255,0.5)', transition: 'background 0.15s' }}
-          onMouseOver={e => { if (!saving) e.currentTarget.style.background = '#007acc' }}
-          onMouseOut={e => { if (!saving) e.currentTarget.style.background = '#0095ff' }}>
+          style={{ width: '100%', padding: '0.875rem', background: saving ? '#742a2a' : '#e53e3e', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: saving ? 'none' : '0 2px 22px rgba(229,62,62,0.5)', transition: 'background 0.15s' }}
+          onMouseOver={e => { if (!saving) e.currentTarget.style.background = '#c53030' }}
+          onMouseOut={e => { if (!saving) e.currentTarget.style.background = '#e53e3e' }}>
           {btnLabel}
         </button>
 
@@ -635,7 +635,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
 const BLUEPRINT_META = {
   Problem:      { icon: '🎯', label: 'Problem Statement',  color: '#7c3aed' },
-  Features:     { icon: '⚡', label: 'Feature List',        color: '#0095ff' },
+  Features:     { icon: '⚡', label: 'Feature List',        color: '#e53e3e' },
   Design:       { icon: '🎨', label: 'Style Guide',         color: '#ec4899' },
   Auth:         { icon: '🔑', label: 'Access Rules',        color: '#f59e0b' },
   Data:         { icon: '🗄️', label: 'File Cabinet',        color: '#10b981' },
@@ -693,7 +693,7 @@ function BlueprintPanel({ blueprint }) {
         <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid #1a1a1a' }}>
           <div style={{ fontSize: '0.67rem', color: '#2a2a2a', textAlign: 'center' }}>{entries.length} of 7 blocks complete</div>
           <div style={{ height: 2, background: '#1e1e1e', borderRadius: '2px', marginTop: '0.4rem', overflow: 'hidden' }}>
-            <div style={{ width: `${(entries.length / 7) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', transition: 'width 0.4s ease' }} />
+            <div style={{ width: `${(entries.length / 7) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #e53e3e, #ff6b6b)', transition: 'width 0.4s ease' }} />
           </div>
         </div>
       )}
@@ -831,9 +831,9 @@ export default function App() {
       <header style={{ flexShrink: 0, height: 52, background: '#111', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
         <button onClick={handleGoToDashboard}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '7px', transition: 'background 0.15s' }}
-          onMouseOver={e => (e.currentTarget.style.background = '#0095ff11')}
+          onMouseOver={e => (e.currentTarget.style.background = '#e53e3e11')}
           onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🚀</div>
+          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #e53e3e, #ff6b6b)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🚀</div>
           <div style={{ textAlign: 'left' }}>
             <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
             <div style={{ color: '#3d3d3d', fontSize: '0.62rem' }}>AI App Builder</div>

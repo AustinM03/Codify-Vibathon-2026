@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 
 const CATEGORY_ORDER = ['Problem', 'Features', 'Design', 'Auth', 'Data', 'Integrations', 'Logic']
 const CATEGORY_META = {
   Problem:      { icon: '🎯', color: '#7c3aed' },
-  Features:     { icon: '⚡', color: '#0095ff' },
+  Features:     { icon: '⚡', color: '#e53e3e' },
   Design:       { icon: '🎨', color: '#ec4899' },
   Auth:         { icon: '🔑', color: '#f59e0b' },
   Data:         { icon: '🗄️', color: '#10b981' },
@@ -103,7 +103,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
   if (loading) {
     return (
       <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ width: 28, height: 28, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid #1e1e1e', borderTopColor: '#e53e3e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <p style={{ color: '#333', fontSize: '0.8rem' }}>Loading your projects...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </main>
@@ -122,9 +122,9 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
             Describe your idea and we'll help you turn it into a full build plan.
           </p>
           <button onClick={onNewProject}
-            style={{ padding: '0.8rem 1.75rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.45)', transition: 'background 0.15s' }}
-            onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
-            onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
+            style={{ padding: '0.8rem 1.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(229,62,62,0.45)', transition: 'background 0.15s' }}
+            onMouseOver={e => (e.currentTarget.style.background = '#c53030')}
+            onMouseOut={e => (e.currentTarget.style.background = '#e53e3e')}>
             Create your first app →
           </button>
         </div>
@@ -143,9 +143,9 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#ebebeb', margin: 0, letterSpacing: '-0.03em' }}>Your App Ideas</h1>
           </div>
           <button onClick={onNewProject}
-            style={{ padding: '0.65rem 1.25rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 14px rgba(0,149,255,0.4)', transition: 'background 0.15s', flexShrink: 0 }}
-            onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
-            onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
+            style={{ padding: '0.65rem 1.25rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 14px rgba(229,62,62,0.4)', transition: 'background 0.15s', flexShrink: 0 }}
+            onMouseOver={e => (e.currentTarget.style.background = '#c53030')}
+            onMouseOut={e => (e.currentTarget.style.background = '#e53e3e')}>
             + New Project
           </button>
         </div>
@@ -170,7 +170,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                   transition: 'border-color 0.15s, box-shadow 0.15s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#0095ff44'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,149,255,0.08)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#e53e3e44'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(229,62,62,0.08)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.boxShadow = 'none' }}>
 
                 {/* Delete button */}
@@ -219,14 +219,14 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                     <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>{stepIdx} / 7</span>
                   </div>
                   <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                    <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #e53e3e, #ff6b6b)', borderRadius: '2px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
                 {/* CTA */}
                 <div style={{ fontSize: '0.72rem', color: '#2a2a2a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <span>{progress === 100 ? '✓ Complete' : 'Continue building'}</span>
-                  <span style={{ marginLeft: 'auto', color: '#1e3a5a', fontSize: '0.8rem' }}>→</span>
+                  <span style={{ marginLeft: 'auto', color: '#5a1e1e', fontSize: '0.8rem' }}>→</span>
                 </div>
               </div>
             )
