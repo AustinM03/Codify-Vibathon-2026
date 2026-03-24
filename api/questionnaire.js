@@ -56,8 +56,8 @@ STRICT RULES — you must follow all of these:
    - "Keep it simple — just an email and password"
    - "No sign-in needed, it's open to everyone"
 
-5. Skip any category that the user's description or previous answers already fully cover.
-6. Aim for 1–3 questions per included category.
+5. You MUST include ALL 7 categories every time — never skip any. Even if something seems obvious from their description, ask a confirming question to make sure you understand their preference correctly.
+6. Aim for 1–3 questions per category.
 7. Each question must have 3–4 suggestion chips.
 
 Return ONLY a valid JSON array — no markdown, no explanation, no code fences. Each element must have exactly this shape:
