@@ -291,7 +291,7 @@ function IntakeScreen({ onSuccess, user }) {
 
 // ─── Questionnaire Screen ─────────────────────────────────────────────────────
 
-function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete }) {
+function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete, initialCategoryName }) {
   const [questions, setQuestions] = useState([])   // [{category, question, suggestions}]
   const [apiLoading, setApiLoading] = useState(true)
   const [apiError, setApiError] = useState('')
@@ -323,6 +323,13 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     acc.find(c => c.name === q.category).questions.push(q)
     return acc
   }, [])
+
+  // Jump to the resume point once questions have loaded
+  useEffect(() => {
+    if (!initialCategoryName || categories.length === 0) return
+    const idx = categories.findIndex(c => c.name === initialCategoryName)
+    if (idx > 0) setCategoryIndex(idx)
+  }, [questions, initialCategoryName]) // categories derived from questions; re-run when either changes
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -655,6 +662,7 @@ export default function App() {
   const [activeStep, setActiveStep] = useState('problem')
   const [toast, setToast] = useState(null)
   const [blueprint, setBlueprint] = useState({})  // category → string[]
+  const [resumeCategory, setResumeCategory] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -700,15 +708,30 @@ export default function App() {
     setCompletedSteps([])
     setActiveStep('problem')
     setBlueprint({})
+    setResumeCategory(null)
     setView('intake')
   }, [])
 
-  const handleOpenSession = useCallback((id, idea) => {
+  const handleOpenSession = useCallback(async (id, idea) => {
+    // Fetch existing responses to determine how far this session has progressed
+    const { data: responses } = await supabase
+      .from('questionnaire_responses')
+      .select('category')
+      .eq('session_id', id)
+
+    const answeredCats = new Set(responses?.map(r => r.category) ?? [])
+    const categoryOrder = STEPS.map(s => s.label) // ['Problem','Features',...]
+    const nextCat = categoryOrder.find(c => !answeredCats.has(c)) ?? null
+    const completedStepIds = categoryOrder
+      .filter(c => answeredCats.has(c))
+      .map(c => CATEGORY_TO_STEP[c])
+
     setSessionId(id)
     setRawIdea(idea)
-    setCompletedSteps([])
-    setActiveStep('problem')
+    setCompletedSteps(completedStepIds)
+    setActiveStep(nextCat ? CATEGORY_TO_STEP[nextCat] : 'problem')
     setBlueprint({})
+    setResumeCategory(nextCat)
     setView('questionnaire')
   }, [])
 
@@ -759,11 +782,13 @@ export default function App() {
         {view === 'questionnaire' && (
           <>
             <QuestionnaireScreen
+              key={sessionId}
               sessionId={sessionId}
               rawIdea={rawIdea}
               user={user}
               onStepComplete={handleStepComplete}
               onAllComplete={handleAllComplete}
+              initialCategoryName={resumeCategory}
             />
             <BlueprintPanel blueprint={blueprint} />
           </>
