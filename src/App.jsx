@@ -17,6 +17,20 @@ const CATEGORY_TO_STEP = {
   Auth: 'auth', Data: 'data', Integrations: 'integrations', Logic: 'logic',
 }
 
+// Normalize whatever Claude writes to the canonical STEPS label
+const CATEGORY_NORM = {
+  problem: 'Problem', 'problem statement': 'Problem', 'problem definition': 'Problem',
+  features: 'Features', 'feature list': 'Features', 'key features': 'Features',
+  design: 'Design', 'ui': 'Design', 'ux': 'Design', 'ui/ux': 'Design', 'look and feel': 'Design', 'style': 'Design',
+  auth: 'Auth', authentication: 'Auth', 'user accounts': 'Auth', 'sign in': 'Auth', 'sign-in': 'Auth', 'login': 'Auth', 'access': 'Auth', 'user access': 'Auth',
+  data: 'Data', 'data storage': 'Data', database: 'Data', 'data management': 'Data', 'information': 'Data', 'data model': 'Data',
+  integrations: 'Integrations', integration: 'Integrations', 'third-party': 'Integrations', 'connected services': 'Integrations', 'external services': 'Integrations',
+  logic: 'Logic', 'business logic': 'Logic', 'app rules': 'Logic', rules: 'Logic', workflows: 'Logic', 'app logic': 'Logic',
+}
+function normalizeCategory(name) {
+  return CATEGORY_NORM[name?.toLowerCase()?.trim()] ?? name
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 function Toast({ message, onDismiss }) {
@@ -386,7 +400,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           throw new Error(`API returned non-JSON (status ${res.status}). Is 'vercel dev' running on port 3000?`)
         }
         if (!res.ok) throw new Error(json.error ?? `Request failed (${res.status})`)
-        setQuestions(json.questions)
+        setQuestions(json.questions.map(q => ({ ...q, category: normalizeCategory(q.category) })))
       } catch (err) {
         setApiError(err.message)
       } finally {
