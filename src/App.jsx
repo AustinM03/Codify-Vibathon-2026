@@ -965,9 +965,9 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answers, dev_mode: devMode }),
         })
-        const valJson = await valRes.json()
+        const validationJson = await valRes.json()
 
-        if (!valRes.ok || valJson.error) {
+        if (!valRes.ok || validationJson.error) {
           // Validate failed — skip to generate rather than blocking the user
           await runGenerate()
           return
@@ -976,16 +976,16 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         // 6. Persist result to validation_cache
         await supabase.from('validation_cache').upsert({
           session_id: sessionId,
-          ready: valJson.ready ?? false,
-          category_health: valJson.category_health ?? {},
-          summary: valJson.summary ?? '',
+          ready: validationJson.ready ?? false,
+          category_health: validationJson.category_health ?? {},
+          summary: validationJson.summary ?? '',
           answers_hash: answersHash,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'session_id' })
 
-        setValidation(valJson)
+        setValidation(validationJson)
 
-        if (valJson.ready === false && Object.keys(valJson.category_health ?? {}).some(k => valJson.category_health[k] === 'poor')) {
+        if (validationJson.ready === false && Object.keys(validationJson.category_health ?? {}).some(k => validationJson.category_health[k] === 'poor')) {
           setStatus('gaps')
           return
         }
