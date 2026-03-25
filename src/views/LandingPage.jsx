@@ -46,20 +46,21 @@ export default function LandingPage({ onGetStarted }) {
 
   return (
     <div style={{
+      height: '100vh',
       minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0f0f0f 0%, #141414 50%, #0a0f1a 100%)',
+      background: 'transparent',
       fontFamily: ff,
       overflowX: 'hidden',
+      overflowY: 'auto',
       color: '#e2e2e2',
+      position: 'relative',
+      zIndex: 1,
     }}>
       <style>{`
         @keyframes float { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-10px) } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulse { 0%,100% { opacity:0.6 } 50% { opacity:1 } }
-        .landing-cta:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 40px rgba(0,149,255,0.55) !important; }
-        .landing-cta:active { transform: translateY(0px) !important; }
-        .step-card:hover { border-color: rgba(0,149,255,0.3) !important; background: rgba(0,149,255,0.04) !important; transform: translateY(-3px); }
-        .feature-pill:hover { border-color: rgba(0,149,255,0.4) !important; background: rgba(0,149,255,0.08) !important; }
+        .feature-pill:hover { border-color: rgba(255,255,255,0.3) !important; background: rgba(255,255,255,0.05) !important; }
       `}</style>
 
       {/* ── Nav ── */}
@@ -81,15 +82,12 @@ export default function LandingPage({ onGetStarted }) {
           <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>PromptReady</span>
         </div>
         <button
+          className="btn-ghost"
           onClick={onGetStarted}
           style={{
-            padding: '0.45rem 1.1rem', background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px',
-            color: '#bbb', fontSize: '0.82rem', fontWeight: 500,
-            cursor: 'pointer', transition: 'all 0.15s', fontFamily: ff,
-          }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = '#0095ff'; e.currentTarget.style.color = '#fff' }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = '#bbb' }}>
+            padding: '0.45rem 1.1rem',
+            fontSize: '0.82rem', fontFamily: ff,
+          }}>
           Sign in
         </button>
       </nav>
@@ -124,7 +122,7 @@ export default function LandingPage({ onGetStarted }) {
         }}>
           Software Development<br />
           <span style={{
-            background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
+            background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
             For Everyone
@@ -134,7 +132,7 @@ export default function LandingPage({ onGetStarted }) {
         {/* Sub-headline */}
         <p style={{
           fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-          color: '#8a8a8a', lineHeight: 1.7,
+          color: '#9CA3AF', lineHeight: 1.7,
           maxWidth: 560, margin: '0 auto 1.5rem',
         }}>
           No coding experience? No problem. Describe your idea, and our AI will guide you through building it step-by-step.
@@ -149,7 +147,7 @@ export default function LandingPage({ onGetStarted }) {
         }}>
           Just{' '}
           <span style={{
-            background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
+            background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
             build it.
@@ -158,18 +156,13 @@ export default function LandingPage({ onGetStarted }) {
 
         {/* CTA */}
         <button
-          className="landing-cta"
+          className="btn-primary"
           onClick={onGetStarted}
           style={{
             padding: '1rem 2.5rem',
-            background: 'linear-gradient(135deg, #0095ff, #00aaff)',
-            color: '#fff', border: 'none',
-            borderRadius: '14px',
             fontSize: '1.05rem', fontWeight: 700,
-            cursor: 'pointer', fontFamily: ff,
-            boxShadow: '0 4px 28px rgba(0,149,255,0.4)',
-            transition: 'transform 0.18s, box-shadow 0.18s',
-            letterSpacing: '-0.01em',
+            fontFamily: ff, letterSpacing: '-0.01em',
+            marginTop: '1rem'
           }}>
           Start Building for Free →
         </button>
@@ -196,10 +189,8 @@ export default function LandingPage({ onGetStarted }) {
           {STEPS_PREVIEW.map((s, i) => (
             <div
               key={i}
-              className="step-card"
+              className="glass-card step-card"
               style={{
-                background: s.accentBg,
-                border: `1px solid ${s.accentBorder}`,
                 borderRadius: '20px', padding: '2rem 1.75rem',
                 transition: 'all 0.2s', position: 'relative',
                 display: 'flex', flexDirection: 'column', gap: '1rem',
@@ -264,11 +255,9 @@ export default function LandingPage({ onGetStarted }) {
         maxWidth: 980, margin: '0 auto',
         padding: '0 2.5rem 6rem',
       }}>
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(16,185,129,0.07) 0%, rgba(6,182,212,0.05) 100%)',
-          border: '1px solid rgba(16,185,129,0.2)',
+        <div className="glass-card" style={{
           borderRadius: '24px',
-          padding: '3.5rem 3rem',
+          padding: '3rem 2.5rem',
           display: 'grid',
           gridTemplateColumns: '1fr auto',
           gap: '3rem',
@@ -310,25 +299,13 @@ export default function LandingPage({ onGetStarted }) {
             </p>
 
             <button
+              className="btn-ghost"
               onClick={() => {}}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.65rem 1.4rem',
-                background: 'transparent',
-                color: '#10b981',
-                border: '1px solid rgba(16,185,129,0.4)',
-                borderRadius: '10px',
                 fontSize: '0.85rem', fontWeight: 600,
-                cursor: 'pointer', fontFamily: ff,
-                transition: 'all 0.15s',
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(16,185,129,0.1)'
-                e.currentTarget.style.borderColor = 'rgba(16,185,129,0.7)'
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'
+                fontFamily: ff,
               }}>
               <span>🔗</span>
               <span>Learn how to connect Ollama</span>
@@ -408,9 +385,7 @@ export default function LandingPage({ onGetStarted }) {
         maxWidth: 700, margin: '0 auto 6rem',
         padding: '0 2.5rem',
       }}>
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(0,149,255,0.1), rgba(0,212,255,0.06))',
-          border: '1px solid rgba(0,149,255,0.2)',
+        <div className="glass-card" style={{
           borderRadius: '20px', padding: '3rem 2.5rem',
           textAlign: 'center',
         }}>
@@ -421,17 +396,13 @@ export default function LandingPage({ onGetStarted }) {
             Thousands of great ideas never get built because people don't know where to start. PromptReady changes that.
           </p>
           <button
-            className="landing-cta"
+            className="landing-cta btn-primary"
             onClick={onGetStarted}
             style={{
               padding: '0.875rem 2.25rem',
-              background: 'linear-gradient(135deg, #0095ff, #00aaff)',
-              color: '#fff', border: 'none',
-              borderRadius: '12px',
               fontSize: '0.95rem', fontWeight: 700,
-              cursor: 'pointer', fontFamily: ff,
-              boxShadow: '0 4px 24px rgba(0,149,255,0.35)',
-              transition: 'transform 0.18s, box-shadow 0.18s',
+              fontFamily: ff,
+              marginTop: '0.5rem'
             }}>
             Start Building for Free →
           </button>
