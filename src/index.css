@@ -1,3 +1,28 @@
+:root {
+  /* Retaining spectral variables for the Shader Background */
+  --c-red: #ff0000;
+  --c-orange: #ff7a00;
+  --c-yellow: #ffff00;
+  --c-green: #00ea00;
+  --c-blue: #0073ff;
+  --c-indigo: #4700e6;
+  --c-violet: #b200ff;
+
+  /* Prism Noir Surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(12px);
+
+  /* Typography */
+  --text-main: rgba(255, 255, 255, 0.9);
+  --text-muted: #9CA3AF;
+
+  --primary: #8B5CF6;
+  --primary-hover: #6366F1;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -9,13 +34,17 @@ html, body, #root {
 }
 
 body {
-  background: #050505;
+  background: #000000;
   overflow: hidden;
-  background: #191919;
+  font-family: 'Inter', 'Geist', 'Montserrat', sans-serif;
 }
 
-textarea {
+textarea, input, button {
   font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: 0.05em;
 }
 
 /* Custom scrollbar */
@@ -41,4 +70,94 @@ textarea {
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Spectral Flow Animation */
+@keyframes spectral-flow {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Buttons - Prism Noir Theme
+   ────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1);
+  color: var(--text-main);
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Spectral Button fallback (left intact for easy swapping, but mapping to primary for now) */
+.btn-spectral {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1);
+  color: var(--text-main);
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+  cursor: pointer;
+}
+.btn-spectral:hover {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Surfaces - Prism Noir
+   ────────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+  border-color: var(--glass-border-hover);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Loaders
+   ────────────────────────────────────────────────────────── */
+.spectral-loader {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--primary-hover), var(--primary), var(--primary-hover)
+  );
+  background-size: 200% 100%;
+  animation: spectral-flow 2s linear infinite;
+  border-radius: 2px;
+  opacity: 0.8;
 }

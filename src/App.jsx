@@ -161,11 +161,8 @@ function LoginScreen() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: T.ff,
     }}>
-      <div style={{
+      <div className="glass-card" style={{
         width: '100%', maxWidth: 420, padding: '2.5rem',
-        background: T.card, backdropFilter: T.blur, WebkitBackdropFilter: T.blur,
-        border: `1px solid ${T.cardBorder}`,
-        borderRadius: '16px', boxShadow: T.cardShadow,
         animation: 'fadeIn 0.4s ease',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem' }}>
@@ -222,9 +219,7 @@ function LoginScreen() {
 
           {error && <div style={{ background: T.errorBg, border: `1px solid rgba(248,113,113,0.2)`, borderRadius: '9px', padding: '0.6rem 0.85rem', color: T.error, fontSize: '0.8rem', marginBottom: '1rem', backdropFilter: T.blur }}>{error}</div>}
           {info && <div style={{ background: T.successBg, border: `1px solid rgba(52,211,153,0.2)`, borderRadius: '9px', padding: '0.6rem 0.85rem', color: T.success, fontSize: '0.8rem', marginBottom: '1rem', backdropFilter: T.blur }}>{info}</div>}
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
-            onMouseOver={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
-            onMouseOut={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
+          <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In →' : 'Create Account →'}
           </button>
         </form>
@@ -357,7 +352,7 @@ function IntakeScreen({ onSuccess, user }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', margin: '1.5rem auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
         </div>
@@ -372,10 +367,8 @@ function IntakeScreen({ onSuccess, user }) {
           {error ? <span style={{ fontSize: '0.78rem', color: T.error }}>{error}</span> : <span />}
           <span style={{ fontSize: '0.71rem', color: T.textMuted, marginLeft: 'auto' }}>{idea.length} chars</span>
         </div>
-        <button onClick={handleSubmit} disabled={loading}
-          style={{ width: '100%', padding: '0.875rem', background: loading ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.2s', boxShadow: loading ? 'none' : '0 4px 24px rgba(124,91,240,0.35)' }}
-          onMouseOver={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
-          onMouseOut={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
+        <button className="btn-primary" onClick={handleSubmit} disabled={loading}
+          style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
           {loading ? 'Saving...' : 'Start Building →'}
         </button>
         <p style={{ fontSize: '0.71rem', color: T.textMuted, textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>Your idea will be saved and analyzed to generate a complete build plan across all 7 phases.</p>
@@ -607,9 +600,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiLoading) {
     return (
-      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ width: 32, height: 32, border: `3px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite, glow 2s ease-in-out infinite' }} />
-        <p style={{ color: T.textSub, fontSize: '0.85rem' }}>Generating your adaptive questionnaire...</p>
+      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="spectral-loader" style={{ width: '200px' }} />
+        <p style={{ color: T.textSub, fontSize: '0.9rem', letterSpacing: '0.05em' }}>Generating your adaptive questionnaire...</p>
       </main>
     )
   }
@@ -620,8 +613,8 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         <div style={{ maxWidth: 420, textAlign: 'center' }}>
           <div style={{ color: T.error, marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠</div>
           <p style={{ color: T.error, fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
-          <button onClick={() => setRetryCount(c => c + 1)}
-            style={{ padding: '0.6rem 1.25rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem', boxShadow: '0 4px 20px rgba(124,91,240,0.3)' }}>
+          <button className="btn-primary" onClick={() => setRetryCount(c => c + 1)}
+            style={{ padding: '0.6rem 1.25rem', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem' }}>
             Try Again
           </button>
         </div>
@@ -635,7 +628,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease', margin: '1.5rem auto' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
@@ -751,10 +744,8 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         })}
 
         {/* Nav */}
-        <button onClick={handleNext} disabled={saving}
-          style={{ width: '100%', padding: '0.875rem', background: saving ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: saving ? 'none' : '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
-          onMouseOver={e => { if (!saving) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
-          onMouseOut={e => { if (!saving) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
+        <button className="btn-primary" onClick={handleNext} disabled={saving}
+          style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           {btnLabel}
         </button>
 
@@ -1062,22 +1053,13 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
-            <button onClick={onDashboard}
-              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
-              onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
+            <button className="btn-ghost" onClick={onDashboard}>
               Back to Dashboard
             </button>
-            <button onClick={onEdit}
-              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
-              onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#9ca3af' }}>
+            <button className="btn-ghost" onClick={onEdit}>
               ← Go back and improve
             </button>
-            <button onClick={runGenerate}
-              style={{ flex: 1, padding: '0.85rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
-              onMouseOver={e => (e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)')}
-              onMouseOut={e => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)')}>
+            <button className="btn-primary" onClick={runGenerate}>
               Generate anyway →
             </button>
           </div>
@@ -1092,8 +1074,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         <div style={{ textAlign: 'center', maxWidth: 440, padding: '2rem' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚠</div>
           <p style={{ color: T.error, fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{error}</p>
-          <button onClick={onDashboard}
-            style={{ padding: '0.65rem 1.5rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(124,91,240,0.3)' }}>
+          <button className="btn-primary" onClick={onDashboard}>
             Back to Dashboard
           </button>
         </div>
@@ -1245,20 +1226,14 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
         {/* Footer CTA */}
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={copyPrompt}
-            style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}>
+          <button className={copied ? "" : "btn-primary"} onClick={copyPrompt}
+            style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : '', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
             {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
           </button>
-          <button onClick={onEdit}
-            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.6)'; e.currentTarget.style.background = 'rgba(167,139,250,0.07)' }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.3)'; e.currentTarget.style.background = 'transparent' }}>
+          <button className="btn-ghost" onClick={onEdit}>
             ✏️ Edit Responses
           </button>
-          <button onClick={onDashboard}
-            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
+          <button className="btn-ghost" onClick={onDashboard}>
             Back to Projects
           </button>
         </div>
