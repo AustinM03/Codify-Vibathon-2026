@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
+import LandingPage from './views/LandingPage'
 
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
@@ -1138,6 +1139,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
 export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [showAuth, setShowAuth] = useState(false)
   const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'complete'
   const [sessionId, setSessionId] = useState(null)
   const [rawIdea, setRawIdea] = useState('')
@@ -1247,7 +1249,10 @@ export default function App() {
     )
   }
 
-  if (!user) return <LoginScreen />
+  if (!user) {
+    if (showAuth) return <LoginScreen />
+    return <LandingPage onGetStarted={() => setShowAuth(true)} />
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
