@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
-
+import OllamaSetup from './views/OllamaSetup'
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
   { id: 'features',     label: 'Features',     phase: 2 },
@@ -983,11 +983,33 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             answers_hash: answersHash,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'session_id' })
+          setValidation(valJson)
+          if (valJson.ready === false) {
+            setStatus('gaps')
+            return
+          }
+          await runGenerate()
+          return
+        }
+
+        // 5. Validate with Claude (cache miss or answers changed)
+        setStatus('validating')
+        const valRes = await fetch('/api/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers, dev_mode: devMode }),
+        })
+        const valJson = await valRes.json()
+
+        if (!valRes.ok || valJson.error) {
+          // Validate failed — skip to generate rather than blocking the user
+          await runGenerate()
+          return
         }
 
         setValidation(valJson)
 
-        if (valJson.ready === false && (valJson.gaps?.length > 0 || valJson.contradictions?.length > 0)) {
+        if (valJson.ready === false && Object.keys(valJson.category_health ?? {}).some(k => valJson.category_health[k] === 'poor')) {
           setStatus('gaps')
           return
         }
@@ -1385,6 +1407,24 @@ export default function App() {
   const [jumpRequest, setJumpRequest] = useState({ category: null, nonce: 0 })
   const [categoryHealth, setCategoryHealth] = useState({})
 
+  const [useLocalAI, setUseLocalAI] = useState(() => localStorage.getItem('useLocalAI') === 'true')
+  const [localAISetupComplete, setLocalAISetupComplete] = useState(() => localStorage.getItem('localAISetupComplete') === 'true')
+
+  const toggleLocalAI = useCallback(() => {
+    const next = !useLocalAI
+    setUseLocalAI(next)
+    localStorage.setItem('useLocalAI', String(next))
+    if (!localAISetupComplete && next === true) {
+      setLocalAISetupComplete(true)
+      localStorage.setItem('localAISetupComplete', 'true')
+    }
+  }, [useLocalAI, localAISetupComplete])
+
+  const handleCompleteLocalAISetup = useCallback(() => {
+    setLocalAISetupComplete(true)
+    localStorage.setItem('localAISetupComplete', 'true')
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -1397,7 +1437,11 @@ export default function App() {
         setView('dashboard') // reset view for next login
       }
       if (event === 'SIGNED_IN') {
-        setView('dashboard') // always land on dashboard after login
+        const intent = sessionStorage.getItem('postLoginRedirect')
+        if (intent === 'ollama-setup') {
+          setView('ollama-setup')
+          sessionStorage.removeItem('postLoginRedirect')
+        }
       }
     })
     return () => subscription.unsubscribe()
@@ -1504,13 +1548,16 @@ export default function App() {
 
   if (!user) {
     if (showAuth) return <><ShaderBackground /><LoginScreen /></>
-    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} /></>
+    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} onLearnOllama={() => { sessionStorage.setItem('postLoginRedirect', 'ollama-setup'); setShowAuth(true); }} /></>
   }
 
   return (
     <>
       <ShaderBackground />
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
+      {view === 'ollama-setup' ? (
+        <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
         <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
           <button onClick={handleGoToDashboard}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
@@ -1523,6 +1570,32 @@ export default function App() {
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div 
+            onClick={() => !localAISetupComplete && setView('ollama-setup')}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.5rem', 
+              background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', 
+              opacity: localAISetupComplete ? 1 : 0.4,
+              cursor: localAISetupComplete ? 'default' : 'pointer',
+              transition: 'opacity 0.2s' 
+            }}>
+            <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>Local AI</span>
+            <div onClick={localAISetupComplete ? toggleLocalAI : undefined} style={{ width: 30, height: 16, borderRadius: '12px', background: useLocalAI ? '#10b981' : '#333', position: 'relative', cursor: localAISetupComplete ? 'pointer' : 'pointer', transition: 'background 0.2s' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: useLocalAI ? 16 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+            </div>
+          </div>
+          <button onClick={() => setView('ollama-setup')}
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))', 
+              border: `1px solid rgba(16,185,129,0.3)`, 
+              borderRadius: '6px', color: '#10b981', 
+              cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.65rem', 
+              transition: 'all 0.15s', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem'
+            }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.6)'; e.currentTarget.style.background = 'rgba(16,185,129,0.2)' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))' }}>
+            ⚡ Connect A Local AI
+          </button>
           <span style={{ fontSize: '0.72rem', color: T.textMuted, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
           <button onClick={handleLogout}
             style={{ background: 'none', border: `1px solid ${T.cardBorder}`, borderRadius: '6px', color: T.textMuted, cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
@@ -1552,7 +1625,8 @@ export default function App() {
         {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
-    </div>
+        </div>
+      )}
     </>
   )
 }

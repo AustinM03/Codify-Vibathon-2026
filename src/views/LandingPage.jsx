@@ -41,7 +41,7 @@ const FEATURES = [
   { icon: '🆓', label: 'Free to get started' },
 ]
 
-export default function LandingPage({ onGetStarted }) {
+export default function LandingPage({ onGetStarted, onLearnOllama }) {
   const [hovering, setHovering] = useState(false)
 
   return (
@@ -300,7 +300,7 @@ export default function LandingPage({ onGetStarted }) {
 
             <button
               className="btn-ghost"
-              onClick={() => {}}
+              onClick={onLearnOllama}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.65rem 1.4rem',
