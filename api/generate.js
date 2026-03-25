@@ -136,7 +136,7 @@ Now generate the full build specification JSON.`
   try {
     const message = await client.messages.create({
       model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
     })
