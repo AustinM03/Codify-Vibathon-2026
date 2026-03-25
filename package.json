@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node server.dev.js",
-    "dev:local": "concurrently -n API,UI -c cyan,magenta \"node server.dev.js\" \"vite\"",
+    "dev:local": "concurrently -n INNGEST,API,UI -c green,cyan,magenta \"npx inngest-cli@latest dev\" \"node server.dev.js\" \"vite\"",
     "dev:full": "concurrently -n API,UI -c cyan,magenta \"vercel dev --listen 3001\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview"
@@ -14,6 +14,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@supabase/supabase-js": "^2.100.0",
+    "inngest": "^4.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.183.2"

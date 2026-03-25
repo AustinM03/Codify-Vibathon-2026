@@ -9,6 +9,7 @@
 
 import 'dotenv/config'
 import express from 'express'
+import { serve } from 'inngest/express'
 
 import questionnaireHandler from './api/questionnaire.js'
 import explainHandler       from './api/explain.js'
@@ -17,11 +18,16 @@ import validateHandler      from './api/validate.js'
 import extractHandler       from './api/extract.js'
 import generateHandler      from './api/generate.js'
 import buildHandler         from './api/build.js'
+import { inngest }          from './api/inngest/client.js'
+import { buildAppJob }      from './api/inngest/functions.js'
 
 const app  = express()
 const PORT = 3001
 
 app.use(express.json())
+
+// Inngest dev server route — communicates with `npx inngest-cli dev`
+app.use('/api/inngest', serve({ client: inngest, functions: [buildAppJob] }))
 
 function route(handler) {
   return (req, res) => handler(req, res)
