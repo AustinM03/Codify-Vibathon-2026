@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
+import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
 
 const STEPS = [
@@ -46,6 +47,38 @@ function normalizeCategory(name) {
   return CATEGORY_NORM[name?.toLowerCase()?.trim()] ?? name
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+const T = {
+  ff: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  mono: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+  bg: '#050505',
+  card: 'rgba(15,15,20,0.7)',
+  cardBorder: 'rgba(255,255,255,0.06)',
+  cardShadow: '0 8px 32px rgba(0,0,0,0.4)',
+  blur: 'blur(20px)',
+  accent: '#7c5bf0',
+  accentHover: '#6d28d9',
+  accent2: '#5eead4',
+  gradient: 'linear-gradient(135deg, #7c5bf0, #5eead4)',
+  gradientBtn: 'linear-gradient(135deg, #7c5bf0, #6d28d9)',
+  text: '#f0eef5',
+  textSub: '#6b6680',
+  textMuted: '#4a4458',
+  success: '#34d399',
+  successBg: 'rgba(52,211,153,0.08)',
+  warn: '#fbbf24',
+  warnBg: 'rgba(251,191,36,0.06)',
+  error: '#f87171',
+  errorBg: 'rgba(248,113,113,0.06)',
+  inputBg: 'rgba(10,10,15,0.8)',
+  inputBorder: 'rgba(255,255,255,0.08)',
+  focusBorder: 'rgba(124,91,240,0.4)',
+  focusGlow: '0 0 20px rgba(124,91,240,0.15)',
+  hoverGlow: '0 0 60px rgba(124,91,240,0.08)',
+  divider: 'rgba(255,255,255,0.04)',
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 function Toast({ message, onDismiss }) {
@@ -56,13 +89,14 @@ function Toast({ message, onDismiss }) {
   return (
     <div style={{
       position: 'fixed', bottom: '1.75rem', right: '1.75rem',
-      background: '#0a1a0a', border: '1px solid #22c55e', borderRadius: '10px',
-      padding: '0.9rem 1.25rem', color: '#4ade80', fontSize: '0.875rem',
-      zIndex: 9999, boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+      background: 'rgba(10,25,20,0.85)', backdropFilter: T.blur, WebkitBackdropFilter: T.blur,
+      border: `1px solid rgba(52,211,153,0.3)`, borderRadius: '12px',
+      padding: '0.9rem 1.25rem', color: T.success, fontSize: '0.875rem',
+      zIndex: 9999, boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
       maxWidth: '340px', animation: 'slideIn 0.2s ease',
     }}>
-      <span style={{ fontSize: '1.1rem', marginTop: '1px' }}>✅</span>
+      <span style={{ fontSize: '1.1rem', marginTop: '1px' }}>✓</span>
       <div>
         <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Session saved successfully</div>
         <div style={{ color: '#86efac', fontSize: '0.77rem', wordBreak: 'break-all', opacity: 0.85 }}>{message}</div>
@@ -110,10 +144,10 @@ function LoginScreen() {
   }
 
   const inputStyle = {
-    width: '100%', background: '#111', border: '1.5px solid #252525',
-    borderRadius: '8px', color: '#e2e2e2', padding: '0.75rem 0.9rem',
+    width: '100%', background: T.inputBg, border: `1.5px solid ${T.inputBorder}`,
+    borderRadius: '10px', color: T.text, padding: '0.75rem 0.9rem',
     fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none',
-    transition: 'border-color 0.15s', display: 'block',
+    transition: 'border-color 0.2s, box-shadow 0.2s', display: 'block',
   }
 
   function switchMode() {
@@ -123,43 +157,47 @@ function LoginScreen() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#191919', display: 'flex',
+      minHeight: '100vh', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      fontFamily: T.ff,
     }}>
       <div style={{
         width: '100%', maxWidth: 420, padding: '2.5rem',
-        background: '#111', border: '1px solid #1e1e1e',
-        borderRadius: '14px', boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+        background: T.card, backdropFilter: T.blur, WebkitBackdropFilter: T.blur,
+        border: `1px solid ${T.cardBorder}`,
+        borderRadius: '16px', boxShadow: T.cardShadow,
+        animation: 'fadeIn 0.4s ease',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem' }}>
-          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🚀</div>
-          <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.95rem' }}>PromptReady</div>
+          <div style={{ width: 32, height: 32, background: T.gradient, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>P</div>
+          <div style={{ color: T.text, fontWeight: 700, fontSize: '0.95rem' }}>PromptReady</div>
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.4rem', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: T.text, margin: '0 0 0.4rem', letterSpacing: '-0.02em' }}>
           {mode === 'signin' ? 'Welcome back' : 'Create your account'}
         </h1>
-        <p style={{ color: '#444', fontSize: '0.85rem', margin: '0 0 1.75rem' }}>
+        <p style={{ color: T.textSub, fontSize: '0.85rem', margin: '0 0 1.75rem' }}>
           {mode === 'signin' ? 'Sign in to continue building.' : 'Get started with PromptReady AI.'}
         </p>
         <form onSubmit={handleSubmit}>
-          <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Email</label>
+          <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: T.textSub, marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Email</label>
           <input type="email" required value={email} onChange={e => { setEmail(e.target.value); setError('') }} placeholder="you@example.com"
             style={{ ...inputStyle, marginBottom: '1rem' }}
-            onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+            onFocus={e => { e.target.style.borderColor = T.focusBorder; e.target.style.boxShadow = T.focusGlow }}
+            onBlur={e => { e.target.style.borderColor = T.inputBorder; e.target.style.boxShadow = 'none' }} />
 
-          <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Password</label>
+          <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: T.textSub, marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Password</label>
           <input type="password" required value={password} onChange={e => { setPassword(e.target.value); setError('') }} placeholder="••••••••"
             style={{ ...inputStyle, marginBottom: mode === 'signup' ? '0.6rem' : '1.4rem' }}
-            onFocus={e => (e.target.style.borderColor = '#0095ff')} onBlur={e => (e.target.style.borderColor = '#252525')} />
+            onFocus={e => { e.target.style.borderColor = T.focusBorder; e.target.style.boxShadow = T.focusGlow }}
+            onBlur={e => { e.target.style.borderColor = T.inputBorder; e.target.style.boxShadow = 'none' }} />
 
           {/* Password requirements — signup only */}
           {mode === 'signup' && (
             <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
               {pwRules.map(r => (
                 <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.75rem' }}>
-                  <span style={{ fontSize: '0.7rem', color: r.ok ? '#4ade80' : '#3a3a3a' }}>{r.ok ? '✓' : '○'}</span>
-                  <span style={{ color: r.ok ? '#4ade80' : '#3a3a3a', transition: 'color 0.15s' }}>{r.label}</span>
+                  <span style={{ fontSize: '0.7rem', color: r.ok ? T.success : T.textMuted }}>{r.ok ? '✓' : '○'}</span>
+                  <span style={{ color: r.ok ? T.success : T.textMuted, transition: 'color 0.15s' }}>{r.label}</span>
                 </div>
               ))}
             </div>
@@ -168,13 +206,13 @@ function LoginScreen() {
           {/* Confirm password — signup only */}
           {mode === 'signup' && (
             <>
-              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Confirm Password</label>
+              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: T.textSub, marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Confirm Password</label>
               <input type="password" required={mode === 'signup'} value={confirm} onChange={e => { setConfirm(e.target.value); setError('') }} placeholder="••••••••"
-                style={{ ...inputStyle, marginBottom: '0.4rem', borderColor: confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525' }}
-                onFocus={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#0095ff')}
-                onBlur={e => (e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? '#16a34a' : '#ef4444') : '#252525')} />
+                style={{ ...inputStyle, marginBottom: '0.4rem', borderColor: confirm.length > 0 ? (confirmMatch ? T.success : T.error) : T.inputBorder }}
+                onFocus={e => { e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? T.success : T.error) : T.focusBorder; e.target.style.boxShadow = T.focusGlow }}
+                onBlur={e => { e.target.style.borderColor = confirm.length > 0 ? (confirmMatch ? T.success : T.error) : T.inputBorder; e.target.style.boxShadow = 'none' }} />
               {confirm.length > 0 && (
-                <div style={{ fontSize: '0.75rem', marginBottom: '1rem', color: confirmMatch ? '#4ade80' : '#f87171' }}>
+                <div style={{ fontSize: '0.75rem', marginBottom: '1rem', color: confirmMatch ? T.success : T.error }}>
                   {confirmMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
                 </div>
               )}
@@ -182,18 +220,18 @@ function LoginScreen() {
             </>
           )}
 
-          {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem' }}>{error}</div>}
-          {info && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid #22c55e', borderRadius: '7px', padding: '0.6rem 0.85rem', color: '#4ade80', fontSize: '0.8rem', marginBottom: '1rem' }}>{info}</div>}
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 18px rgba(0,149,255,0.4)', transition: 'background 0.15s' }}
-            onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#007acc' }}
-            onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#0095ff' }}>
+          {error && <div style={{ background: T.errorBg, border: `1px solid rgba(248,113,113,0.2)`, borderRadius: '9px', padding: '0.6rem 0.85rem', color: T.error, fontSize: '0.8rem', marginBottom: '1rem', backdropFilter: T.blur }}>{error}</div>}
+          {info && <div style={{ background: T.successBg, border: `1px solid rgba(52,211,153,0.2)`, borderRadius: '9px', padding: '0.6rem 0.85rem', color: T.success, fontSize: '0.8rem', marginBottom: '1rem', backdropFilter: T.blur }}>{info}</div>}
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.8rem', background: loading ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
+            onMouseOver={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
+            onMouseOut={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
             {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In →' : 'Create Account →'}
           </button>
         </form>
-        <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: '#333' }}>
+        <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: T.textMuted }}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <button onClick={switchMode}
-            style={{ background: 'none', border: 'none', color: '#0095ff', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
+            style={{ background: 'none', border: 'none', color: T.accent, cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
             {mode === 'signin' ? 'Sign up' : 'Sign in'}
           </button>
         </p>
@@ -206,16 +244,16 @@ function LoginScreen() {
 
 function StepRow({ step, isActive, isCompleted, onClick }) {
   return (
-    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '6px', background: isActive ? 'rgba(0,149,255,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.12s' }}
-      onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.18)' : 'rgba(255,255,255,0.04)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(0,149,255,0.1)' : 'transparent' }}>
-      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? '#16a34a' : isActive ? '#0095ff' : 'transparent', border: isCompleted || isActive ? 'none' : '1.5px solid #2e2e2e', color: isCompleted || isActive ? '#fff' : '#3a3a3a', pointerEvents: 'none' }}>
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '8px', background: isActive ? 'rgba(124,91,240,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(124,91,240,0.18)' : 'rgba(255,255,255,0.03)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(124,91,240,0.1)' : 'transparent' }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? T.success : isActive ? T.accent : 'transparent', border: isCompleted || isActive ? 'none' : `1.5px solid ${T.textMuted}`, color: isCompleted || isActive ? '#fff' : T.textMuted, pointerEvents: 'none', boxShadow: isActive ? '0 0 12px rgba(124,91,240,0.3)' : 'none', transition: 'all 0.2s' }}>
         {isCompleted ? '✓' : step.phase}
       </div>
-      <span style={{ fontSize: '0.845rem', color: isActive ? '#60c8ff' : isCompleted ? '#86efac' : '#3a3a3a', fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
+      <span style={{ fontSize: '0.845rem', color: isActive ? '#b4a0f4' : isCompleted ? T.success : T.textMuted, fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
         {displayName(step.label)}
       </span>
-      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#0095ff', flexShrink: 0, pointerEvents: 'none' }} />}
+      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: T.accent, flexShrink: 0, pointerEvents: 'none' }} />}
     </div>
   )
 }
@@ -223,28 +261,28 @@ function StepRow({ step, isActive, isCompleted, onClick }) {
 function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard, onStepClick }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
-    <aside style={{ width: 232, minWidth: 232, height: '100%', background: '#111', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: '1px solid #171717' }}>
+    <aside style={{ width: 232, minWidth: 232, height: '100%', background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRight: `1px solid ${T.divider}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: `1px solid ${T.divider}` }}>
         <button onClick={onDashboard}
-          style={{ width: '100%', background: 'none', border: 'none', borderRadius: '6px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
-          onMouseOver={e => { e.currentTarget.style.color = '#00d4ff'; e.currentTarget.style.background = '#0095ff11' }}
-          onMouseOut={e => { e.currentTarget.style.color = '#3a3a3a'; e.currentTarget.style.background = 'none' }}>
+          style={{ width: '100%', background: 'none', border: 'none', borderRadius: '7px', color: T.textMuted, cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
+          onMouseOver={e => { e.currentTarget.style.color = T.accent2; e.currentTarget.style.background = 'rgba(124,91,240,0.06)' }}
+          onMouseOut={e => { e.currentTarget.style.color = T.textMuted; e.currentTarget.style.background = 'none' }}>
           <span>◀</span><span>My Projects</span>
         </button>
       </div>
       <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1, overflowY: 'auto' }}>
-        <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: '#333', textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
+        <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: T.textMuted, textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
         {STEPS.map(step => (
           <StepRow key={step.id} step={step} isActive={activeStep === step.id} isCompleted={completedSteps.includes(step.id)} onClick={() => onStepClick?.(step.id)} />
         ))}
       </div>
-      <div style={{ padding: '0.9rem 1rem', borderTop: '1px solid #1a1a1a' }}>
+      <div style={{ padding: '0.9rem 1rem', borderTop: `1px solid ${T.divider}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-          <span style={{ fontSize: '0.67rem', color: '#333' }}>Progress</span>
-          <span style={{ fontSize: '0.67rem', color: '#444' }}>{completedSteps.length} / 7</span>
+          <span style={{ fontSize: '0.67rem', color: T.textMuted }}>Progress</span>
+          <span style={{ fontSize: '0.67rem', color: T.textSub }}>{completedSteps.length} / 7</span>
         </div>
-        <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
-          <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.4s ease' }} />
+        <div style={{ height: 3, background: 'rgba(255,255,255,0.04)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: `${progress}%`, height: '100%', background: T.gradient, borderRadius: '2px', transition: 'width 0.4s ease' }} />
         </div>
       </div>
     </aside>
@@ -259,7 +297,7 @@ function IntakeScreen({ onSuccess, user }) {
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
 
-  const borderColor = error ? '#ef4444' : focused ? '#0095ff' : '#252525'
+  const borderColor = error ? T.error : focused ? T.focusBorder : T.inputBorder
 
   async function handleSubmit() {
     if (!idea.trim()) { setError('Please describe your app idea before continuing.'); return }
@@ -276,29 +314,29 @@ function IntakeScreen({ onSuccess, user }) {
   }
 
   return (
-    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: '#555', background: '#161616', border: '1px solid #252525', borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
         </div>
-        <h1 style={{ fontSize: '2.1rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.55rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>Project Initialization</h1>
-        <p style={{ color: '#5e5e5e', fontSize: '0.95rem', margin: '0 0 2rem', lineHeight: 1.65 }}>Describe your vision. We'll break it down into a complete build plan across all 7 phases.</p>
-        <div style={{ height: '1px', background: '#1e1e1e', marginBottom: '2rem' }} />
-        <label style={{ display: 'block', fontSize: '0.71rem', fontWeight: 600, color: '#555', marginBottom: '0.55rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Your App Idea</label>
+        <h1 style={{ fontSize: '2.1rem', fontWeight: 700, color: T.text, margin: '0 0 0.55rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>Project Initialization</h1>
+        <p style={{ color: T.textSub, fontSize: '0.95rem', margin: '0 0 2rem', lineHeight: 1.65 }}>Describe your vision. We'll break it down into a complete build plan across all 7 phases.</p>
+        <div style={{ height: '1px', background: T.divider, marginBottom: '2rem' }} />
+        <label style={{ display: 'block', fontSize: '0.71rem', fontWeight: 600, color: T.textSub, marginBottom: '0.55rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Your App Idea</label>
         <textarea value={idea} onChange={e => { setIdea(e.target.value); if (error) setError('') }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           placeholder="Describe your app idea in as much detail as possible..." rows={9}
-          style={{ width: '100%', background: '#111', border: `1.5px solid ${borderColor}`, borderRadius: '10px', color: '#e2e2e2', padding: '1rem 1.1rem', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.7, display: 'block', transition: 'border-color 0.15s' }} />
+          style={{ width: '100%', background: T.inputBg, border: `1.5px solid ${borderColor}`, borderRadius: '12px', color: T.text, padding: '1rem 1.1rem', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.7, display: 'block', transition: 'border-color 0.2s, box-shadow 0.2s', boxShadow: focused ? T.focusGlow : 'none' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.45rem', marginBottom: '1.5rem', minHeight: '1.1rem' }}>
-          {error ? <span style={{ fontSize: '0.78rem', color: '#f87171' }}>{error}</span> : <span />}
-          <span style={{ fontSize: '0.71rem', color: '#333', marginLeft: 'auto' }}>{idea.length} chars</span>
+          {error ? <span style={{ fontSize: '0.78rem', color: T.error }}>{error}</span> : <span />}
+          <span style={{ fontSize: '0.71rem', color: T.textMuted, marginLeft: 'auto' }}>{idea.length} chars</span>
         </div>
         <button onClick={handleSubmit} disabled={loading}
-          style={{ width: '100%', padding: '0.875rem', background: loading ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: loading ? 'none' : '0 2px 22px rgba(0,149,255,0.5)' }}
-          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#007acc' }}
-          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#0095ff' }}>
+          style={{ width: '100%', padding: '0.875rem', background: loading ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.015em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.2s', boxShadow: loading ? 'none' : '0 4px 24px rgba(124,91,240,0.35)' }}
+          onMouseOver={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
+          onMouseOut={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
           {loading ? 'Saving...' : 'Start Building →'}
         </button>
-        <p style={{ fontSize: '0.71rem', color: '#2e2e2e', textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>Your idea will be saved and analyzed to generate a complete build plan across all 7 phases.</p>
+        <p style={{ fontSize: '0.71rem', color: T.textMuted, textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>Your idea will be saved and analyzed to generate a complete build plan across all 7 phases.</p>
       </div>
     </main>
   )
@@ -527,22 +565,21 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiLoading) {
     return (
-      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ color: '#333', fontSize: '0.85rem' }}>Generating your adaptive questionnaire...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ width: 32, height: 32, border: `3px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite, glow 2s ease-in-out infinite' }} />
+        <p style={{ color: T.textSub, fontSize: '0.85rem' }}>Generating your adaptive questionnaire...</p>
       </main>
     )
   }
 
   if (apiError) {
     return (
-      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ maxWidth: 420, textAlign: 'center' }}>
-          <div style={{ color: '#f87171', marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠️</div>
-          <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
+          <div style={{ color: T.error, marginBottom: '0.5rem', fontSize: '1.1rem' }}>⚠</div>
+          <p style={{ color: T.error, fontSize: '0.9rem', marginBottom: '1rem' }}>{apiError}</p>
           <button onClick={() => setRetryCount(c => c + 1)}
-            style={{ padding: '0.6rem 1.25rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+            style={{ padding: '0.6rem 1.25rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem', boxShadow: '0 4px 20px rgba(124,91,240,0.3)' }}>
             Try Again
           </button>
         </div>
@@ -555,30 +592,30 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const phaseNum = STEPS.findIndex(s => s.id === CATEGORY_TO_STEP[currentCategory.name]) + 1
 
   return (
-    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem' }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: '#555', background: '#161616', border: '1px solid #252525', borderRadius: '999px', padding: '0.25rem 0.8rem', letterSpacing: '0.02em' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', letterSpacing: '0.02em' }}>
             <span>📋</span>
             <span>Phase {phaseNum} — {displayName(currentCategory.name)}</span>
           </div>
-          <span style={{ fontSize: '0.7rem', color: '#333' }}>{categoryIndex + 1} of {categories.length}</span>
+          <span style={{ fontSize: '0.7rem', color: T.textMuted }}>{categoryIndex + 1} of {categories.length}</span>
         </div>
 
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.5rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: T.text, margin: '0 0 0.5rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
           {displayName(currentCategory.name)}
         </h1>
-        <p style={{ color: '#5e5e5e', fontSize: '0.9rem', margin: '0 0 2rem', lineHeight: 1.65 }}>
+        <p style={{ color: T.textSub, fontSize: '0.9rem', margin: '0 0 2rem', lineHeight: 1.65 }}>
           Answer these questions to help define the {displayName(currentCategory.name).toLowerCase()} requirements for your app.
         </p>
 
-        <div style={{ height: '1px', background: '#1e1e1e', marginBottom: '2rem' }} />
+        <div style={{ height: '1px', background: T.divider, marginBottom: '2rem' }} />
 
         {/* Category progress bar */}
-        <div style={{ height: 2, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden', marginBottom: '2rem' }}>
-          <div style={{ width: `${((categoryIndex + 1) / categories.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', transition: 'width 0.4s ease' }} />
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.04)', borderRadius: '2px', overflow: 'hidden', marginBottom: '2rem' }}>
+          <div style={{ width: `${((categoryIndex + 1) / categories.length) * 100}%`, height: '100%', background: T.gradient, transition: 'width 0.4s ease' }} />
         </div>
 
         {/* Questions */}
@@ -597,24 +634,24 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
               {!expl ? (
                 <button
                   onClick={() => fetchExplanation(categoryIndex, qIdx, q.question, currentCategory.name)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: 'none', color: '#444', fontSize: '0.73rem', cursor: 'pointer', padding: '0 0 0.65rem', transition: 'color 0.12s' }}
-                  onMouseOver={e => (e.currentTarget.style.color = '#0095ff')}
-                  onMouseOut={e => (e.currentTarget.style.color = '#444')}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: 'none', color: T.textMuted, fontSize: '0.73rem', cursor: 'pointer', padding: '0 0 0.65rem', transition: 'color 0.12s' }}
+                  onMouseOver={e => (e.currentTarget.style.color = T.accent)}
+                  onMouseOut={e => (e.currentTarget.style.color = T.textMuted)}>
                   <span style={{ fontSize: '0.8rem' }}>💡</span> I&apos;m not sure what this means
                 </button>
               ) : (
-                <div style={{ background: '#0d1a2b', border: '1px solid #0e3a6e', borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '0.65rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                <div style={{ background: 'rgba(124,91,240,0.06)', border: `1px solid rgba(124,91,240,0.15)`, borderRadius: '10px', padding: '0.8rem 1rem', marginBottom: '0.65rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start', backdropFilter: T.blur }}>
                   <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>💡</span>
                   <div style={{ flex: 1 }}>
                     {expl.loading ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3a7fc1', fontSize: '0.78rem' }}>
-                        <div style={{ width: 12, height: 12, border: '2px solid #1e4a7a', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#b4a0f4', fontSize: '0.78rem' }}>
+                        <div style={{ width: 12, height: 12, border: `2px solid rgba(124,91,240,0.2)`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
                         Thinking of a good analogy...
                       </div>
                     ) : (
                       <>
-                        <p style={{ color: '#93c5fd', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 0.4rem' }}>{expl.text}</p>
-                        <button onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[explKey]; return n })} style={{ background: 'none', border: 'none', color: '#2a5a8a', fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>Dismiss</button>
+                        <p style={{ color: '#c4b5fd', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 0.4rem' }}>{expl.text}</p>
+                        <button onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[explKey]; return n })} style={{ background: 'none', border: 'none', color: T.textMuted, fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>Dismiss</button>
                       </>
                     )}
                   </div>
@@ -640,10 +677,11 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                       }}
                       style={{
                         padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '999px', cursor: 'pointer',
-                        border: `1px solid ${isSelected ? '#0095ff' : '#252525'}`,
-                        background: isSelected ? 'rgba(0,149,255,0.12)' : '#161616',
-                        color: isSelected ? '#60c8ff' : '#555',
-                        transition: 'all 0.12s',
+                        border: `1px solid ${isSelected ? 'rgba(124,91,240,0.4)' : T.cardBorder}`,
+                        background: isSelected ? 'rgba(124,91,240,0.12)' : 'rgba(15,15,20,0.5)',
+                        color: isSelected ? '#c4b5fd' : T.textSub,
+                        transition: 'all 0.15s',
+                        backdropFilter: 'blur(8px)',
                       }}>
                       {chip}
                     </button>
@@ -658,13 +696,13 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                 placeholder="Type your answer, or click a suggestion above..."
                 rows={3}
                 style={{
-                  width: '100%', background: '#111', border: '1.5px solid #252525',
-                  borderRadius: '8px', color: '#e2e2e2', padding: '0.8rem 1rem',
+                  width: '100%', background: T.inputBg, border: `1.5px solid ${T.inputBorder}`,
+                  borderRadius: '10px', color: T.text, padding: '0.8rem 1rem',
                   fontSize: '0.875rem', fontFamily: 'inherit', resize: 'vertical',
-                  outline: 'none', lineHeight: 1.6, display: 'block', transition: 'border-color 0.15s',
+                  outline: 'none', lineHeight: 1.6, display: 'block', transition: 'border-color 0.2s, box-shadow 0.2s',
                 }}
-                onFocus={e => (e.target.style.borderColor = '#0095ff')}
-                onBlur={e => (e.target.style.borderColor = '#252525')}
+                onFocus={e => { e.target.style.borderColor = T.focusBorder; e.target.style.boxShadow = T.focusGlow }}
+                onBlur={e => { e.target.style.borderColor = T.inputBorder; e.target.style.boxShadow = 'none' }}
               />
             </div>
           )
@@ -672,13 +710,13 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
         {/* Nav */}
         <button onClick={handleNext} disabled={saving}
-          style={{ width: '100%', padding: '0.875rem', background: saving ? '#004e8a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: saving ? 'none' : '0 2px 22px rgba(0,149,255,0.5)', transition: 'background 0.15s' }}
-          onMouseOver={e => { if (!saving) e.currentTarget.style.background = '#007acc' }}
-          onMouseOut={e => { if (!saving) e.currentTarget.style.background = '#0095ff' }}>
+          style={{ width: '100%', padding: '0.875rem', background: saving ? T.textMuted : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: saving ? 'none' : '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
+          onMouseOver={e => { if (!saving) e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)' }}
+          onMouseOut={e => { if (!saving) e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)' }}>
           {btnLabel}
         </button>
 
-        <p style={{ fontSize: '0.71rem', color: '#2e2e2e', textAlign: 'center', marginTop: '1rem' }}>
+        <p style={{ fontSize: '0.71rem', color: T.textMuted, textAlign: 'center', marginTop: '1rem' }}>
           Answers are saved automatically as you progress through each phase.
         </p>
       </div>
@@ -703,28 +741,30 @@ function BlueprintPanel({ blueprint }) {
   return (
     <aside style={{
       width: 260, minWidth: 260, height: '100%', overflowY: 'auto',
-      background: '#111', borderLeft: '1px solid #1a1a1a',
+      background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      borderLeft: `1px solid ${T.divider}`,
       display: 'flex', flexDirection: 'column',
     }}>
-      <div style={{ padding: '1.4rem 1.1rem 0.8rem', borderBottom: '1px solid #1a1a1a' }}>
-        <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#333', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Live Blueprint</div>
-        <div style={{ fontSize: '0.72rem', color: '#2e2e2e' }}>Your plan builds as you answer</div>
+      <div style={{ padding: '1.4rem 1.1rem 0.8rem', borderBottom: `1px solid ${T.divider}` }}>
+        <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.textMuted, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Live Blueprint</div>
+        <div style={{ fontSize: '0.72rem', color: T.textMuted }}>Your plan builds as you answer</div>
       </div>
 
       <div style={{ padding: '1rem 0.9rem', flex: 1 }}>
         {entries.length === 0 && (
           <div style={{ textAlign: 'center', paddingTop: '2.5rem' }}>
             <div style={{ fontSize: '1.6rem', marginBottom: '0.6rem', opacity: 0.3 }}>📐</div>
-            <p style={{ fontSize: '0.72rem', color: '#2a2a2a', lineHeight: 1.6 }}>Your building blocks will appear here as you complete each section.</p>
+            <p style={{ fontSize: '0.72rem', color: T.textMuted, lineHeight: 1.6 }}>Your building blocks will appear here as you complete each section.</p>
           </div>
         )}
         {entries.map(([category, summary]) => {
-          const meta = BLUEPRINT_META[category] ?? { icon: '📦', label: category, color: '#555' }
+          const meta = BLUEPRINT_META[category] ?? { icon: '📦', label: category, color: T.textSub }
           return (
             <div key={category} style={{
-              background: '#161616', border: `1px solid ${meta.color}22`,
+              background: T.card, backdropFilter: T.blur,
+              border: `1px solid ${meta.color}22`,
               borderLeft: `3px solid ${meta.color}`,
-              borderRadius: '8px', padding: '0.75rem 0.9rem',
+              borderRadius: '10px', padding: '0.75rem 0.9rem',
               marginBottom: '0.65rem', animation: 'slideIn 0.25s ease',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.4rem' }}>
@@ -733,9 +773,9 @@ function BlueprintPanel({ blueprint }) {
               </div>
               <ul style={{ margin: 0, padding: '0 0 0 0.5rem', listStyle: 'none' }}>
                 {summary.map((line, i) => (
-                  <li key={i} style={{ fontSize: '0.71rem', color: '#4a4a4a', lineHeight: 1.55, display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
+                  <li key={i} style={{ fontSize: '0.71rem', color: T.textSub, lineHeight: 1.55, display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
                     <span style={{ color: meta.color, opacity: 0.6, flexShrink: 0, marginTop: '0.1rem' }}>›</span>
-                    <span style={{ color: '#555' }}>{line}</span>
+                    <span style={{ color: T.textSub }}>{line}</span>
                   </li>
                 ))}
               </ul>
@@ -745,10 +785,10 @@ function BlueprintPanel({ blueprint }) {
       </div>
 
       {entries.length > 0 && (
-        <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid #1a1a1a' }}>
-          <div style={{ fontSize: '0.67rem', color: '#2a2a2a', textAlign: 'center' }}>{entries.length} of 7 blocks complete</div>
-          <div style={{ height: 2, background: '#1e1e1e', borderRadius: '2px', marginTop: '0.4rem', overflow: 'hidden' }}>
-            <div style={{ width: `${(entries.length / 7) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #0095ff, #00d4ff)', transition: 'width 0.4s ease' }} />
+        <div style={{ padding: '0.8rem 1rem', borderTop: `1px solid ${T.divider}` }}>
+          <div style={{ fontSize: '0.67rem', color: T.textMuted, textAlign: 'center' }}>{entries.length} of 7 blocks complete</div>
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.04)', borderRadius: '2px', marginTop: '0.4rem', overflow: 'hidden' }}>
+            <div style={{ width: `${(entries.length / 7) * 100}%`, height: '100%', background: T.gradient, transition: 'width 0.4s ease' }} />
           </div>
         </div>
       )}
@@ -878,8 +918,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-
   const loadingMessages = {
     loading:    { title: 'Reviewing your answers...', sub: 'Loading your responses from the database' },
     validating: { title: 'Checking your plan for completeness...', sub: 'Claude is reviewing all 7 sections for gaps and contradictions' },
@@ -889,35 +927,34 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   if (['loading', 'validating', 'generating'].includes(status)) {
     const msg = loadingMessages[status]
     return (
-      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.25rem', fontFamily: ff }}>
-        <div style={{ width: 36, height: 36, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.25rem', fontFamily: T.ff }}>
+        <div style={{ width: 36, height: 36, border: `3px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite, glow 2s ease-in-out infinite' }} />
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: '#e2e2e2', fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>{msg.title}</p>
-          <p style={{ color: '#333', fontSize: '0.78rem', margin: 0 }}>{msg.sub}</p>
+          <p style={{ color: T.text, fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>{msg.title}</p>
+          <p style={{ color: T.textMuted, fontSize: '0.78rem', margin: 0 }}>{msg.sub}</p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </main>
     )
   }
 
   if (status === 'gaps') {
     return (
-      <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center', fontFamily: ff }}>
-        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.6rem' }}>Review needed</div>
-          <h1 style={{ fontSize: '1.9rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>Almost there — a few things to review</h1>
+      <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center', fontFamily: T.ff }}>
+        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.warn, textTransform: 'uppercase', marginBottom: '0.6rem' }}>Review needed</div>
+          <h1 style={{ fontSize: '1.9rem', fontWeight: 700, color: T.text, margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>Almost there — a few things to review</h1>
           {validation?.summary && (
-            <p style={{ color: '#6a6a6a', fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 2rem' }}>{validation.summary}</p>
+            <p style={{ color: T.textSub, fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 2rem' }}>{validation.summary}</p>
           )}
-          <div style={{ height: 1, background: '#1e1e1e', marginBottom: '1.75rem' }} />
+          <div style={{ height: 1, background: T.divider, marginBottom: '1.75rem' }} />
 
           {validation?.gaps?.length > 0 && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Missing or thin answers</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.warn, textTransform: 'uppercase', marginBottom: '0.75rem' }}>Missing or thin answers</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {validation.gaps.map((gap, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: '8px', padding: '0.7rem 0.9rem' }}>
-                    <span style={{ flexShrink: 0, fontSize: '0.9rem', marginTop: '1px' }}>⚠️</span>
+                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: T.warnBg, border: '1px solid rgba(251,191,36,0.15)', borderRadius: '10px', padding: '0.7rem 0.9rem', backdropFilter: T.blur }}>
+                    <span style={{ flexShrink: 0, fontSize: '0.9rem', marginTop: '1px' }}>⚠</span>
                     <span style={{ color: '#d97706', fontSize: '0.83rem', lineHeight: 1.6 }}>{gap}</span>
                   </div>
                 ))}
@@ -927,12 +964,12 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
           {validation?.contradictions?.length > 0 && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f87171', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Contradictions found</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.error, textTransform: 'uppercase', marginBottom: '0.75rem' }}>Contradictions found</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {validation.contradictions.map((c, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', padding: '0.7rem 0.9rem' }}>
-                    <span style={{ flexShrink: 0, color: '#f87171', fontWeight: 700, fontSize: '0.85rem', marginTop: '2px' }}>✗</span>
-                    <span style={{ color: '#f87171', fontSize: '0.83rem', lineHeight: 1.6 }}>{c}</span>
+                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: T.errorBg, border: '1px solid rgba(248,113,113,0.15)', borderRadius: '10px', padding: '0.7rem 0.9rem', backdropFilter: T.blur }}>
+                    <span style={{ flexShrink: 0, color: T.error, fontWeight: 700, fontSize: '0.85rem', marginTop: '2px' }}>✗</span>
+                    <span style={{ color: T.error, fontSize: '0.83rem', lineHeight: 1.6 }}>{c}</span>
                   </div>
                 ))}
               </div>
@@ -940,6 +977,10 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
+            <button onClick={onDashboard}
+              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
             <button onClick={onEdit}
               style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
@@ -947,9 +988,9 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
               ← Go back and improve
             </button>
             <button onClick={runGenerate}
-              style={{ flex: 1, padding: '0.85rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)', transition: 'background 0.15s' }}
-              onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
-              onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
+              style={{ flex: 1, padding: '0.85rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
+              onMouseOver={e => (e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)')}
+              onMouseOut={e => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)')}>
               Generate anyway →
             </button>
           </div>
@@ -960,12 +1001,12 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
   if (status === 'error') {
     return (
-      <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: ff }}>
+      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.ff }}>
         <div style={{ textAlign: 'center', maxWidth: 440, padding: '2rem' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚠️</div>
-          <p style={{ color: '#f87171', fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{error}</p>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚠</div>
+          <p style={{ color: T.error, fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{error}</p>
           <button onClick={onDashboard}
-            style={{ padding: '0.65rem 1.5rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>
+            style={{ padding: '0.65rem 1.5rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(124,91,240,0.3)' }}>
             Back to Dashboard
           </button>
         </div>
@@ -974,47 +1015,47 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   }
 
   return (
-    <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', fontFamily: ff }}>
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem' }}>
+    <main style={{ flex: 1, height: '100%', overflowY: 'auto', fontFamily: T.ff }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '999px', padding: '0.2rem 0.7rem' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.success, textTransform: 'uppercase', background: T.successBg, border: `1px solid rgba(52,211,153,0.2)`, borderRadius: '999px', padding: '0.2rem 0.7rem', backdropFilter: T.blur }}>
             Build Plan Ready
           </div>
         </div>
-        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.4rem', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: T.text, margin: '0 0 0.4rem', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
           {result.title}
         </h1>
-        <p style={{ color: '#6a6a6a', fontSize: '0.95rem', lineHeight: 1.7, margin: '0 0 2.5rem', maxWidth: 620 }}>
+        <p style={{ color: T.textSub, fontSize: '0.95rem', lineHeight: 1.7, margin: '0 0 2.5rem', maxWidth: 620 }}>
           {result.summary}
         </p>
 
-        <div style={{ height: 1, background: '#1e1e1e', marginBottom: '2.5rem' }} />
+        <div style={{ height: 1, background: T.divider, marginBottom: '2.5rem' }} />
 
         {/* AI Coding Prompt — hero section */}
         <div style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#555', textTransform: 'uppercase', marginBottom: '0.2rem' }}>AI Coding Prompt</div>
-              <div style={{ fontSize: '0.75rem', color: '#333' }}>Paste this into Cursor, Copilot, or ChatGPT to start building</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.textSub, textTransform: 'uppercase', marginBottom: '0.2rem' }}>AI Coding Prompt</div>
+              <div style={{ fontSize: '0.75rem', color: T.textMuted }}>Paste this into Cursor, Copilot, or ChatGPT to start building</div>
             </div>
             <button onClick={copyPrompt}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem',
                 padding: '0.5rem 1rem', fontSize: '0.78rem', fontWeight: 600,
-                background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(0,149,255,0.1)',
-                color: copied ? '#4ade80' : '#0095ff',
-                border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(0,149,255,0.25)'}`,
-                borderRadius: '7px', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+                background: copied ? T.successBg : 'rgba(124,91,240,0.1)',
+                color: copied ? T.success : '#c4b5fd',
+                border: `1px solid ${copied ? 'rgba(52,211,153,0.3)' : 'rgba(124,91,240,0.25)'}`,
+                borderRadius: '9px', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
               }}>
               <span>{copied ? '✓' : '⎘'}</span>
               <span>{copied ? 'Copied!' : 'Copy Prompt'}</span>
             </button>
           </div>
           <div style={{
-            background: '#0d0d0d', border: '1px solid #222', borderRadius: '10px',
-            padding: '1.5rem', fontFamily: "'Courier New', Courier, monospace",
+            background: 'rgba(8,8,12,0.9)', border: `1px solid ${T.cardBorder}`, borderRadius: '12px',
+            padding: '1.5rem', fontFamily: T.mono,
             fontSize: '0.82rem', color: '#c9d1d9', lineHeight: 1.75,
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             maxHeight: '420px', overflowY: 'auto',
@@ -1027,26 +1068,26 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
 
           {/* Features */}
-          <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#0095ff', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Core Features</div>
+          <div style={{ background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '12px', padding: '1.25rem 1.3rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.accent, textTransform: 'uppercase', marginBottom: '0.9rem' }}>Core Features</div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {result.features.map((f, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#0095ff', flexShrink: 0, marginTop: '1px', fontSize: '0.75rem' }}>›</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.82rem', lineHeight: 1.55 }}>{f}</span>
+                  <span style={{ color: T.accent, flexShrink: 0, marginTop: '1px', fontSize: '0.75rem' }}>›</span>
+                  <span style={{ color: T.textSub, fontSize: '0.82rem', lineHeight: 1.55 }}>{f}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Tech Stack */}
-          <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#00d4ff', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Recommended Tech Stack</div>
+          <div style={{ background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '12px', padding: '1.25rem 1.3rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.accent2, textTransform: 'uppercase', marginBottom: '0.9rem' }}>Recommended Tech Stack</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
               {result.tech_stack.map((t, i) => (
                 <span key={i} style={{
-                  fontSize: '0.75rem', color: '#60c8ff',
-                  background: 'rgba(0,149,255,0.07)', border: '1px solid rgba(0,149,255,0.18)',
+                  fontSize: '0.75rem', color: T.accent2,
+                  background: 'rgba(94,234,212,0.07)', border: '1px solid rgba(94,234,212,0.18)',
                   borderRadius: '999px', padding: '0.25rem 0.7rem',
                 }}>
                   {t}
@@ -1058,12 +1099,12 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
         {/* Build Traps */}
         {result.build_traps?.length > 0 && (
-          <div style={{ background: '#111', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Watch Out — Build Traps</div>
+          <div style={{ background: T.card, backdropFilter: T.blur, border: '1px solid rgba(251,191,36,0.2)', borderRadius: '12px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.warn, textTransform: 'uppercase', marginBottom: '0.9rem' }}>Watch Out — Build Traps</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {result.build_traps.map((trap, i) => (
-                <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.05)', borderRadius: '7px', padding: '0.6rem 0.75rem' }}>
-                  <span style={{ flexShrink: 0, fontSize: '0.85rem' }}>⚠️</span>
+                <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: T.warnBg, borderRadius: '9px', padding: '0.6rem 0.75rem' }}>
+                  <span style={{ flexShrink: 0, fontSize: '0.85rem' }}>⚠</span>
                   <span style={{ color: '#d97706', fontSize: '0.82rem', lineHeight: 1.6 }}>{trap}</span>
                 </div>
               ))}
@@ -1073,27 +1114,27 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
         {/* Build in Phases */}
         {result.phases && (
-          <div style={{ background: '#111', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', marginBottom: '0.9rem' }}>Suggested Build Order</div>
+          <div style={{ background: T.card, backdropFilter: T.blur, border: `1px solid rgba(52,211,153,0.15)`, borderRadius: '12px', padding: '1.25rem 1.3rem', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.success, textTransform: 'uppercase', marginBottom: '0.9rem' }}>Suggested Build Order</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#4ade80', marginBottom: '0.5rem' }}>Phase 1 — Start here</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: T.success, marginBottom: '0.5rem' }}>Phase 1 — Start here</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {result.phases.phase1.map((f, i) => (
                     <div key={i} style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-start' }}>
-                      <span style={{ color: '#22c55e', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                      <span style={{ color: T.success, flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
                       <span style={{ color: '#86efac', fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#555', marginBottom: '0.5rem' }}>Phase 2 — Add next</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: T.textMuted, marginBottom: '0.5rem' }}>Phase 2 — Add next</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {result.phases.phase2.map((f, i) => (
                     <div key={i} style={{ display: 'flex', gap: '0.45rem', alignItems: 'flex-start' }}>
-                      <span style={{ color: '#333', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
-                      <span style={{ color: '#444', fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
+                      <span style={{ color: T.textMuted, flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                      <span style={{ color: T.textSub, fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -1103,13 +1144,13 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         )}
 
         {/* User Stories */}
-        <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '1.25rem 1.3rem', marginBottom: '2.5rem' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#a78bfa', textTransform: 'uppercase', marginBottom: '0.9rem' }}>User Stories</div>
+        <div style={{ background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '12px', padding: '1.25rem 1.3rem', marginBottom: '2.5rem' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: '0.9rem' }}>User Stories</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {result.user_stories.map((s, i) => (
               <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                <span style={{ color: '#a78bfa', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
-                <span style={{ color: '#9ca3af', fontSize: '0.82rem', lineHeight: 1.6 }}>{s}</span>
+                <span style={{ color: '#c4b5fd', flexShrink: 0, fontSize: '0.75rem', marginTop: '2px' }}>›</span>
+                <span style={{ color: T.textSub, fontSize: '0.82rem', lineHeight: 1.6 }}>{s}</span>
               </div>
             ))}
           </div>
@@ -1118,7 +1159,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         {/* Footer CTA */}
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={copyPrompt}
-            style={{ padding: '0.8rem 1.75rem', background: copied ? '#16a34a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)', transition: 'all 0.15s' }}>
+            style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}>
             {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
           </button>
           <button onClick={onEdit}
@@ -1128,9 +1169,9 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
             ✏️ Edit Responses
           </button>
           <button onClick={onDashboard}
-            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#555', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#aaa' }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555' }}>
+            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
             Back to Projects
           </button>
         </div>
@@ -1266,12 +1307,19 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#2a2a2a', fontSize: '0.85rem' }}>Loading...</div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 28, height: 28, border: `3px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
 
+  if (!user) return <><ShaderBackground /><LoginScreen /></>
+
+  return (
+    <>
+    <ShaderBackground />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
+      <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
   if (!user) {
     if (showAuth) return <LoginScreen />
     return <LandingPage onGetStarted={() => setShowAuth(true)} />
@@ -1281,21 +1329,21 @@ export default function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
       <header style={{ flexShrink: 0, height: 52, background: '#111', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
         <button onClick={handleGoToDashboard}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '7px', transition: 'background 0.15s' }}
-          onMouseOver={e => (e.currentTarget.style.background = '#0095ff11')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
+          onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
           onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #0095ff, #00d4ff)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🚀</div>
+          <div style={{ width: 28, height: 28, background: T.gradient, borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff', fontWeight: 700 }}>P</div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ color: '#e2e2e2', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
-            <div style={{ color: '#3d3d3d', fontSize: '0.62rem' }}>AI App Builder</div>
+            <div style={{ color: T.text, fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
+            <div style={{ color: T.textMuted, fontSize: '0.62rem' }}>AI App Builder</div>
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '0.72rem', color: '#3a3a3a', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
+          <span style={{ fontSize: '0.72rem', color: T.textMuted, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
           <button onClick={handleLogout}
-            style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: '5px', color: '#3a3a3a', cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#3a3a3a' }}>
+            style={{ background: 'none', border: `1px solid ${T.cardBorder}`, borderRadius: '6px', color: T.textMuted, cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(248,113,113,0.3)'; e.currentTarget.style.color = T.error }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textMuted }}>
             Sign out
           </button>
         </div>
@@ -1321,5 +1369,6 @@ export default function App() {
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
+    </>
   )
 }
