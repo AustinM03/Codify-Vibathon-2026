@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
-
+import OllamaSetup from './views/OllamaSetup'
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
   { id: 'features',     label: 'Features',     phase: 2 },
@@ -1316,7 +1316,8 @@ export default function App() {
         setView('dashboard') // reset view for next login
       }
       if (event === 'SIGNED_IN') {
-        setView('dashboard') // always land on dashboard after login
+        // We do not force setView('dashboard') here anymore because tab-refocus can trigger SIGNED_IN
+        // and boot the user out of sub-views like the Ollama Setup.
       }
     })
     return () => subscription.unsubscribe()
@@ -1429,7 +1430,10 @@ export default function App() {
   return (
     <>
       <ShaderBackground />
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
+      {view === 'ollama-setup' ? (
+        <OllamaSetup onBack={handleGoToDashboard} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
         <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
           <button onClick={handleGoToDashboard}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
@@ -1442,6 +1446,18 @@ export default function App() {
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button onClick={() => setView('ollama-setup')}
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))', 
+              border: `1px solid rgba(16,185,129,0.3)`, 
+              borderRadius: '6px', color: '#10b981', 
+              cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.65rem', 
+              transition: 'all 0.15s', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem'
+            }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.6)'; e.currentTarget.style.background = 'rgba(16,185,129,0.2)' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))' }}>
+            ⚡ Connect A Local AI
+          </button>
           <span style={{ fontSize: '0.72rem', color: T.textMuted, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
           <button onClick={handleLogout}
             style={{ background: 'none', border: `1px solid ${T.cardBorder}`, borderRadius: '6px', color: T.textMuted, cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
@@ -1471,7 +1487,8 @@ export default function App() {
         {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
-    </div>
+        </div>
+      )}
     </>
   )
 }
