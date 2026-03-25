@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 
@@ -758,15 +758,63 @@ function BlueprintPanel({ blueprint }) {
 // ─── Result Screen ────────────────────────────────────────────────────────────
 
 function ResultScreen({ sessionId, rawIdea, onDashboard }) {
-  const [status, setStatus] = useState('loading') // 'loading' | 'done' | 'error'
+  // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
+  const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
+  const [validation, setValidation] = useState(null)  // { ready, gaps[], contradictions[], summary }
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const answersRef = useRef(null)  // cache answers between validate and generate steps
+
+  // Runs extract + generate using cached answers
+  async function runGenerate() {
+    try {
+      setStatus('generating')
+      const answers = answersRef.current
+
+      // Extract structured signal from raw idea (Sonnet) — non-fatal
+      let extracted = null
+      try {
+        const extRes = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_idea: rawIdea }),
+        })
+        if (extRes.ok) extracted = await extRes.json()
+      } catch { /* non-fatal */ }
+
+      // Generate full build artifact (Opus)
+      const genRes = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
+      })
+      const json = await genRes.json()
+      if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
+
+      // Persist so we never regenerate
+      await supabase.from('build_plans').upsert({
+        session_id: sessionId,
+        title: json.title,
+        summary: json.summary,
+        prompt: json.prompt,
+        features: json.features,
+        tech_stack: json.tech_stack,
+        user_stories: json.user_stories,
+      }, { onConflict: 'session_id' })
+
+      setResult(json)
+      setStatus('done')
+    } catch (err) {
+      setError(err.message)
+      setStatus('error')
+    }
+  }
 
   useEffect(() => {
-    async function generate() {
+    async function loadAndValidate() {
       try {
-        // 1. Check if a build plan already exists for this session
+        // 1. Return cached plan immediately — skip validate
         const { data: existing } = await supabase
           .from('build_plans')
           .select('title, summary, prompt, features, tech_stack, user_stories')
@@ -779,7 +827,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
           return
         }
 
-        // 2. Load all saved answers for this session
+        // 2. Load answers
+        setStatus('loading')
         const { data: rows } = await supabase
           .from('questionnaire_responses')
           .select('category, question, answer')
@@ -787,48 +836,39 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
           .order('created_at', { ascending: true })
 
         if (!rows?.length) throw new Error('No answers found for this session.')
-
         const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
+        answersRef.current = answers
 
-        // 3. Extract structured signal from raw idea (Sonnet)
-        let extracted = null
-        try {
-          const extRes = await fetch('/api/extract', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ raw_idea: rawIdea }),
-          })
-          if (extRes.ok) extracted = await extRes.json()
-        } catch { /* non-fatal — generate will run its own fallback */ }
-
-        // 4. Generate full build artifact (Opus)
-        const genRes = await fetch('/api/generate', {
+        // 3. Validate with Opus
+        setStatus('validating')
+        const valRes = await fetch('/api/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
+          body: JSON.stringify({ answers }),
         })
-        const json = await genRes.json()
-        if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
+        const valJson = await valRes.json()
 
-        // 5. Persist the build plan so we never regenerate it
-        await supabase.from('build_plans').upsert({
-          session_id: sessionId,
-          title: json.title,
-          summary: json.summary,
-          prompt: json.prompt,
-          features: json.features,
-          tech_stack: json.tech_stack,
-          user_stories: json.user_stories,
-        }, { onConflict: 'session_id' })
+        if (!valRes.ok || valJson.error) {
+          // Validate failed — skip to generate rather than blocking the user
+          await runGenerate()
+          return
+        }
 
-        setResult(json)
-        setStatus('done')
+        setValidation(valJson)
+
+        if (valJson.ready === false && (valJson.gaps?.length > 0 || valJson.contradictions?.length > 0)) {
+          setStatus('gaps')
+          return
+        }
+
+        // All good — generate
+        await runGenerate()
       } catch (err) {
         setError(err.message)
         setStatus('error')
       }
     }
-    generate()
+    loadAndValidate()
   }, [sessionId, rawIdea])
 
   function copyPrompt() {
@@ -839,15 +879,80 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
 
   const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
 
-  if (status === 'loading') {
+  const loadingMessages = {
+    loading:    { title: 'Reviewing your answers...', sub: 'Loading your responses from the database' },
+    validating: { title: 'Checking your plan for completeness...', sub: 'Claude is reviewing all 7 sections for gaps and contradictions' },
+    generating: { title: 'Generating your build plan...', sub: 'Claude is synthesizing all your answers into a complete specification' },
+  }
+
+  if (['loading', 'validating', 'generating'].includes(status)) {
+    const msg = loadingMessages[status]
     return (
       <main style={{ flex: 1, height: '100%', background: '#191919', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.25rem', fontFamily: ff }}>
         <div style={{ width: 36, height: 36, border: '3px solid #1e1e1e', borderTopColor: '#0095ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: '#e2e2e2', fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>Generating your build plan...</p>
-          <p style={{ color: '#333', fontSize: '0.78rem', margin: 0 }}>Claude is synthesizing all your answers into a complete specification</p>
+          <p style={{ color: '#e2e2e2', fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>{msg.title}</p>
+          <p style={{ color: '#333', fontSize: '0.78rem', margin: 0 }}>{msg.sub}</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </main>
+    )
+  }
+
+  if (status === 'gaps') {
+    return (
+      <main style={{ flex: 1, height: '100%', overflowY: 'auto', background: '#191919', display: 'flex', justifyContent: 'center', fontFamily: ff }}>
+        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.6rem' }}>Review needed</div>
+          <h1 style={{ fontSize: '1.9rem', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>Almost there — a few things to review</h1>
+          {validation?.summary && (
+            <p style={{ color: '#6a6a6a', fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 2rem' }}>{validation.summary}</p>
+          )}
+          <div style={{ height: 1, background: '#1e1e1e', marginBottom: '1.75rem' }} />
+
+          {validation?.gaps?.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Missing or thin answers</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {validation.gaps.map((gap, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: '8px', padding: '0.7rem 0.9rem' }}>
+                    <span style={{ flexShrink: 0, fontSize: '0.9rem', marginTop: '1px' }}>⚠️</span>
+                    <span style={{ color: '#d97706', fontSize: '0.83rem', lineHeight: 1.6 }}>{gap}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {validation?.contradictions?.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: '#f87171', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Contradictions found</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {validation.contradictions.map((c, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', padding: '0.7rem 0.9rem' }}>
+                    <span style={{ flexShrink: 0, color: '#f87171', fontWeight: 700, fontSize: '0.85rem', marginTop: '2px' }}>✗</span>
+                    <span style={{ color: '#f87171', fontSize: '0.83rem', lineHeight: 1.6 }}>{c}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
+            <button onClick={onDashboard}
+              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#9ca3af' }}>
+              ← Go back and improve
+            </button>
+            <button onClick={runGenerate}
+              style={{ flex: 1, padding: '0.85rem', background: '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)', transition: 'background 0.15s' }}
+              onMouseOver={e => (e.currentTarget.style.background = '#007acc')}
+              onMouseOut={e => (e.currentTarget.style.background = '#0095ff')}>
+              Generate anyway →
+            </button>
+          </div>
+        </div>
       </main>
     )
   }
