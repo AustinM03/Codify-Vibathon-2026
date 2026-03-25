@@ -9,15 +9,10 @@ html, body, #root {
 }
 
 body {
-  background: #191919;
+  background: #050505;
   overflow: hidden;
 }
 
 textarea {
   font-family: inherit;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
