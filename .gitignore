@@ -3,6 +3,10 @@
 # Python / Node / Secrets / Large Files
 # ============================================================
 
+# ---------- Test outputs ----------
+test-output*/
+test-swarm.js
+
 # ---------- Claude Code (local only) ----------
 .claude/
 

@@ -37,9 +37,14 @@
     {
       "src": "api/build.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/inngest/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    { "src": "/api/inngest", "dest": "api/inngest/index.js" },
     { "src": "/api/questionnaire", "dest": "api/questionnaire.js" },
     { "src": "/api/explain", "dest": "api/explain.js" },
     { "src": "/api/test-claude", "dest": "api/test-claude.js" },
