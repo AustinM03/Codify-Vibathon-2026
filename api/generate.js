@@ -72,9 +72,9 @@ PHASES:
 - user_stories: 4-6 stories in "As a X, I can Y so that Z" format
 - No markdown, no code fences, no explanation — only the JSON object`
 
-async function extractFallback(raw_idea) {
+async function extractFallback(raw_idea, dev_mode) {
   const message = await client.messages.create({
-    model: MODELS.BALANCED,
+    model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
     max_tokens: 400,
     system: 'Extract a JSON object with: core_problem (string), target_users (string), key_features (string[]), domain (string), scale ("personal"|"small_business"|"enterprise"). No markdown, JSON only.',
     messages: [{ role: 'user', content: `App idea: "${raw_idea.slice(0, 1000)}"` }],
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea, extracted: providedExtracted, answers } = req.body ?? {}
+  const { raw_idea, extracted: providedExtracted, answers, dev_mode } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
   let extracted = providedExtracted
   if (!extracted || typeof extracted !== 'object') {
     try {
-      extracted = await extractFallback(raw_idea)
+      extracted = await extractFallback(raw_idea, dev_mode)
     } catch {
       extracted = null
     }
@@ -135,7 +135,7 @@ Now generate the full build specification JSON.`
 
   try {
     const message = await client.messages.create({
-      model: MODELS.POWERFUL,
+      model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],

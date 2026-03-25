@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea } = req.body ?? {}
+  const { raw_idea, dev_mode } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string' || raw_idea.trim().length < 5) {
     return res.status(400).json({ error: 'raw_idea is required (min 5 chars)' })
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
   try {
     const message = await client.messages.create({
-      model: MODELS.BALANCED,
+      model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
       max_tokens: 512,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],

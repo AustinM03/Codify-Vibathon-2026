@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea, history } = req.body ?? {}
+  const { raw_idea, history, dev_mode } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
@@ -93,32 +93,63 @@ Return ONLY a valid JSON array of arrays — one inner array per question, in th
 [["chip1", "chip2", "chip3"], ["chip1", "chip2", "chip3"], ...]`
   }
 
+  /**
+   * Strip markdown fences and attempt JSON.parse.
+   * If the string looks truncated (ends mid-array), trim to the last
+   * complete top-level element before the unterminated one.
+   */
+  function safeParseJSON(raw) {
+    // Strip common markdown code-fence wrappers
+    let text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+
+    // First, try a straight parse
+    try { return JSON.parse(text) } catch (_) { /* fall through to repair */ }
+
+    // Repair: walk backwards to find the last `}` or `]` that closes a full element,
+    // then close the outer array and try again.
+    // This handles the most common truncation: last string/object cut off mid-value.
+    const lastComma = Math.max(text.lastIndexOf('},'), text.lastIndexOf('],'))
+    if (lastComma > 0) {
+      const repaired = text.slice(0, lastComma + 1) + ']'
+      try { return JSON.parse(repaired) } catch (_) { /* fall through */ }
+    }
+
+    // Last-ditch: find outermost closing bracket
+    const lastBracket = text.lastIndexOf(']')
+    if (lastBracket > 0) {
+      try { return JSON.parse(text.slice(0, lastBracket + 1)) } catch (_) { /* give up */ }
+    }
+
+    throw new SyntaxError('Could not parse or repair JSON from model response')
+  }
+
   try {
-    // Pass 1 — Opus
+    // Pass 1 — Opus (or Haiku in dev mode)
     const opusMsg = await client.messages.create({
-      model: MODELS.POWERFUL,
-      max_tokens: 3000,
+      model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
+      max_tokens: 4096,   // raised from 3000 to prevent mid-string truncation
       messages: [{ role: 'user', content: questionPrompt }],
     })
 
-    const rawQuestions = opusMsg.content[0].text.trim()
-    const cleanedQuestions = rawQuestions.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const questions = JSON.parse(cleanedQuestions)
+    const questions = safeParseJSON(opusMsg.content[0].text.trim())
 
     if (!Array.isArray(questions)) throw new Error('Opus did not return a JSON array')
 
-    // Pass 2 — Haiku
+    // Pass 2 — Haiku (always Haiku — chips don't need quality)
     const haikusMsg = await client.messages.create({
       model: MODELS.FAST,
-      max_tokens: 2000,
+      max_tokens: 2048,   // raised from 2000 for safety
       messages: [{ role: 'user', content: buildChipsPrompt(questions) }],
     })
 
-    const rawChips = haikusMsg.content[0].text.trim()
-    const cleanedChips = rawChips.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const chipsMatrix = JSON.parse(cleanedChips)
-
-    if (!Array.isArray(chipsMatrix)) throw new Error('Haiku did not return a JSON array')
+    // Chips are lower-stakes: if they fail to parse, fall back to empty arrays
+    let chipsMatrix = []
+    try {
+      const parsed = safeParseJSON(haikusMsg.content[0].text.trim())
+      if (Array.isArray(parsed)) chipsMatrix = parsed
+    } catch (chipErr) {
+      console.warn('Chips parse failed (non-fatal):', chipErr.message)
+    }
 
     // Merge: attach chips to each question
     const merged = questions.map((q, i) => ({

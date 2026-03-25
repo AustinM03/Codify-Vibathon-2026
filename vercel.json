@@ -33,6 +33,10 @@
     {
       "src": "api/generate.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/build.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -42,6 +46,7 @@
     { "src": "/api/validate", "dest": "api/validate.js" },
     { "src": "/api/extract", "dest": "api/extract.js" },
     { "src": "/api/generate", "dest": "api/generate.js" },
+    { "src": "/api/build", "dest": "api/build.js" },
     { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/health", "dest": "api/index.py" },
     { "src": "/docs", "dest": "api/index.py" },

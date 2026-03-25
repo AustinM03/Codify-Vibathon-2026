@@ -38,17 +38,14 @@ export default function ShaderBackground() {
 
         float d = length(p) * distortion;
 
-        // 3 prism-split x-offsets
         float x1 = p.x * (1.0 + d * 2.0);
         float x2 = p.x;
         float x3 = p.x * (1.0 - d * 2.0);
 
-        // Varying speeds — each stream drifts at its own pace
         float t1 = time * (0.8 + 0.2 * sin(time * 0.13));
         float t2 = time * (1.0 + 0.15 * sin(time * 0.09 + 2.0));
         float t3 = time * (0.9 + 0.25 * sin(time * 0.11 + 4.0));
 
-        // Smooth curves with a subtle wobble layered on top
         float y1 = sin((x1 + t1) * xScale) * yScale
                   + sin((x1 * 0.6 + t1 * 0.7) * 1.8) * 0.07;
 
@@ -62,7 +59,6 @@ export default function ShaderBackground() {
         float s2 = 0.035 / abs(p.y + y2);
         float s3 = 0.035 / abs(p.y + y3);
 
-        // Shifting gradient — colors slowly rotate over time
         float hueShift = time * 0.15;
         vec3 c1 = vec3(
           0.55 + 0.45 * sin(hueShift),
@@ -81,7 +77,7 @@ export default function ShaderBackground() {
         );
 
         vec3 col = s1*c1 + s2*c2 + s3*c3;
-        col *= 0.22;
+        col *= 0.25;
 
         gl_FragColor = vec4(col, 1.0);
       }
@@ -98,9 +94,9 @@ export default function ShaderBackground() {
       refs.uniforms = {
         resolution: { value: [window.innerWidth, window.innerHeight] },
         time: { value: 0.0 },
-        xScale: { value: 1.0 },
-        yScale: { value: 0.5 },
-        distortion: { value: 0.15 },
+        xScale: { value: 0.55 },
+        yScale: { value: 0.85 },
+        distortion: { value: 0.3 },
       }
 
       const position = [

@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { question, category } = req.body ?? {}
+  const { question, category, dev_mode } = req.body ?? {}
 
   if (!question || typeof question !== 'string') {
     return res.status(400).json({ error: 'question is required' })
@@ -33,7 +33,7 @@ Return ONLY the plain text explanation. No JSON, no formatting, no quotes around
 
   try {
     const message = await client.messages.create({
-      model: CATEGORY_MODELS[category] ?? MODELS.BALANCED,
+      model: dev_mode ? MODELS.FAST : (CATEGORY_MODELS[category] ?? MODELS.BALANCED),
       max_tokens: 256,
       messages: [{ role: 'user', content: prompt }],
     })
