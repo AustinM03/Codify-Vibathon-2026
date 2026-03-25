@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
@@ -922,7 +922,40 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
         answersRef.current = answers
 
-        // 3. Validate with Opus
+        // 3. Compute a stable SHA-256 hash of the answers to use as a cache key
+        const answersHash = await (async () => {
+          const canonical = JSON.stringify(
+            [...answers].sort((a, b) => (a.category + a.question).localeCompare(b.category + b.question))
+          )
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical))
+          return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+        })()
+
+        // 4. Check validation_cache — skip Claude if hash matches (answers unchanged)
+        const { data: cached } = await supabase
+          .from('validation_cache')
+          .select('ready, category_health, summary, answers_hash')
+          .eq('session_id', sessionId)
+          .maybeSingle()
+
+        if (cached && cached.answers_hash === answersHash) {
+          const valJson = {
+            ready: cached.ready,
+            category_health: cached.category_health ?? {},
+            summary: cached.summary,
+            gaps: [],
+            contradictions: [],
+          }
+          setValidation(valJson)
+          if (valJson.ready === false) {
+            setStatus('gaps')
+            return
+          }
+          await runGenerate()
+          return
+        }
+
+        // 5. Validate with Claude (cache miss or answers changed)
         setStatus('validating')
         const valRes = await fetch('/api/validate', {
           method: 'POST',
@@ -936,6 +969,16 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           await runGenerate()
           return
         }
+
+        // 6. Persist result to validation_cache
+        await supabase.from('validation_cache').upsert({
+          session_id: sessionId,
+          ready: valJson.ready ?? false,
+          category_health: valJson.category_health ?? {},
+          summary: valJson.summary ?? '',
+          answers_hash: answersHash,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'session_id' })
 
         setValidation(valJson)
 
