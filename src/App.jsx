@@ -1300,8 +1300,11 @@ export default function App() {
         setView('dashboard') // reset view for next login
       }
       if (event === 'SIGNED_IN') {
-        // We do not force setView('dashboard') here anymore because tab-refocus can trigger SIGNED_IN
-        // and boot the user out of sub-views like the Ollama Setup.
+        const intent = sessionStorage.getItem('postLoginRedirect')
+        if (intent === 'ollama-setup') {
+          setView('ollama-setup')
+          sessionStorage.removeItem('postLoginRedirect')
+        }
       }
     })
     return () => subscription.unsubscribe()
@@ -1408,7 +1411,7 @@ export default function App() {
 
   if (!user) {
     if (showAuth) return <><ShaderBackground /><LoginScreen /></>
-    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} /></>
+    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} onLearnOllama={() => { sessionStorage.setItem('postLoginRedirect', 'ollama-setup'); setShowAuth(true); }} /></>
   }
 
   return (
@@ -1430,14 +1433,20 @@ export default function App() {
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {localAISetupComplete && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>Local AI</span>
-              <div onClick={toggleLocalAI} style={{ width: 30, height: 16, borderRadius: '12px', background: useLocalAI ? '#10b981' : '#333', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: useLocalAI ? 16 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-              </div>
+          <div 
+            onClick={() => !localAISetupComplete && setView('ollama-setup')}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.5rem', 
+              background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', 
+              opacity: localAISetupComplete ? 1 : 0.4,
+              cursor: localAISetupComplete ? 'default' : 'pointer',
+              transition: 'opacity 0.2s' 
+            }}>
+            <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>Local AI</span>
+            <div onClick={localAISetupComplete ? toggleLocalAI : undefined} style={{ width: 30, height: 16, borderRadius: '12px', background: useLocalAI ? '#10b981' : '#333', position: 'relative', cursor: localAISetupComplete ? 'pointer' : 'pointer', transition: 'background 0.2s' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: useLocalAI ? 16 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
             </div>
-          )}
+          </div>
           <button onClick={() => setView('ollama-setup')}
             style={{ 
               background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))', 

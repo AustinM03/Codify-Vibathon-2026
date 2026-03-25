@@ -15,6 +15,10 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
   const [copied, setCopied] = useState(false)
   const [copiedServe, setCopiedServe] = useState(false)
   const [os, setOs] = useState('mac')
+  const [computerType, setComputerType] = useState('standard')
+
+  const modelMap = { basic: 'llama3.2:1b', standard: 'llama3.2', powerful: 'llama3.1' }
+  const getCmd = () => `ollama run ${modelMap[computerType]}`
 
   const copyCommand = (cmd, type) => {
     navigator.clipboard.writeText(cmd)
@@ -86,6 +90,15 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
           }}>
             Follow these 3 simple steps to unlock unlimited, free app generation by turning your computer into an AI engine.
           </p>
+          <div style={{
+            maxWidth: 640, margin: '2rem auto 0', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)',
+            border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', display: 'flex', gap: '0.75rem', textAlign: 'left', alignItems: 'flex-start'
+          }}>
+            <span style={{ fontSize: '1.2rem' }}>ℹ️</span>
+            <span style={{ color: '#e2e2e2', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              <strong>Note:</strong> Local AI uses your computer's brain instead of the cloud. The age and speed of your computer will affect how fast the AI responds.
+            </span>
+          </div>
         </div>
 
         {/* Steps Grid */}
@@ -132,6 +145,30 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
                   Download the Brain
                 </h2>
                 <div style={{ color: '#9CA3AF', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ marginBottom: '1.25rem' }}>Select your computer type so we can recommend the perfect AI size:</p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                    {[
+                      { id: 'basic', title: 'Older / Budget', desc: 'Computers bought before 2020, basic school Chromebooks, or budget laptops. Uses our lightest, fastest AI.' },
+                      { id: 'standard', title: 'Standard / Everyday', desc: 'Most laptops bought in the last 4 years. If you mostly use it for web browsing, Word docs, and Netflix, pick this.', rec: true },
+                      { id: 'powerful', title: 'Powerful / Pro', desc: 'Thick gaming laptops, expensive desktop PCs, or computers specifically bought for heavy video editing.' }
+                    ].map(opt => (
+                      <div 
+                        key={opt.id} 
+                        onClick={() => setComputerType(opt.id)}
+                        style={{
+                          cursor: 'pointer', padding: '1rem', borderRadius: '8px',
+                          border: '1px solid ' + (computerType === opt.id ? '#10b981' : 'rgba(255,255,255,0.1)'),
+                          background: computerType === opt.id ? 'rgba(16,185,129,0.05)' : 'rgba(0,0,0,0.2)',
+                          transition: 'all 0.2s', position: 'relative', display: 'flex', flexDirection: 'column'
+                        }}>
+                        {opt.rec && <div style={{ position: 'absolute', top: -10, right: 10, background: '#10b981', color: '#000', fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '4px' }}>RECOMMENDED</div>}
+                        <div style={{ color: computerType === opt.id ? '#10b981' : '#fff', fontWeight: 700, marginBottom: '0.4rem', fontSize: '0.95rem' }}>{opt.title}</div>
+                        <div style={{ color: '#9CA3AF', fontSize: '0.8rem', lineHeight: 1.4 }}>{opt.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+
                   <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                     <button onClick={() => setOs('mac')} style={{ padding: '0.3rem 0.8rem', borderRadius: '6px', border: '1px solid ' + (os==='mac' ? '#10b981' : '#333'), background: os==='mac' ? 'rgba(16,185,129,0.1)' : 'transparent', color: os==='mac' ? '#10b981' : '#888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Mac</button>
                     <button onClick={() => setOs('windows')} style={{ padding: '0.3rem 0.8rem', borderRadius: '6px', border: '1px solid ' + (os==='windows' ? '#10b981' : '#333'), background: os==='windows' ? 'rgba(16,185,129,0.1)' : 'transparent', color: os==='windows' ? '#10b981' : '#888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Windows</button>
@@ -146,14 +183,21 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
                   </p>
                 </div>
               </div>
-              <div style={{ flex: '1 1 300px', background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <code style={{ fontFamily: 'monospace', color: '#10b981', fontSize: '1rem' }}>ollama run llama3</code>
-                <button 
-                  className="btn-ghost" 
-                  onClick={() => copyCommand('ollama run llama3', 'run')}
-                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                  {copied ? 'Copied!' : 'Copy Text'}
-                </button>
+              <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <code style={{ fontFamily: 'monospace', color: '#10b981', fontSize: '1rem' }}>{getCmd()}</code>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => copyCommand(getCmd(), 'run')}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                    {copied ? 'Copied!' : 'Copy Text'}
+                  </button>
+                </div>
+                <div style={{ textAlign: 'right', paddingRight: '0.25rem' }}>
+                  <a href="https://ollama.com/library" target="_blank" rel="noreferrer" style={{ color: '#6b7280', fontSize: '0.75rem', textDecoration: 'underline', transition: 'color 0.2s' }} onMouseOver={e=>e.target.style.color='#9ca3af'} onMouseOut={e=>e.target.style.color='#6b7280'}>
+                    Tech expert? Learn more about these models
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -170,22 +214,43 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
                   STEP 3
                 </div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginBottom: '0.75rem', letterSpacing: '0.02em' }}>
-                  The Secret Handshake
+                  The Final Restart
                 </h2>
-                <p style={{ color: '#9CA3AF', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
-                  Because of browser security, we need to explicitly allow this website to talk to your new AI. Close the Ollama app from your system tray, open your {os === 'mac' ? 'Terminal' : 'Command Prompt'} again, and run the command below. Leave this terminal window open while you build!
-                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <button onClick={() => setOs('mac')} style={{ padding: '0.3rem 0.8rem', borderRadius: '6px', border: '1px solid ' + (os==='mac' ? '#06b6d4' : '#333'), background: os==='mac' ? 'rgba(6,182,212,0.1)' : 'transparent', color: os==='mac' ? '#06b6d4' : '#888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Mac</button>
+                  <button onClick={() => setOs('windows')} style={{ padding: '0.3rem 0.8rem', borderRadius: '6px', border: '1px solid ' + (os==='windows' ? '#06b6d4' : '#333'), background: os==='windows' ? 'rgba(6,182,212,0.1)' : 'transparent', color: os==='windows' ? '#06b6d4' : '#888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Windows</button>
+                </div>
+                <div style={{ color: '#9CA3AF', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ marginBottom: '1rem' }}>Let's restart the engine so it can talk to this website.</p>
+                  
+                  {os === 'mac' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div>1. Look at the very top right of your screen. Click the little Llama icon (🦙) and click Quit.</div>
+                      <div>2. Open your Terminal again, paste this exact code, and hit Enter:</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div>1. Look at the bottom right of your screen near the clock. Click the little arrow ^, right-click the Llama icon (🦙), and click Quit.</div>
+                      <div>2. Open Command Prompt again, paste this exact code, and hit Enter:</div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ flex: '1 1 300px', background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <code style={{ fontFamily: 'monospace', color: '#06b6d4', fontSize: '0.85rem', wordBreak: 'break-all' }}>
-                  {os === 'mac' ? "OLLAMA_ORIGINS='*' ollama serve" : 'set OLLAMA_ORIGINS="*" && ollama serve'}
-                </code>
-                <button 
-                  className="btn-ghost" 
-                  onClick={() => copyCommand(os === 'mac' ? "OLLAMA_ORIGINS='*' ollama serve" : 'set OLLAMA_ORIGINS="*" && ollama serve', 'serve')}
-                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}>
-                  {copiedServe ? 'Copied!' : 'Copy Text'}
-                </button>
+              <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <code style={{ fontFamily: 'monospace', color: '#06b6d4', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                    {os === 'mac' ? "OLLAMA_ORIGINS='*' ollama serve" : 'set OLLAMA_ORIGINS="*" && ollama serve'}
+                  </code>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => copyCommand(os === 'mac' ? "OLLAMA_ORIGINS='*' ollama serve" : 'set OLLAMA_ORIGINS="*" && ollama serve', 'serve')}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}>
+                    {copiedServe ? 'Copied!' : 'Copy Text'}
+                  </button>
+                </div>
+                <p style={{ color: '#e2e2e2', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                  <strong>Leave that black window open in the background, and you're ready to build!</strong>
+                </p>
               </div>
             </div>
           </div>

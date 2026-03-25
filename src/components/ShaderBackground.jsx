@@ -22,6 +22,7 @@ export default function ShaderBackground() {
     const fragmentShader = `
       precision highp float;
       uniform vec2  resolution;
+      uniform float dpr;
       uniform float time;
 
       // ── Helpers ──────────────────────────────────────────────────────────
@@ -107,12 +108,13 @@ export default function ShaderBackground() {
 
         // ── Prism ───────────────────────────────────────────────────────
         float cx  = 0.10 * asp;
+        float cy  = dpr * 0.5; // Back to true mathematical center mapped via DPR
         float pH  = 0.38;
         float pHW = 0.15;
 
-        vec2 apex = vec2(cx,        0.5 + pH * 0.5);
-        vec2 bL   = vec2(cx - pHW,  0.5 - pH * 0.5);
-        vec2 bR   = vec2(cx + pHW,  0.5 - pH * 0.5);
+        vec2 apex = vec2(cx,        cy + pH * 0.5);
+        vec2 bL   = vec2(cx - pHW,  cy - pH * 0.5);
+        vec2 bR   = vec2(cx + pHW,  cy - pH * 0.5);
 
         vec2 inPt  = (apex + bL) * 0.5;   // white beam enters here
         vec2 outPt = (apex + bR) * 0.5;   // center of right face
@@ -193,8 +195,10 @@ export default function ShaderBackground() {
       refs.renderer.setClearColor(new THREE.Color(0x050505))
       refs.camera   = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, -1)
 
+      const dpr = window.devicePixelRatio || 1
       refs.uniforms = {
         resolution: { value: [window.innerWidth, window.innerHeight] },
+        dpr:        { value: dpr },
         time:       { value: 0.0 },
       }
 
@@ -221,7 +225,9 @@ export default function ShaderBackground() {
     const handleResize = () => {
       if (!refs.renderer || !refs.uniforms) return
       refs.renderer.setSize(window.innerWidth, window.innerHeight, false)
+      const dpr = window.devicePixelRatio || 1
       refs.uniforms.resolution.value = [window.innerWidth, window.innerHeight]
+      refs.uniforms.dpr.value = dpr
     }
 
     initScene()
