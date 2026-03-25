@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
@@ -77,33 +77,6 @@ const T = {
   focusGlow: '0 0 20px rgba(124,91,240,0.15)',
   hoverGlow: '0 0 60px rgba(124,91,240,0.08)',
   divider: 'rgba(255,255,255,0.04)',
-}
-
-// ─── Dev Toggle ──────────────────────────────────────────────────────────────
-
-function DevToggle({ devMode, onToggle }) {
-  return (
-    <button onClick={onToggle}
-      title={devMode ? 'DEV mode: all calls use Haiku (cheap)' : 'PROD mode: normal model routing'}
-      style={{
-        position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 9999,
-        display: 'flex', alignItems: 'center', gap: '0.4rem',
-        padding: '0.35rem 0.75rem', borderRadius: '999px',
-        fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em',
-        cursor: 'pointer', transition: 'all 0.2s',
-        border: `1px solid ${devMode ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.08)'}`,
-        background: devMode ? 'rgba(251,191,36,0.1)' : 'rgba(15,15,20,0.7)',
-        color: devMode ? '#fbbf24' : T.textMuted,
-        backdropFilter: T.blur, WebkitBackdropFilter: T.blur,
-      }}>
-      <span style={{
-        width: 7, height: 7, borderRadius: '50%',
-        background: devMode ? '#fbbf24' : T.textMuted,
-        boxShadow: devMode ? '0 0 8px rgba(251,191,36,0.5)' : 'none',
-      }} />
-      {devMode ? 'DEV: Haiku' : 'PROD: Full'}
-    </button>
-  )
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -269,23 +242,65 @@ function LoginScreen() {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function StepRow({ step, isActive, isCompleted, onClick }) {
+function StepRow({ step, isActive, isCompleted, onClick, categoryHealth }) {
+  // Map step.label (e.g. 'Auth') to health info
+  const health = categoryHealth?.[step.label];
+  let borderColor = isActive ? T.accent : 'transparent';
+  let bgColor = isActive ? 'rgba(124,91,240,0.1)' : 'transparent';
+  let icon = isCompleted ? '✓' : step.phase;
+  let iconBg = isCompleted ? T.success : isActive ? T.accent : 'transparent';
+  let iconColor = isCompleted || isActive ? '#fff' : T.textMuted;
+  let iconBorder = isCompleted || isActive ? 'none' : `1.5px solid ${T.textMuted}`;
+  let textColor = isActive ? '#b4a0f4' : isCompleted ? T.success : T.textMuted;
+  let messageColor = T.textMuted;
+  if (health) {
+    if (health.status === 'green') {
+      borderColor = T.success;
+      iconBg = T.success;
+      icon = '✓';
+      iconColor = '#fff';
+      textColor = T.success;
+    } else if (health.status === 'yellow') {
+      borderColor = T.warn;
+      iconBg = 'rgba(251,191,36,0.7)';
+      icon = '⚠️';
+      iconColor = '#fff';
+      textColor = T.warn;
+      messageColor = T.warn;
+    } else if (health.status === 'red') {
+      borderColor = T.error;
+      iconBg = 'rgba(248,113,113,0.7)';
+      icon = '❌';
+      iconColor = '#fff';
+      textColor = T.error;
+      messageColor = T.error;
+    }
+  }
   return (
-    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.44rem 0.65rem', borderRadius: '8px', background: isActive ? 'rgba(124,91,240,0.1)' : 'transparent', marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.15s' }}
+    <div onClick={onClick} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 0,
+      padding: '0.44rem 0.65rem', borderRadius: '8px', background: bgColor, marginBottom: '2px', cursor: 'pointer', userSelect: 'none', transition: 'background 0.15s', border: `1.5px solid ${borderColor}`
+    }}
       onMouseEnter={e => { e.currentTarget.style.background = isActive ? 'rgba(124,91,240,0.18)' : 'rgba(255,255,255,0.03)' }}
       onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'rgba(124,91,240,0.1)' : 'transparent' }}>
-      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: isCompleted ? T.success : isActive ? T.accent : 'transparent', border: isCompleted || isActive ? 'none' : `1.5px solid ${T.textMuted}`, color: isCompleted || isActive ? '#fff' : T.textMuted, pointerEvents: 'none', boxShadow: isActive ? '0 0 12px rgba(124,91,240,0.3)' : 'none', transition: 'all 0.2s' }}>
-        {isCompleted ? '✓' : step.phase}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+        <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, background: iconBg, border: iconBorder, color: iconColor, pointerEvents: 'none', boxShadow: isActive ? '0 0 12px rgba(124,91,240,0.3)' : 'none', transition: 'all 0.2s' }}>
+          {icon}
+        </div>
+        <span style={{ fontSize: '0.845rem', color: textColor, fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
+          {displayName(step.label)}
+        </span>
+        {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: T.accent, flexShrink: 0, pointerEvents: 'none' }} />}
       </div>
-      <span style={{ fontSize: '0.845rem', color: isActive ? '#b4a0f4' : isCompleted ? T.success : T.textMuted, fontWeight: isActive ? 600 : 400, pointerEvents: 'none' }}>
-        {displayName(step.label)}
-      </span>
-      {isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: T.accent, flexShrink: 0, pointerEvents: 'none' }} />}
+      {/* Message below if yellow or red */}
+      {health && (health.status === 'yellow' || health.status === 'red') && health.message && (
+        <div style={{ fontSize: '0.72rem', color: messageColor, marginLeft: 28, marginTop: 2, marginBottom: 2, lineHeight: 1.4, whiteSpace: 'pre-line' }}>{health.message}</div>
+      )}
     </div>
   )
 }
 
-function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard, onStepClick }) {
+function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard, onStepClick, categoryHealth = {} }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
     <aside style={{ width: 232, minWidth: 232, height: '100%', background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRight: `1px solid ${T.divider}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -300,7 +315,7 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard,
       <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: T.textMuted, textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
         {STEPS.map(step => (
-          <StepRow key={step.id} step={step} isActive={activeStep === step.id} isCompleted={completedSteps.includes(step.id)} onClick={() => onStepClick?.(step.id)} />
+          <StepRow key={step.id} step={step} isActive={activeStep === step.id} isCompleted={completedSteps.includes(step.id)} onClick={() => onStepClick?.(step.id)} categoryHealth={categoryHealth} />
         ))}
       </div>
       <div style={{ padding: '0.9rem 1rem', borderTop: `1px solid ${T.divider}` }}>
@@ -342,7 +357,7 @@ function IntakeScreen({ onSuccess, user }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
         </div>
@@ -371,7 +386,7 @@ function IntakeScreen({ onSuccess, user }) {
 
 // ─── Questionnaire Screen ─────────────────────────────────────────────────────
 
-function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete, jumpRequest, devMode }) {
+function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllComplete, jumpRequest }) {
   const [questions, setQuestions] = useState([])   // [{category, question, suggestions}]
   const [apiLoading, setApiLoading] = useState(true)
   const [apiError, setApiError] = useState('')
@@ -388,7 +403,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       const res = await fetch('/api/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, category, dev_mode: devMode }),
+        body: JSON.stringify({ question, category }),
       })
       const json = await res.json()
       setExplanations(prev => ({ ...prev, [key]: { loading: false, text: json.explanation ?? json.error ?? 'Could not load explanation.' } }))
@@ -527,7 +542,6 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           body: JSON.stringify({
             raw_idea: rawIdea,
             history: history ?? [],
-            dev_mode: devMode,
           }),
         })
         const text = await res.text()
@@ -621,7 +635,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
@@ -826,7 +840,7 @@ function BlueprintPanel({ blueprint }) {
 
 // ─── Result Screen ────────────────────────────────────────────────────────────
 
-function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
+function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
@@ -834,13 +848,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const answersRef = useRef(null)  // cache answers between validate and generate steps
-
-  // Build & Deploy state
-  // buildStatus: null | 'building' | 'deploying' | 'deployed' | 'error'
-  const [buildStatus, setBuildStatus] = useState(null)
-  const [deployUrl, setDeployUrl] = useState(null)
-  const [buildError, setBuildError] = useState('')
-  const [buildFiles, setBuildFiles] = useState(null)
 
   // Runs extract + generate using cached answers
   async function runGenerate() {
@@ -854,7 +861,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         const extRes = await fetch('/api/extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw_idea: rawIdea, dev_mode: devMode }),
+          body: JSON.stringify({ raw_idea: rawIdea }),
         })
         if (extRes.ok) extracted = await extRes.json()
       } catch { /* non-fatal */ }
@@ -863,7 +870,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
       const genRes = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw_idea: rawIdea, extracted, answers, dev_mode: devMode }),
+        body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
       })
       const json = await genRes.json()
       if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
@@ -893,16 +900,12 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         // 1. Return cached plan immediately — skip validate
         const { data: existing } = await supabase
           .from('build_plans')
-          .select('title, summary, prompt, features, tech_stack, user_stories, deploy_url')
+          .select('title, summary, prompt, features, tech_stack, user_stories')
           .eq('session_id', sessionId)
           .maybeSingle()
 
         if (existing) {
           setResult(existing)
-          if (existing.deploy_url) {
-            setDeployUrl(existing.deploy_url)
-            setBuildStatus('deployed')
-          }
           setStatus('done')
           return
         }
@@ -924,7 +927,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         const valRes = await fetch('/api/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers, dev_mode: devMode }),
+          body: JSON.stringify({ answers }),
         })
         const valJson = await valRes.json()
 
@@ -957,45 +960,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  async function handleBuildDeploy() {
-    setBuildStatus('building')
-    setBuildError('')
-    try {
-      const res = await fetch('/api/build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          title: result.title,
-          prompt: result.prompt,
-          tech_stack: result.tech_stack,
-          features: result.features,
-          dev_mode: devMode,
-        }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? `Build failed (${res.status})`)
-
-      setBuildFiles(json.files)
-
-      if (json.status === 'deployed' && json.deploy_url) {
-        setBuildStatus('deployed')
-        setDeployUrl(json.deploy_url)
-        // Save deploy URL to Supabase
-        await supabase.from('build_plans').update({ deploy_url: json.deploy_url }).eq('session_id', sessionId)
-      } else if (json.status === 'generated') {
-        setBuildStatus('deployed')
-        setDeployUrl(null)
-      } else {
-        setBuildStatus('error')
-        setBuildError(json.message ?? 'Deployment failed')
-      }
-    } catch (err) {
-      setBuildStatus('error')
-      setBuildError(err.message)
-    }
-  }
-
   const loadingMessages = {
     loading:    { title: 'Reviewing your answers...', sub: 'Loading your responses from the database' },
     validating: { title: 'Checking your plan for completeness...', sub: 'Claude is reviewing all 7 sections for gaps and contradictions' },
@@ -1018,7 +982,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   if (status === 'gaps') {
     return (
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center', fontFamily: T.ff }}>
-        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.97) 0%, rgba(5,5,5,0.93) 40%, rgba(5,5,5,0.7) 60%, rgba(5,5,5,0.0) 80%)', borderRadius: '20px', margin: '1.5rem auto' }}>
+        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.warn, textTransform: 'uppercase', marginBottom: '0.6rem' }}>Review needed</div>
           <h1 style={{ fontSize: '1.9rem', fontWeight: 700, color: T.text, margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>Almost there — a few things to review</h1>
           {validation?.summary && (
@@ -1055,10 +1019,16 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
-            <button onClick={onEdit}
+            <button onClick={onDashboard}
               style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
               onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
+              Back to Dashboard
+            </button>
+            <button onClick={onEdit}
+              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#9ca3af' }}>
               ← Go back and improve
             </button>
             <button onClick={runGenerate}
@@ -1090,7 +1060,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', fontFamily: T.ff }}>
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.97) 0%, rgba(5,5,5,0.93) 40%, rgba(5,5,5,0.7) 60%, rgba(5,5,5,0.0) 80%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
@@ -1230,93 +1200,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           </div>
         </div>
 
-        {/* Build & Deploy */}
-        <div style={{ background: T.card, backdropFilter: T.blur, border: `1px solid rgba(124,91,240,0.2)`, borderRadius: '12px', padding: '1.5rem', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '1.1rem' }}>🚀</span>
-            <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.accent, textTransform: 'uppercase' }}>Build & Deploy</div>
-              <div style={{ fontSize: '0.75rem', color: T.textMuted }}>Generate a working app and deploy it to the web</div>
-            </div>
-          </div>
-
-          {!buildStatus && (
-            <button onClick={handleBuildDeploy}
-              style={{ width: '100%', padding: '0.9rem', background: T.gradient, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              onMouseOver={e => (e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.5)')}
-              onMouseOut={e => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)')}>
-              🚀 Build & Deploy to Vercel
-            </button>
-          )}
-
-          {buildStatus === 'building' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0' }}>
-              <div style={{ width: 20, height: 20, border: `2.5px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-              <div>
-                <div style={{ color: T.text, fontSize: '0.88rem', fontWeight: 600 }}>Building your app...</div>
-                <div style={{ color: T.textMuted, fontSize: '0.75rem' }}>Claude is writing the code — this may take 30-60 seconds</div>
-              </div>
-            </div>
-          )}
-
-          {buildStatus === 'deployed' && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1rem' }}>✓</span>
-                <span style={{ color: T.success, fontSize: '0.88rem', fontWeight: 600 }}>
-                  {deployUrl ? 'App deployed successfully!' : 'Code generated successfully!'}
-                </span>
-              </div>
-              {deployUrl && (
-                <a href={deployUrl} target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                    width: '100%', padding: '0.8rem', background: 'rgba(52,211,153,0.1)',
-                    border: '1px solid rgba(52,211,153,0.3)', borderRadius: '10px',
-                    color: T.success, fontSize: '0.88rem', fontWeight: 600,
-                    textDecoration: 'none', marginBottom: '0.5rem', transition: 'all 0.15s',
-                  }}>
-                  🌐 Open App → {deployUrl.replace('https://', '')}
-                </a>
-              )}
-              {!deployUrl && (
-                <div style={{ padding: '0.6rem 0.85rem', background: T.warnBg, border: '1px solid rgba(251,191,36,0.2)', borderRadius: '9px', fontSize: '0.8rem', color: '#d97706', marginBottom: '0.5rem' }}>
-                  Set VERCEL_TOKEN in your environment to enable auto-deployment.
-                </div>
-              )}
-              {buildFiles && (
-                <details style={{ marginTop: '0.5rem' }}>
-                  <summary style={{ fontSize: '0.75rem', color: T.textMuted, cursor: 'pointer', padding: '0.3rem 0' }}>
-                    View generated files ({buildFiles.length} files)
-                  </summary>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 300, overflowY: 'auto' }}>
-                    {buildFiles.map((f, i) => (
-                      <div key={i}>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 600, color: T.accent2, marginBottom: '0.25rem', fontFamily: T.mono }}>{f.path}</div>
-                        <pre style={{ background: 'rgba(8,8,12,0.9)', border: `1px solid ${T.cardBorder}`, borderRadius: '8px', padding: '0.75rem', fontFamily: T.mono, fontSize: '0.72rem', color: '#c9d1d9', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, maxHeight: 200, overflowY: 'auto' }}>
-                          {f.content}
-                        </pre>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </div>
-          )}
-
-          {buildStatus === 'error' && (
-            <div>
-              <div style={{ padding: '0.6rem 0.85rem', background: T.errorBg, border: '1px solid rgba(248,113,113,0.2)', borderRadius: '9px', fontSize: '0.8rem', color: T.error, marginBottom: '0.75rem' }}>
-                {buildError}
-              </div>
-              <button onClick={handleBuildDeploy}
-                style={{ padding: '0.6rem 1.25rem', background: T.gradientBtn, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(124,91,240,0.3)' }}>
-                Try Again
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Footer CTA */}
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={copyPrompt}
@@ -1348,7 +1231,6 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
-  const [devMode, setDevMode] = useState(false)
   const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'complete'
   const [sessionId, setSessionId] = useState(null)
   const [rawIdea, setRawIdea] = useState('')
@@ -1482,17 +1364,15 @@ export default function App() {
 
   return (
     <>
-    <ShaderBackground />
-    {/* Fixed dark overlay — always covers the full viewport behind all content */}
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,5,0.65)', zIndex: 1, pointerEvents: 'none' }} />
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 2 }}>
-      <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
-        <button onClick={handleGoToDashboard}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
-          onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
-          onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-          <div style={{ width: 28, height: 28, background: T.gradient, borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff', fontWeight: 700 }}>P</div>
-          <div style={{ textAlign: 'left' }}>
+      <ShaderBackground />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
+        <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
+          <button onClick={handleGoToDashboard}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+            <div style={{ width: 28, height: 28, background: T.gradient, borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff', fontWeight: 700 }}>P</div>
+            <div style={{ textAlign: 'left' }}>
             <div style={{ color: T.text, fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
             <div style={{ color: T.textMuted, fontSize: '0.62rem' }}>AI App Builder</div>
           </div>
@@ -1512,7 +1392,7 @@ export default function App() {
         {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
         {view === 'questionnaire' && (
           <>
-            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} onStepClick={handleStepClick} />
+            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} onStepClick={handleStepClick} categoryHealth={categoryHealth} />
             <QuestionnaireScreen
               key={sessionId}
               sessionId={sessionId}
@@ -1521,14 +1401,12 @@ export default function App() {
               onStepComplete={handleStepComplete}
               onAllComplete={handleAllComplete}
               jumpRequest={jumpRequest}
-              devMode={devMode}
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
-      <DevToggle devMode={devMode} onToggle={() => setDevMode(d => !d)} />
     </div>
     </>
   )

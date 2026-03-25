@@ -181,24 +181,24 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
               <div key={s.id}
                 onClick={() => onOpenSession(s.id, s.raw_idea)}
                 style={{
-                  background: hasPlan ? 'rgba(34,197,94,0.04)' : 'rgba(15,15,20,0.7)',
+                  background: hasPlan ? 'rgba(34,197,94,0.04)' : '#111',
                   backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: '14px',
+                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'}`,
+                  borderRadius: '12px',
                   padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : 'rgba(124,91,240,0.25)'
-                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 0 60px rgba(124,91,240,0.08)'
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : '#0095ff44'
+                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(0,149,255,0.08)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'
                   e.currentTarget.style.boxShadow = 'none'
                 }}>
 
-                {/* Build Plan Ready badge */}
+                {/* Build Plan Ready badge (top-left, replaces phase pill) */}
                 {hasPlan && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
@@ -246,7 +246,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                     ) : (
                       <>
                         <span style={{ fontSize: '0.8rem' }}>📝</span>
-                        <span style={{ fontSize: '0.72rem', color: '#4a4458' }}>Not started</span>
+                        <span style={{ fontSize: '0.72rem', color: '#333' }}>Not started</span>
                       </>
                     )}
                   </div>
@@ -262,25 +262,25 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                     <span style={{ fontSize: '1rem' }}>📋</span>
                     <div>
                       <div style={{ fontSize: '0.73rem', fontWeight: 600, color: '#4ade80', lineHeight: 1.3 }}>AI coding prompt ready</div>
-                      <div style={{ fontSize: '0.66rem', color: 'rgba(52,211,153,0.6)' }}>Paste into Cursor or ChatGPT to start building</div>
+                      <div style={{ fontSize: '0.66rem', color: '#2a6a3a' }}>Paste into Cursor or ChatGPT to start building</div>
                     </div>
                   </div>
                 ) : (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.62rem', color: '#4a4458' }}>Progress</span>
-                      <span style={{ fontSize: '0.62rem', color: '#4a4458' }}>{stepIdx} / 7</span>
+                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>Progress</span>
+                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>{stepIdx} / 7</span>
                     </div>
-                    <div style={{ height: 3, background: 'rgba(255,255,255,0.04)', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#34d399' : 'linear-gradient(135deg, #7c5bf0, #5eead4)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                    <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.3s' }} />
                     </div>
                   </div>
                 )}
 
                 {/* CTA */}
-                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#4a4458', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#2a2a2a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <span>{hasPlan ? 'View Build Plan' : (progress === 100 ? '✓ Complete' : 'Continue building')}</span>
-                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#7c5bf0', fontSize: '0.8rem' }}>→</span>
+                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#1e3a5a', fontSize: '0.8rem' }}>→</span>
                 </div>
               </div>
             )

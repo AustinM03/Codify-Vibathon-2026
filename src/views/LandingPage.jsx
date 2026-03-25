@@ -46,11 +46,15 @@ export default function LandingPage({ onGetStarted }) {
 
   return (
     <div style={{
+      height: '100vh',
       minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0f0f0f 0%, #141414 50%, #0a0f1a 100%)',
+      background: 'transparent',
       fontFamily: ff,
       overflowX: 'hidden',
+      overflowY: 'auto',
       color: '#e2e2e2',
+      position: 'relative',
+      zIndex: 1,
     }}>
       <style>{`
         @keyframes float { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-10px) } }
