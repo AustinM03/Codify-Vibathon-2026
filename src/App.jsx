@@ -1154,8 +1154,15 @@ export default function App() {
       setUser(session?.user ?? null)
       setAuthLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      if (event === 'SIGNED_OUT') {
+        setShowAuth(false)   // return to LandingPage, not LoginScreen
+        setView('dashboard') // reset view for next login
+      }
+      if (event === 'SIGNED_IN') {
+        setView('dashboard') // always land on dashboard after login
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
