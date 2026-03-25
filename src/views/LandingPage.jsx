@@ -3,9 +3,33 @@ import { useState } from 'react'
 const ff = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
 
 const STEPS_PREVIEW = [
-  { icon: '💡', title: 'Describe your idea', desc: 'Tell us what you want to build in plain English — no tech speak needed.' },
-  { icon: '🤖', title: 'AI guides you through it', desc: 'Answer a few friendly questions. Our AI understands your vision and fills in the gaps.' },
-  { icon: '📋', title: 'Get your build plan', desc: 'Receive a complete, copy-paste-ready plan you can hand to any AI coding tool.' },
+  {
+    icon: '💬',
+    label: 'Step 1',
+    title: 'The Idea',
+    desc: 'Tell us what you want to make in plain English. No technical knowledge needed — just describe your vision like you\'d explain it to a friend.',
+    accent: '#a78bfa',
+    accentBg: 'rgba(167,139,250,0.08)',
+    accentBorder: 'rgba(167,139,250,0.2)',
+  },
+  {
+    icon: '✨',
+    label: 'Step 2',
+    title: 'The Blueprint',
+    desc: 'Answer simple, jargon-free questions about your App Connections, Information, and Policies. We handle all the technical translations behind the scenes.',
+    accent: '#0095ff',
+    accentBg: 'rgba(0,149,255,0.08)',
+    accentBorder: 'rgba(0,149,255,0.2)',
+  },
+  {
+    icon: '🚀',
+    label: 'Step 3',
+    title: 'The Build',
+    desc: 'Watch as your complete application blueprint is generated right before your eyes — ready to hand to any AI coding tool and start building immediately.',
+    accent: '#22c55e',
+    accentBg: 'rgba(34,197,94,0.08)',
+    accentBorder: 'rgba(34,197,94,0.2)',
+  },
 ]
 
 const FEATURES = [
@@ -157,37 +181,79 @@ export default function LandingPage({ onGetStarted }) {
 
       {/* ── How it works ── */}
       <section style={{
-        maxWidth: 900, margin: '0 auto',
+        maxWidth: 980, margin: '0 auto',
         padding: '2rem 2.5rem 5rem',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.12em', color: '#444', textTransform: 'uppercase', marginBottom: '0.6rem' }}>How it works</div>
-          <h2 style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 700, color: '#ebebeb', margin: 0, letterSpacing: '-0.03em' }}>
-            Three steps to your build plan
+          <h2 style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 700, color: '#ebebeb', margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>
+            From idea to build plan in minutes
           </h2>
+          <p style={{ fontSize: '0.9rem', color: '#555', margin: 0 }}>No developer needed. No jargon. Just results.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(268px, 1fr))', gap: '1.25rem', alignItems: 'stretch' }}>
           {STEPS_PREVIEW.map((s, i) => (
             <div
               key={i}
               className="step-card"
               style={{
-                background: '#111', border: '1px solid #1e1e1e',
-                borderRadius: '16px', padding: '1.75rem 1.5rem',
-                transition: 'all 0.2s',
+                background: s.accentBg,
+                border: `1px solid ${s.accentBorder}`,
+                borderRadius: '20px', padding: '2rem 1.75rem',
+                transition: 'all 0.2s', position: 'relative',
+                display: 'flex', flexDirection: 'column', gap: '1rem',
               }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'float 3s ease infinite', animationDelay: `${i * 0.4}s`, display: 'inline-block' }}>{s.icon}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-                <span style={{
-                  width: 22, height: 22, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
-                  color: '#fff', fontSize: '0.65rem', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>{i + 1}</span>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#e2e2e2', margin: 0 }}>{s.title}</h3>
+
+              {/* Step label */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                alignSelf: 'flex-start',
+                fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em',
+                color: s.accent, background: `${s.accent}18`,
+                border: `1px solid ${s.accent}33`,
+                borderRadius: '999px', padding: '0.2rem 0.65rem',
+              }}>
+                {s.label}
               </div>
-              <p style={{ fontSize: '0.83rem', color: '#555', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+
+              {/* Icon */}
+              <div style={{
+                fontSize: '2.4rem',
+                animation: `float 3s ease infinite`,
+                animationDelay: `${i * 0.5}s`,
+                display: 'inline-block',
+              }}>
+                {s.icon}
+              </div>
+
+              {/* Title */}
+              <h3 style={{
+                fontSize: '1.15rem', fontWeight: 700,
+                color: '#ebebeb', margin: 0,
+                letterSpacing: '-0.02em',
+              }}>
+                {s.title}
+              </h3>
+
+              {/* Description */}
+              <p style={{ fontSize: '0.85rem', color: '#666', lineHeight: 1.7, margin: 0 }}>
+                {s.desc}
+              </p>
+
+              {/* Connector arrow (not on last card) */}
+              {i < STEPS_PREVIEW.length - 1 && (
+                <div style={{
+                  position: 'absolute', right: '-1.1rem', top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '1rem', color: '#2a2a2a',
+                  display: 'none', // hidden on mobile, shown via media query below
+                  zIndex: 2,
+                }}
+                  className="step-arrow">
+                  ›
+                </div>
+              )}
             </div>
           ))}
         </div>
