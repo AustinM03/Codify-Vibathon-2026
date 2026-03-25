@@ -482,6 +482,8 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           const stepId = CATEGORY_TO_STEP[currentCategory.name]
           if (stepId) onStepComplete(stepId, currentCategory.name, rows)
         }
+        // Answers changed — invalidate the validation cache
+        await supabase.from('validation_cache').delete().eq('session_id', sessionId)
       }
       setActiveCatName(jumpRequest.category)
     })()
@@ -576,6 +578,8 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       .eq('session_id', sessionId).eq('category', currentCategory.name)
     const { error } = await supabase.from('questionnaire_responses').insert(rows)
     if (error) { console.error('Save error:', error) }
+    // Answers changed — invalidate the validation cache so it re-runs next time
+    await supabase.from('validation_cache').delete().eq('session_id', sessionId)
 
     const stepId = CATEGORY_TO_STEP[currentCategory.name]
     if (stepId) onStepComplete(stepId, currentCategory.name, rows)
@@ -826,6 +830,14 @@ function BlueprintPanel({ blueprint }) {
 
 // ─── Result Screen ────────────────────────────────────────────────────────────
 
+// Stable hash of answers array — used to detect when answers change
+function hashAnswers(answers) {
+  const sorted = [...answers].sort((a, b) =>
+    `${a.category}${a.question}`.localeCompare(`${b.category}${b.question}`)
+  )
+  return JSON.stringify(sorted)
+}
+
 function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
@@ -919,19 +931,44 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
         answersRef.current = answers
 
-        // 3. Validate with Opus
-        setStatus('validating')
-        const valRes = await fetch('/api/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers, dev_mode: devMode }),
-        })
-        const valJson = await valRes.json()
+        // 3. Check validation cache — skip Claude if answers haven't changed
+        const answersHash = hashAnswers(answers)
+        const { data: cached } = await supabase
+          .from('validation_cache')
+          .select('ready, gaps, contradictions, summary, answers_hash')
+          .eq('session_id', sessionId)
+          .maybeSingle()
 
-        if (!valRes.ok || valJson.error) {
-          // Validate failed — skip to generate rather than blocking the user
-          await runGenerate()
-          return
+        let valJson
+        if (cached && cached.answers_hash === answersHash) {
+          // Cache hit — reuse stored result
+          valJson = { ready: cached.ready, gaps: cached.gaps, contradictions: cached.contradictions, summary: cached.summary }
+        } else {
+          // Cache miss or answers changed — call Claude
+          setStatus('validating')
+          const valRes = await fetch('/api/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers, dev_mode: devMode }),
+          })
+          valJson = await valRes.json()
+
+          if (!valRes.ok || valJson.error) {
+            // Validate failed — skip to generate rather than blocking the user
+            await runGenerate()
+            return
+          }
+
+          // Persist result so we don't re-run validation on next visit
+          await supabase.from('validation_cache').upsert({
+            session_id: sessionId,
+            ready: valJson.ready,
+            gaps: valJson.gaps ?? [],
+            contradictions: valJson.contradictions ?? [],
+            summary: valJson.summary ?? '',
+            answers_hash: answersHash,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'session_id' })
         }
 
         setValidation(valJson)
