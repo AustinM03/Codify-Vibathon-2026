@@ -852,6 +852,14 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   const [copied, setCopied] = useState(false)
   const answersRef = useRef(null)  // cache answers between validate and generate steps
 
+  // Build & Deploy state
+  const [buildJobId, setBuildJobId] = useState(null)
+  const [buildStatus, setBuildStatus] = useState(null)
+  const [buildProgress, setBuildProgress] = useState(0)
+  const [buildTotal, setBuildTotal] = useState(0)
+  const [deployUrl, setDeployUrl] = useState(null)
+  const [buildError, setBuildError] = useState(null)
+
   // Runs extract + generate using cached answers
   async function runGenerate() {
     try {
@@ -941,14 +949,40 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           .eq('session_id', sessionId)
           .maybeSingle()
 
+        let valJson
         if (cached && cached.answers_hash === answersHash) {
-          const valJson = {
+          valJson = {
             ready: cached.ready,
             category_health: cached.category_health ?? {},
             summary: cached.summary,
             gaps: [],
             contradictions: [],
           }
+        } else {
+          // Cache miss or answers changed — call Claude
+          setStatus('validating')
+          const valRes = await fetch('/api/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers, dev_mode: devMode }),
+          })
+          valJson = await valRes.json()
+
+          if (!valRes.ok || valJson.error) {
+            // Validate failed — skip to generate rather than blocking the user
+            await runGenerate()
+            return
+          }
+
+          // Persist result to validation_cache
+          await supabase.from('validation_cache').upsert({
+            session_id: sessionId,
+            ready: valJson.ready ?? false,
+            category_health: valJson.category_health ?? {},
+            summary: valJson.summary ?? '',
+            answers_hash: answersHash,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'session_id' })
           setValidation(valJson)
           if (valJson.ready === false) {
             setStatus('gaps')
@@ -1005,6 +1039,66 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  async function handleBuildAndDeploy() {
+    setBuildError(null)
+    setBuildStatus('Queuing build...')
+    setBuildProgress(0)
+    setBuildTotal(0)
+    setDeployUrl(null)
+    try {
+      const res = await fetch('/api/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          title: result.title,
+          prompt: result.prompt,
+          tech_stack: result.tech_stack,
+          features: result.features,
+          dev_mode: devMode,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.job_id) {
+        setBuildError(data.error || 'Failed to start build')
+        setBuildStatus(null)
+        return
+      }
+      setBuildJobId(data.job_id)
+    } catch (err) {
+      setBuildError(err.message)
+      setBuildStatus(null)
+    }
+  }
+
+  // Poll Supabase for build job progress
+  useEffect(() => {
+    if (!buildJobId) return
+    const interval = setInterval(async () => {
+      const { data: job } = await supabase
+        .from('jobs')
+        .select('status, progress, total_files, deploy_url, error')
+        .eq('id', buildJobId)
+        .maybeSingle()
+      if (!job) return
+      setBuildStatus(job.status)
+      setBuildProgress(job.progress ?? 0)
+      setBuildTotal(job.total_files ?? 0)
+      if (job.deploy_url) {
+        setDeployUrl(job.deploy_url)
+        clearInterval(interval)
+      }
+      if (job.error) {
+        setBuildError(job.error)
+        clearInterval(interval)
+      }
+      if (job.status === 'Done!') {
+        clearInterval(interval)
+      }
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [buildJobId])
 
   const loadingMessages = {
     loading:    { title: 'Reviewing your answers...', sub: 'Loading your responses from the database' },
@@ -1236,6 +1330,58 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           </div>
         </div>
 
+        {/* Build & Deploy */}
+        <div style={{ background: 'rgba(124,91,240,0.06)', border: '1px solid rgba(124,91,240,0.15)', borderRadius: '14px', padding: '1.5rem', textAlign: 'center' }}>
+          {!buildStatus && !deployUrl && !buildError && (
+            <button onClick={handleBuildAndDeploy}
+              style={{ padding: '0.9rem 2rem', background: 'linear-gradient(135deg, #7c5bf0, #6d28d9)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}
+              onMouseOver={e => (e.currentTarget.style.boxShadow = '0 4px 32px rgba(124,91,240,0.55)')}
+              onMouseOut={e => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,91,240,0.35)')}>
+              Build & Deploy to Vercel
+            </button>
+          )}
+
+          {buildStatus && !deployUrl && !buildError && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: 18, height: 18, border: '2px solid rgba(124,91,240,0.2)', borderTopColor: '#7c5bf0', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <span style={{ color: T.text, fontSize: '0.85rem', fontWeight: 600 }}>{buildStatus}</span>
+              </div>
+              {buildTotal > 0 && (
+                <div style={{ width: '100%', maxWidth: 300 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: T.textSub }}>Files written</span>
+                    <span style={{ fontSize: '0.7rem', color: T.textSub }}>{buildProgress} / {buildTotal}</span>
+                  </div>
+                  <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.round((buildProgress / buildTotal) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #7c5bf0, #a78bfa)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {deployUrl && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>Deployed successfully!</div>
+              <a href={deployUrl} target="_blank" rel="noopener noreferrer"
+                style={{ padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block' }}>
+                View Live App
+              </a>
+            </div>
+          )}
+
+          {buildError && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ color: '#f87171', fontSize: '0.82rem' }}>{buildError}</div>
+              <button onClick={() => { setBuildError(null); setBuildJobId(null); setBuildStatus(null) }}
+                style={{ padding: '0.6rem 1.25rem', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                Retry
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Footer CTA */}
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className={copied ? "" : "btn-primary"} onClick={copyPrompt}
@@ -1269,6 +1415,7 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const [blueprint, setBlueprint] = useState({})  // category → string[]
   const [jumpRequest, setJumpRequest] = useState({ category: null, nonce: 0 })
+  const [categoryHealth, setCategoryHealth] = useState({})
 
   const [useLocalAI, setUseLocalAI] = useState(() => localStorage.getItem('useLocalAI') === 'true')
   const [localAISetupComplete, setLocalAISetupComplete] = useState(() => localStorage.getItem('localAISetupComplete') === 'true')
@@ -1485,7 +1632,7 @@ export default function App() {
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
         </div>
