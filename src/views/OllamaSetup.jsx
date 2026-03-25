@@ -11,17 +11,10 @@ const Kbd = ({ children }) => (
   }}>{children}</kbd>
 )
 
-export default function OllamaSetup({ onBack }) {
+export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompleteSetup }) {
   const [copied, setCopied] = useState(false)
   const [copiedServe, setCopiedServe] = useState(false)
   const [os, setOs] = useState('mac')
-  const [useLocalAI, setUseLocalAI] = useState(() => localStorage.getItem('useLocalAI') === 'true')
-
-  const toggleLocalAI = () => {
-    const next = !useLocalAI
-    setUseLocalAI(next)
-    localStorage.setItem('useLocalAI', String(next))
-  }
 
   const copyCommand = (cmd, type) => {
     navigator.clipboard.writeText(cmd)
@@ -223,7 +216,10 @@ export default function OllamaSetup({ onBack }) {
 
           <button 
             className="btn-primary" 
-            onClick={onBack}
+            onClick={() => {
+              if (onCompleteSetup) onCompleteSetup()
+              onBack()
+            }}
             style={{ padding: '1.2rem 2.5rem', fontSize: '1.1rem', letterSpacing: '0.02em', borderRadius: '12px' }}>
             I've done this! Take me to the next steps →
           </button>

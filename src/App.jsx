@@ -844,7 +844,6 @@ function hashAnswers(answers) {
 }
 
 function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
-function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
@@ -926,13 +925,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         const answers = rows.map(r => ({ category: r.category, question: r.question, answer: r.answer }))
         answersRef.current = answers
 
-        // 3. Check validation cache — skip Claude if answers haven't changed
-        const answersHash = hashAnswers(answers)
-        const { data: cached } = await supabase
-          .from('validation_cache')
-          .select('ready, gaps, contradictions, summary, answers_hash')
-          .eq('session_id', sessionId)
-          .maybeSingle()
         // 3. Compute a stable SHA-256 hash of the answers to use as a cache key
         const answersHash = await (async () => {
           const canonical = JSON.stringify(
@@ -971,40 +963,14 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         const valRes = await fetch('/api/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers }),
+          body: JSON.stringify({ answers, dev_mode: devMode }),
         })
         const valJson = await valRes.json()
 
-        let valJson
-        if (cached && cached.answers_hash === answersHash) {
-          // Cache hit — reuse stored result
-          valJson = { ready: cached.ready, gaps: cached.gaps, contradictions: cached.contradictions, summary: cached.summary }
-        } else {
-          // Cache miss or answers changed — call Claude
-          setStatus('validating')
-          const valRes = await fetch('/api/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ answers, dev_mode: devMode }),
-          })
-          valJson = await valRes.json()
-
-          if (!valRes.ok || valJson.error) {
-            // Validate failed — skip to generate rather than blocking the user
-            await runGenerate()
-            return
-          }
-
-          // Persist result so we don't re-run validation on next visit
-          await supabase.from('validation_cache').upsert({
-            session_id: sessionId,
-            ready: valJson.ready,
-            gaps: valJson.gaps ?? [],
-            contradictions: valJson.contradictions ?? [],
-            summary: valJson.summary ?? '',
-            answers_hash: answersHash,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'session_id' })
+        if (!valRes.ok || valJson.error) {
+          // Validate failed — skip to generate rather than blocking the user
+          await runGenerate()
+          return
         }
 
         // 6. Persist result to validation_cache
@@ -1019,7 +985,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
 
         setValidation(valJson)
 
-        if (valJson.ready === false && (valJson.gaps?.length > 0 || valJson.contradictions?.length > 0)) {
+        if (valJson.ready === false && Object.keys(valJson.category_health ?? {}).some(k => valJson.category_health[k] === 'poor')) {
           setStatus('gaps')
           return
         }
@@ -1304,6 +1270,24 @@ export default function App() {
   const [blueprint, setBlueprint] = useState({})  // category → string[]
   const [jumpRequest, setJumpRequest] = useState({ category: null, nonce: 0 })
 
+  const [useLocalAI, setUseLocalAI] = useState(() => localStorage.getItem('useLocalAI') === 'true')
+  const [localAISetupComplete, setLocalAISetupComplete] = useState(() => localStorage.getItem('localAISetupComplete') === 'true')
+
+  const toggleLocalAI = useCallback(() => {
+    const next = !useLocalAI
+    setUseLocalAI(next)
+    localStorage.setItem('useLocalAI', String(next))
+    if (!localAISetupComplete && next === true) {
+      setLocalAISetupComplete(true)
+      localStorage.setItem('localAISetupComplete', 'true')
+    }
+  }, [useLocalAI, localAISetupComplete])
+
+  const handleCompleteLocalAISetup = useCallback(() => {
+    setLocalAISetupComplete(true)
+    localStorage.setItem('localAISetupComplete', 'true')
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -1431,7 +1415,7 @@ export default function App() {
     <>
       <ShaderBackground />
       {view === 'ollama-setup' ? (
-        <OllamaSetup onBack={handleGoToDashboard} />
+        <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
         <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
@@ -1446,6 +1430,14 @@ export default function App() {
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {localAISetupComplete && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>Local AI</span>
+              <div onClick={toggleLocalAI} style={{ width: 30, height: 16, borderRadius: '12px', background: useLocalAI ? '#10b981' : '#333', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}>
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: useLocalAI ? 16 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+              </div>
+            </div>
+          )}
           <button onClick={() => setView('ollama-setup')}
             style={{ 
               background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))', 
