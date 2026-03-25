@@ -940,7 +940,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
-            <button onClick={onDashboard}
+            <button onClick={onEdit}
               style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
               onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#9ca3af' }}>
