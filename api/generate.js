@@ -34,7 +34,7 @@ Return ONLY a valid JSON object with exactly these fields:
 {
   "title": "3-5 word app name that captures the core value",
   "summary": "2-3 sentences in plain English describing what the app does, who it's for, and what problem it solves. No jargon.",
-  "prompt": "A complete, copy-paste-ready prompt for an AI coding tool (Cursor, GitHub Copilot, ChatGPT). Must be 300-600 words. Structure it as: 1) App overview, 2) Core features (bulleted), 3) Tech stack recommendation with specific framework choices, 4) Key screens/flows, 5) Important business rules. Write it as a direct instruction to a developer AI — start with 'Build a [app name]...'. If phases is not null, close with: 'Build Phase 1 first and verify it works end-to-end before touching Phase 2.'",
+  "prompt": "A complete app specification that will be used to generate a multi-file React+Vite project. Must be 300-600 words. Structure it as: 1) App overview, 2) Core features (bulleted, be specific about behavior), 3) Key screens/views and the user flow between them, 4) Important business rules and data relationships, 5) Visual style direction (colors, layout, feel). Write it as a direct instruction — start with 'Build a [app name]...'. Focus on WHAT the app does, not HOW to code it — the implementation architecture is handled separately. Keep scope realistic for a single-page React app with mocked data.",
   "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
   "tech_stack": ["Technology 1", "Technology 2", "Technology 3"],
   "user_stories": ["As a [user type], I can [action] so that [benefit].", "..."],
