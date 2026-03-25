@@ -48,15 +48,34 @@ Rules:
 - Use React 18 with functional components and hooks
 - Use inline styles — no CSS frameworks, no Tailwind, no external CSS files (a small index.css for resets is OK)
 - Make it visually polished — use a clean, modern design with good spacing, colors, and typography
-- All code must be complete and working — NO placeholder comments like "// TODO" or "// implement later"
 - NO API keys, secrets, or environment variables in the generated code
 - Keep it self-contained — the app must work with just npm install && npm run dev
 - If the spec mentions a database or backend, mock it with local state or localStorage
-- Include proper error handling and loading states
-- The app should look professional and be immediately usable
-- Do NOT use TypeScript — use plain JavaScript (.jsx files)
 - Dependencies in package.json must include "react", "react-dom", "vite", "@vitejs/plugin-react"
+- CRITICAL: KEEP YOUR CODE EXTREMELY CONCISE to ensure the entire app fits within the LLM's output limits. 
+- YOU MUST BUILD A MINIMUM VIABLE PROTOTYPE ONLY. DO NOT attempt to build every feature discussed.
+- DO NOT INCLUDE ANY ADMIN PANELS OR SETTINGS PAGES unless requested. Focus ONLY on the primary user-facing flow.
+- STRICTLY LIMIT MOCK DATA size. Use maximum 2-3 items per array (e.g., 2 courses, 2 lessons, 1 user). Do not write paragraphs of description text.
+- Try to put most of your components directly inside src/App.jsx instead of creating many separate files.
+- Simplify non-core features and avoid unnecessary UI fluff. Make it work fully end-to-end first.
 - No markdown, no code fences, no explanation — ONLY the JSON object`
+
+function safeParseJSONObject(raw) {
+  let text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  try { return JSON.parse(text) } catch (_) { /* fall through to repair */ }
+
+  // Truncated mid-string scenario
+  try { return JSON.parse(text + '"}') } catch (_) {}
+  try { return JSON.parse(text + '}') } catch (_) {}
+
+  // Walk backward to last complete key-value pair and close it
+  const lastComma = text.lastIndexOf('",')
+  if (lastComma > 0) {
+    try { return JSON.parse(text.slice(0, lastComma + 1) + '}') } catch (_) {}
+  }
+
+  throw new SyntaxError('Could not parse or repair JSON from model response')
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -92,23 +111,45 @@ Generate the complete project as a JSON object. Every file must be complete and 
     // Step 1: Generate code with Claude
     const message = await client.messages.create({
       model,
-      max_tokens: 8192,
+      max_tokens: 16384,
       system: CODE_GEN_SYSTEM,
       messages: [{ role: 'user', content: userMessage }],
     })
 
     const raw = message.content[0].text.trim()
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const fileMap = JSON.parse(cleaned)
+    
+    let fileMap
+    let isErrorState = false
 
-    // Validate required files
+    try {
+      fileMap = safeParseJSONObject(raw)
+    } catch (_) {
+      isErrorState = true
+      fileMap = { 
+        'index.html': `<html><body><h1>RAW RESPONSE FAILED TO PARSE:</h1><pre>${raw}</pre></body></html>` 
+      }
+    }
+
     const requiredFiles = ['package.json', 'index.html', 'src/main.jsx', 'src/App.jsx']
-    for (const f of requiredFiles) {
-      if (!(f in fileMap)) throw new Error(`Generated code missing required file: ${f}`)
+    if (!isErrorState) {
+      for (const f of requiredFiles) {
+        if (!(f in fileMap)) {
+          isErrorState = true
+          fileMap = {
+            'index.html': `<html><body><h1>Missing file: ${f}</h1><pre>RAW RESPONSE:\n\n${raw}</pre></body></html>`
+          }
+          break
+        }
+      }
     }
 
     // Convert to files array
     const files = Object.entries(fileMap).map(([path, content]) => ({ path, content }))
+    
+    // If it's an error state, also log it locally in case Vercel totally rejects it
+    if (isErrorState) {
+      import('fs').then(fs => fs.writeFileSync('./error.log', raw))
+    }
 
     // Step 2: Deploy to Vercel
     const vercelToken = process.env.VERCEL_TOKEN
@@ -122,7 +163,6 @@ Generate the complete project as a JSON object. Every file must be complete and 
       })
     }
 
-    // Build Vercel deployment payload
     const slugName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)
 
     const vercelFiles = files.map(f => ({
@@ -131,15 +171,19 @@ Generate the complete project as a JSON object. Every file must be complete and 
       encoding: 'base64',
     }))
 
+    const projectSettings = isErrorState
+      ? { framework: null } // Static HTML deploy so it doesn't crash on npm install
+      : {
+          framework: 'vite',
+          installCommand: 'npm install',
+          buildCommand: 'npm run build',
+          outputDirectory: 'dist',
+        }
+
     const deployBody = {
       name: slugName || 'promptready-app',
       files: vercelFiles,
-      projectSettings: {
-        framework: 'vite',
-        installCommand: 'npm install',
-        buildCommand: 'npm run build',
-        outputDirectory: 'dist',
-      },
+      projectSettings,
     }
 
     const teamId = process.env.VERCEL_TEAM_ID
