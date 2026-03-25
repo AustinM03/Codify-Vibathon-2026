@@ -55,7 +55,7 @@ const T = {
   card: 'rgba(15,15,20,0.7)',
   cardBorder: 'rgba(255,255,255,0.06)',
   cardShadow: '0 8px 32px rgba(0,0,0,0.4)',
-  blur: 'blur(16px)',
+  blur: 'blur(20px)',
   accent: '#7c5bf0',
   accentHover: '#6d28d9',
   accent2: '#5eead4',
@@ -260,7 +260,7 @@ function StepRow({ step, isActive, isCompleted, onClick }) {
 function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard, onStepClick }) {
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
-    <aside style={{ width: 232, minWidth: 232, height: '100%', background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRight: `1px solid ${T.divider}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <aside style={{ width: 232, minWidth: 232, height: '100%', background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRight: `1px solid ${T.divider}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: `1px solid ${T.divider}` }}>
         <button onClick={onDashboard}
           style={{ width: '100%', background: 'none', border: 'none', borderRadius: '7px', color: T.textMuted, cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
@@ -314,7 +314,7 @@ function IntakeScreen({ onSuccess, user }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
         </div>
@@ -592,7 +592,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease' }}>
+      <div style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.3s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
@@ -740,7 +740,7 @@ function BlueprintPanel({ blueprint }) {
   return (
     <aside style={{
       width: 260, minWidth: 260, height: '100%', overflowY: 'auto',
-      background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       borderLeft: `1px solid ${T.divider}`,
       display: 'flex', flexDirection: 'column',
     }}>
@@ -939,7 +939,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
   if (status === 'gaps') {
     return (
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center', fontFamily: T.ff }}>
-        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ width: '100%', maxWidth: 660, padding: '3.5rem 2.5rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', margin: '1.5rem auto' }}>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.warn, textTransform: 'uppercase', marginBottom: '0.6rem' }}>Review needed</div>
           <h1 style={{ fontSize: '1.9rem', fontWeight: 700, color: T.text, margin: '0 0 0.6rem', letterSpacing: '-0.03em' }}>Almost there — a few things to review</h1>
           {validation?.summary && (
@@ -1011,7 +1011,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', fontFamily: T.ff }}>
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
@@ -1290,7 +1290,7 @@ export default function App() {
     <>
     <ShaderBackground />
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
-      <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
+      <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
         <button onClick={handleGoToDashboard}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
           onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}

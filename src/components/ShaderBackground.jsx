@@ -38,20 +38,50 @@ export default function ShaderBackground() {
 
         float d = length(p) * distortion;
 
-        float rx = p.x * (1.0 + d);
-        float gx = p.x;
-        float bx = p.x * (1.0 - d);
+        // 3 prism-split x-offsets
+        float x1 = p.x * (1.0 + d * 2.0);
+        float x2 = p.x;
+        float x3 = p.x * (1.0 - d * 2.0);
 
-        float r = 0.05 / abs(p.y + sin((rx + time) * xScale) * yScale);
-        float g = 0.05 / abs(p.y + sin((gx + time) * xScale) * yScale);
-        float b = 0.05 / abs(p.y + sin((bx + time) * xScale) * yScale);
+        // Varying speeds — each stream drifts at its own pace
+        float t1 = time * (0.8 + 0.2 * sin(time * 0.13));
+        float t2 = time * (1.0 + 0.15 * sin(time * 0.09 + 2.0));
+        float t3 = time * (0.9 + 0.25 * sin(time * 0.11 + 4.0));
 
-        // Map raw RGB to purple/indigo/teal palette
-        vec3 col = vec3(0.0);
-        col += r * vec3(0.48, 0.36, 0.94);  // purple
-        col += g * vec3(0.25, 0.55, 0.85);  // indigo
-        col += b * vec3(0.37, 0.92, 0.82);  // teal
-        col *= 0.7;
+        // Smooth curves with a subtle wobble layered on top
+        float y1 = sin((x1 + t1) * xScale) * yScale
+                  + sin((x1 * 0.6 + t1 * 0.7) * 1.8) * 0.07;
+
+        float y2 = sin((x2 + t2) * xScale) * yScale
+                  + sin((x2 * 0.7 + t2 * 0.6) * 1.6) * 0.08;
+
+        float y3 = sin((x3 + t3) * xScale) * yScale
+                  + sin((x3 * 0.5 + t3 * 0.8) * 2.0) * 0.06;
+
+        float s1 = 0.035 / abs(p.y + y1);
+        float s2 = 0.035 / abs(p.y + y2);
+        float s3 = 0.035 / abs(p.y + y3);
+
+        // Shifting gradient — colors slowly rotate over time
+        float hueShift = time * 0.15;
+        vec3 c1 = vec3(
+          0.55 + 0.45 * sin(hueShift),
+          0.20 + 0.15 * sin(hueShift + 2.1),
+          0.30 + 0.40 * sin(hueShift + 4.2)
+        );
+        vec3 c2 = vec3(
+          0.20 + 0.20 * sin(hueShift + 1.0),
+          0.55 + 0.40 * sin(hueShift + 3.1),
+          0.30 + 0.30 * sin(hueShift + 5.2)
+        );
+        vec3 c3 = vec3(
+          0.30 + 0.30 * sin(hueShift + 2.0),
+          0.25 + 0.20 * sin(hueShift + 4.1),
+          0.55 + 0.45 * sin(hueShift + 0.5)
+        );
+
+        vec3 col = s1*c1 + s2*c2 + s3*c3;
+        col *= 0.22;
 
         gl_FragColor = vec4(col, 1.0);
       }
@@ -70,7 +100,7 @@ export default function ShaderBackground() {
         time: { value: 0.0 },
         xScale: { value: 1.0 },
         yScale: { value: 0.5 },
-        distortion: { value: 0.05 },
+        distortion: { value: 0.15 },
       }
 
       const position = [
@@ -100,7 +130,7 @@ export default function ShaderBackground() {
     }
 
     const animate = () => {
-      if (refs.uniforms) refs.uniforms.time.value += 0.008
+      if (refs.uniforms) refs.uniforms.time.value += 0.004
       if (refs.renderer && refs.scene && refs.camera) {
         refs.renderer.render(refs.scene, refs.camera)
       }

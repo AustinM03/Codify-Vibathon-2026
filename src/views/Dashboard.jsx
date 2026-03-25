@@ -140,7 +140,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
   return (
     <main style={{ flex: 1, height: '100%', overflowY: 'auto' }}>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '3rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '3rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
@@ -171,7 +171,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
               <div key={s.id}
                 onClick={() => onOpenSession(s.id, s.raw_idea)}
                 style={{
-                  background: 'rgba(15,15,20,0.7)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                  background: 'rgba(15,15,20,0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px',
                   padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
