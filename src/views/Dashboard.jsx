@@ -36,6 +36,7 @@ function timeAgo(dateStr) {
 export default function Dashboard({ user, onOpenSession, onNewProject }) {
   const [sessions, setSessions] = useState([])
   const [lastCategories, setLastCategories] = useState({}) // sessionId → category
+  const [buildPlanIds, setBuildPlanIds] = useState(new Set()) // sessionIds with a saved build plan
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null) // sessionId being deleted
 
@@ -104,6 +105,14 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
         if (currIdx > prevIdx) map[r.session_id] = r.category
       })
       setLastCategories(map)
+
+      // Fetch which sessions already have a saved build plan
+      const { data: plans } = await supabase
+        .from('build_plans')
+        .select('session_id')
+        .in('session_id', ids)
+      setBuildPlanIds(new Set(plans?.map(p => p.session_id) ?? []))
+
       setLoading(false)
     }
     load()
@@ -166,6 +175,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
             const meta = lastCat ? CATEGORY_META[lastCat] : null
             const stepIdx = lastCat ? CATEGORY_ORDER.indexOf(lastCat) + 1 : 0
             const progress = Math.round((stepIdx / 7) * 100)
+            const hasPlan = buildPlanIds.has(s.id)
 
             return (
               <div key={s.id}
@@ -173,12 +183,36 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                 style={{
                   background: 'rgba(15,15,20,0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px',
+                  background: hasPlan ? 'rgba(34,197,94,0.04)' : '#111',
+                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'}`,
+                  borderRadius: '12px',
                   padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(124,91,240,0.25)'; e.currentTarget.style.boxShadow = '0 0 60px rgba(124,91,240,0.08)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none' }}>
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : '#0095ff44'
+                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(0,149,255,0.08)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}>
+
+                {/* Build Plan Ready badge (top-left, replaces phase pill) */}
+                {hasPlan && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                    fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em',
+                    color: '#4ade80', background: 'rgba(34,197,94,0.1)',
+                    border: '1px solid rgba(34,197,94,0.25)', borderRadius: '999px',
+                    padding: '0.2rem 0.6rem', alignSelf: 'flex-start',
+                  }}>
+                    <span>✦</span><span>BUILD PLAN READY</span>
+                  </div>
+                )}
 
                 {/* Delete button */}
                 <button
@@ -227,13 +261,55 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                   </div>
                   <div style={{ height: 3, background: 'rgba(255,255,255,0.04)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#34d399' : 'linear-gradient(135deg, #7c5bf0, #5eead4)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                {/* Status — hide for completed plans */}
+                {!hasPlan && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {meta ? (
+                      <>
+                        <span style={{ fontSize: '0.8rem' }}>{meta.icon}</span>
+                        <span style={{ fontSize: '0.72rem', color: meta.color, fontWeight: 500 }}>Last: {CATEGORY_DISPLAY[lastCat] ?? lastCat}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: '0.8rem' }}>📝</span>
+                        <span style={{ fontSize: '0.72rem', color: '#333' }}>Not started</span>
+                      </>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {/* Progress bar — replaced by summary for completed plans */}
+                {hasPlan ? (
+                  <div style={{
+                    background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.15)',
+                    borderRadius: '8px', padding: '0.6rem 0.75rem',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  }}>
+                    <span style={{ fontSize: '1rem' }}>📋</span>
+                    <div>
+                      <div style={{ fontSize: '0.73rem', fontWeight: 600, color: '#4ade80', lineHeight: 1.3 }}>AI coding prompt ready</div>
+                      <div style={{ fontSize: '0.66rem', color: '#2a6a3a' }}>Paste into Cursor or ChatGPT to start building</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>Progress</span>
+                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>{stepIdx} / 7</span>
+                    </div>
+                    <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                    </div>
+                  </div>
+                )}
 
                 {/* CTA */}
                 <div style={{ fontSize: '0.72rem', color: '#4a4458', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <span>{progress === 100 ? '✓ Complete' : 'Continue building'}</span>
                   <span style={{ marginLeft: 'auto', color: '#7c5bf0', fontSize: '0.8rem' }}>→</span>
+                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#2a2a2a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span>{hasPlan ? 'View Build Plan' : (progress === 100 ? '✓ Complete' : 'Continue building')}</span>
+                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#1e3a5a', fontSize: '0.8rem' }}>→</span>
                 </div>
               </div>
             )

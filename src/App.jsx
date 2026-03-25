@@ -2,6 +2,7 @@
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
+import LandingPage from './views/LandingPage'
 
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
@@ -797,7 +798,7 @@ function BlueprintPanel({ blueprint }) {
 
 // ─── Result Screen ────────────────────────────────────────────────────────────
 
-function ResultScreen({ sessionId, rawIdea, onDashboard }) {
+function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
@@ -980,6 +981,10 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
               style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = T.text }}
               onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textSub }}>
+            <button onClick={onEdit}
+              style={{ flex: 1, padding: '0.85rem', background: 'transparent', color: '#9ca3af', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#e2e2e2' }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#9ca3af' }}>
               ← Go back and improve
             </button>
             <button onClick={runGenerate}
@@ -1152,10 +1157,16 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
         </div>
 
         {/* Footer CTA */}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={copyPrompt}
             style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : T.gradientBtn, color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 24px rgba(124,91,240,0.35)', transition: 'all 0.2s' }}>
             {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
+          </button>
+          <button onClick={onEdit}
+            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.6)'; e.currentTarget.style.background = 'rgba(167,139,250,0.07)' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.3)'; e.currentTarget.style.background = 'transparent' }}>
+            ✏️ Edit Responses
           </button>
           <button onClick={onDashboard}
             style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: T.textSub, border: `1px solid ${T.cardBorder}`, borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
@@ -1175,6 +1186,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
 export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [showAuth, setShowAuth] = useState(false)
   const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'complete'
   const [sessionId, setSessionId] = useState(null)
   const [rawIdea, setRawIdea] = useState('')
@@ -1189,8 +1201,15 @@ export default function App() {
       setUser(session?.user ?? null)
       setAuthLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      if (event === 'SIGNED_OUT') {
+        setShowAuth(false)   // return to LandingPage, not LoginScreen
+        setView('dashboard') // reset view for next login
+      }
+      if (event === 'SIGNED_IN') {
+        setView('dashboard') // always land on dashboard after login
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -1266,6 +1285,16 @@ export default function App() {
     setView('dashboard')
   }, [])
 
+  const handleEditResult = useCallback(async () => {
+    // Delete cached build plan so it regenerates after the user saves edits
+    await supabase.from('build_plans').delete().eq('session_id', sessionId)
+    // Jump back to the questionnaire starting at the first category
+    setCompletedSteps([])
+    setActiveStep(STEPS[0].id)
+    setJumpRequest({ category: STEPS[0].label, nonce: Date.now() })
+    setView('questionnaire')
+  }, [sessionId])
+
   const handleStepClick = useCallback((stepId) => {
     const step = STEPS.find(s => s.id === stepId)
     if (!step) return
@@ -1291,6 +1320,14 @@ export default function App() {
     <ShaderBackground />
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
       <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
+  if (!user) {
+    if (showAuth) return <LoginScreen />
+    return <LandingPage onGetStarted={() => setShowAuth(true)} />
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", background: '#191919' }}>
+      <header style={{ flexShrink: 0, height: 52, background: '#111', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
         <button onClick={handleGoToDashboard}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
           onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
@@ -1328,7 +1365,7 @@ export default function App() {
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
