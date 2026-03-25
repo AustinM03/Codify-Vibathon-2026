@@ -259,6 +259,125 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
+      {/* ── Ollama / Local AI section ── */}
+      <section style={{
+        maxWidth: 980, margin: '0 auto',
+        padding: '0 2.5rem 6rem',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.07) 0%, rgba(6,182,212,0.05) 100%)',
+          border: '1px solid rgba(16,185,129,0.2)',
+          borderRadius: '24px',
+          padding: '3.5rem 3rem',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto',
+          gap: '3rem',
+          alignItems: 'center',
+        }}>
+          {/* Left — copy */}
+          <div>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em',
+              color: '#10b981', background: 'rgba(16,185,129,0.1)',
+              border: '1px solid rgba(16,185,129,0.25)',
+              borderRadius: '999px', padding: '0.2rem 0.7rem',
+              marginBottom: '1.25rem',
+            }}>
+              <span>🔒</span><span>ZERO COST · TOTAL PRIVACY</span>
+            </div>
+
+            <h2 style={{
+              fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
+              fontWeight: 800, color: '#ebebeb',
+              margin: '0 0 1rem', letterSpacing: '-0.04em', lineHeight: 1.15,
+            }}>
+              Run it locally.<br />
+              <span style={{
+                background: 'linear-gradient(135deg, #10b981, #06b6d4)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+                Build for free.
+              </span>
+            </h2>
+
+            <p style={{
+              fontSize: '0.95rem', color: '#666',
+              lineHeight: 1.75, margin: '0 0 2rem',
+              maxWidth: 520,
+            }}>
+              Unlike other platforms that charge you per generation, PromptReady lets you plug in your own local AI models using <strong style={{ color: '#aaa' }}>Ollama</strong>. Download a model once, run it on your own computer, and generate unlimited apps with <strong style={{ color: '#aaa' }}>zero cloud costs</strong> and <strong style={{ color: '#aaa' }}>total privacy</strong>.
+            </p>
+
+            <button
+              onClick={() => {}}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.65rem 1.4rem',
+                background: 'transparent',
+                color: '#10b981',
+                border: '1px solid rgba(16,185,129,0.4)',
+                borderRadius: '10px',
+                fontSize: '0.85rem', fontWeight: 600,
+                cursor: 'pointer', fontFamily: ff,
+                transition: 'all 0.15s',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = 'rgba(16,185,129,0.1)'
+                e.currentTarget.style.borderColor = 'rgba(16,185,129,0.7)'
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'
+              }}>
+              <span>🔗</span>
+              <span>Learn how to connect Ollama</span>
+            </button>
+          </div>
+
+          {/* Right — stylised local terminal illustration */}
+          <div style={{
+            flexShrink: 0,
+            width: 260, height: 200,
+            background: '#0d0d0d',
+            border: '1px solid #1e1e1e',
+            borderRadius: '16px',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}>
+            {/* Terminal title bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.55rem 0.75rem',
+              background: '#161616',
+              borderBottom: '1px solid #1e1e1e',
+            }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171', display: 'inline-block' }} />
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.6rem', color: '#333', fontFamily: 'monospace' }}>terminal</span>
+            </div>
+            {/* Terminal body */}
+            <div style={{
+              flex: 1, padding: '0.85rem 1rem',
+              fontFamily: "'Courier New', monospace",
+              fontSize: '0.72rem', lineHeight: 1.7,
+            }}>
+              <div style={{ color: '#555' }}>$ ollama run llama3</div>
+              <div style={{ color: '#10b981' }}>✓ Model loaded locally</div>
+              <div style={{ color: '#555', marginTop: '0.2rem' }}>$ promptready generate</div>
+              <div style={{ color: '#06b6d4' }}>→ Generating build plan...</div>
+              <div style={{ color: '#4ade80', marginTop: '0.2rem' }}>✓ Done. Zero API cost.</div>
+              <div style={{ color: '#0095ff', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
+                <span>$</span>
+                <span style={{ width: 7, height: 13, background: '#0095ff', display: 'inline-block', animation: 'pulse 1s ease infinite' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Feature pills ── */}
       <section style={{
         maxWidth: 700, margin: '0 auto',
