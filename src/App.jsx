@@ -758,7 +758,7 @@ function BlueprintPanel({ blueprint }) {
 
 // ─── Result Screen ────────────────────────────────────────────────────────────
 
-function ResultScreen({ sessionId, rawIdea, onDashboard }) {
+function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
@@ -1116,10 +1116,16 @@ function ResultScreen({ sessionId, rawIdea, onDashboard }) {
         </div>
 
         {/* Footer CTA */}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={copyPrompt}
             style={{ padding: '0.8rem 1.75rem', background: copied ? '#16a34a' : '#0095ff', color: '#fff', border: 'none', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 18px rgba(0,149,255,0.4)', transition: 'all 0.15s' }}>
             {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
+          </button>
+          <button onClick={onEdit}
+            style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.6)'; e.currentTarget.style.background = 'rgba(167,139,250,0.07)' }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.3)'; e.currentTarget.style.background = 'transparent' }}>
+            ✏️ Edit Responses
           </button>
           <button onClick={onDashboard}
             style={{ padding: '0.8rem 1.5rem', background: 'transparent', color: '#555', border: '1px solid #2a2a2a', borderRadius: '9px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
@@ -1238,6 +1244,16 @@ export default function App() {
     setView('dashboard')
   }, [])
 
+  const handleEditResult = useCallback(async () => {
+    // Delete cached build plan so it regenerates after the user saves edits
+    await supabase.from('build_plans').delete().eq('session_id', sessionId)
+    // Jump back to the questionnaire starting at the first category
+    setCompletedSteps([])
+    setActiveStep(STEPS[0].id)
+    setJumpRequest({ category: STEPS[0].label, nonce: Date.now() })
+    setView('questionnaire')
+  }, [sessionId])
+
   const handleStepClick = useCallback((stepId) => {
     const step = STEPS.find(s => s.id === stepId)
     if (!step) return
@@ -1301,7 +1317,7 @@ export default function App() {
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
