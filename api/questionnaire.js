@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea, history } = req.body ?? {}
+  const { raw_idea, history, dev_mode } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
@@ -94,9 +94,9 @@ Return ONLY a valid JSON array of arrays — one inner array per question, in th
   }
 
   try {
-    // Pass 1 — Opus
+    // Pass 1 — Opus (or Haiku in dev mode)
     const opusMsg = await client.messages.create({
-      model: MODELS.POWERFUL,
+      model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
       max_tokens: 3000,
       messages: [{ role: 'user', content: questionPrompt }],
     })
@@ -107,7 +107,7 @@ Return ONLY a valid JSON array of arrays — one inner array per question, in th
 
     if (!Array.isArray(questions)) throw new Error('Opus did not return a JSON array')
 
-    // Pass 2 — Haiku
+    // Pass 2 — Haiku (always Haiku — chips don't need quality)
     const haikusMsg = await client.messages.create({
       model: MODELS.FAST,
       max_tokens: 2000,

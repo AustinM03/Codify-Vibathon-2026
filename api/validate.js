@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { answers } = req.body ?? {}
+  const { answers, dev_mode } = req.body ?? {}
 
   if (!Array.isArray(answers) || answers.length === 0) {
     return res.status(400).json({ error: 'answers array is required' })
@@ -55,7 +55,7 @@ Rules:
 
   try {
     const message = await client.messages.create({
-      model: MODELS.POWERFUL,
+      model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
     })
