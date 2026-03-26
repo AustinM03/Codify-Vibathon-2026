@@ -240,7 +240,9 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
         encoding: 'base64',
       }))
 
-      const teamId = process.env.VERCEL_TEAM_ID
+      // Use DEPLOY_TEAM_ID (not VERCEL_TEAM_ID) because Vercel auto-injects
+      // VERCEL_TEAM_ID with the hosting team's ID, which is not where we deploy user apps.
+      const teamId = process.env.DEPLOY_TEAM_ID
       const vercelUrl = teamId
         ? `https://api.vercel.com/v13/deployments?teamId=${teamId}`
         : 'https://api.vercel.com/v13/deployments'

@@ -1611,7 +1611,7 @@ export default function App() {
         <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
-        <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
+        <header style={{ flexShrink: 0, height: 52, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 4px 30px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
           <button onClick={handleGoToDashboard}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
