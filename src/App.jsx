@@ -4,6 +4,7 @@ import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
 import OllamaSetup from './views/OllamaSetup'
+import AIGeneratedInput from './components/AIGeneratedInput.jsx'
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
   { id: 'features',     label: 'Features',     phase: 2 },
@@ -335,10 +336,6 @@ function IntakeScreen({ onSuccess, user }) {
   const [focused, setFocused] = useState(false)
 
   const borderColor = error ? T.error : focused ? T.focusBorder : T.inputBorder
-
-  // Import the new input component
-  // eslint-disable-next-line
-  const AIGeneratedInput = require('./components/AIGeneratedInput.jsx').default;
 
   async function handleSubmit() {
     if (!idea.trim()) { setError('Please describe your app idea before continuing.'); return }
