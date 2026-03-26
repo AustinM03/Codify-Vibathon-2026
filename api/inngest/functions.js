@@ -3,7 +3,10 @@ import { inngest } from './client.js'
 import { supabase } from '../supabaseServer.js'
 import { MODELS } from '../models.js'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 45_000, // 45s — fail fast before Vercel's 60s kill, let Inngest retry cleanly
+})
 
 // ---------------------------------------------------------------------------
 // Static files that never touch Claude — keeps token budget for real code
@@ -68,11 +71,13 @@ async function updateJob(jobId, fields) {
 // buildAppJob — the Inngest function (3 sequential steps)
 // ---------------------------------------------------------------------------
 export const buildAppJob = inngest.createFunction(
-  { id: 'build-app-job', retries: 1, triggers: [{ event: 'app/build' }] },
+  { id: 'build-app-job', retries: 3, triggers: [{ event: 'app/build' }] },
   async ({ event, step }) => {
     const { jobId, session_id, title, prompt, tech_stack, features, dev_mode } = event.data
-    const model = dev_mode ? MODELS.FAST : MODELS.BALANCED
-    const fastModel = MODELS.FAST
+    // Haiku for all build steps — fast responses (3-10s) guarantee we stay
+    // well under Vercel's 60s timeout. Files are small (~50-80 lines) so
+    // Haiku quality is sufficient.
+    const buildModel = MODELS.FAST
 
     // -----------------------------------------------------------------------
     // Step A — Architect: design the file schema (Haiku for speed)
@@ -81,22 +86,24 @@ export const buildAppJob = inngest.createFunction(
       await updateJob(jobId, { status: 'Architecting codebase...' })
 
       const res = await client.messages.create({
-        model: fastModel,
+        model: buildModel,
         max_tokens: 4096,
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
 
 Rules:
-- 3-10 files, all under src/
+- All files under src/
 - src/App.jsx is ALWAYS the first entry — it is the root component and router
+- Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
+- No file count limit — let the app's complexity determine how many files are needed
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
 - ONLY output the JSON array. No markdown, no explanation
 
-Architecture constraint — each file will be generated independently by a separate AI call that sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
-- Each component must be fully self-contained — no shared utility functions or shared constants unless explicitly listed as a file
-- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational when possible
+Architecture constraint — each file will be generated independently by a separate AI call in parallel. The writer sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
+- Each component must be fully self-contained — one responsibility per file
+- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational
 - If a shared data model or theme is needed, make it its own file (e.g. src/theme.js, src/data.js) so every file can import it
-- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details (layout, key visual elements)`,
+- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details`,
         messages: [{
           role: 'user',
           content: `Design the file structure for this app:
@@ -132,14 +139,18 @@ Return ONLY the JSON array.`
     // Build context string so each worker knows about sibling files
     const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
+    const BATCH_SIZE = 5
     const files = []
-    for (let i = 0; i < schema.length; i++) {
-      const fileSpec = schema[i]
-      const file = await step.run(`write-file-${i}`, async () => {
-        const res = await client.messages.create({
-          model,
-          max_tokens: 8000,
-          system: `You are an expert React developer writing a single file for a larger project.
+    for (let b = 0; b < schema.length; b += BATCH_SIZE) {
+      const batch = schema.slice(b, b + BATCH_SIZE)
+      const batchFiles = await Promise.all(
+        batch.map((fileSpec, j) => {
+          const i = b + j
+          return step.run(`write-file-${i}`, async () => {
+            const res = await client.messages.create({
+              model: buildModel,
+              max_tokens: 2048,
+              system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
 - Use React 18 with functional components and hooks
@@ -161,9 +172,9 @@ Design system — apply consistently since files are generated independently:
 - Interactive elements: smooth transitions (0.2s ease), hover states, pointer cursor
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`,
-          messages: [{
-            role: 'user',
-            content: `Write the complete code for: ${fileSpec.path}
+              messages: [{
+                role: 'user',
+                content: `Write the complete code for: ${fileSpec.path}
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
@@ -177,14 +188,18 @@ ${schemaContext}
 IMPORTANT: This file is located at "${fileSpec.path}". Calculate all import paths relative to this file's directory.
 
 Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
-          }],
+              }],
+            })
+
+            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+          })
         })
-
-        await updateJob(jobId, { progress: i + 1 })
-
-        return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+      )
+      files.push(...batchFiles)
+      // Update progress after each batch completes — no race condition
+      await step.run(`progress-batch-${b}`, async () => {
+        await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
-      files.push(file)
     }
 
     const generatedFiles = { files, extraDeps: allDeps }
