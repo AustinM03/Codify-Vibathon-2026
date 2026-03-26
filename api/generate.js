@@ -34,7 +34,7 @@ Return ONLY a valid JSON object with exactly these fields:
 {
   "title": "3-5 word app name that captures the core value",
   "summary": "2-3 sentences in plain English describing what the app does, who it's for, and what problem it solves. No jargon.",
-  "prompt": "A complete app specification that will be used to generate a multi-file React+Vite project. Must be 300-600 words. Structure it as: 1) App overview, 2) Core features (bulleted, be specific about behavior), 3) Key screens/views and the user flow between them, 4) Important business rules and data relationships, 5) Visual style direction (colors, layout, feel). Write it as a direct instruction — start with 'Build a [app name]...'. Focus on WHAT the app does, not HOW to code it — the implementation architecture is handled separately. Keep scope realistic for a single-page React app with mocked data.",
+  "prompt": "A complete app specification used to generate a multi-file React+Vite project where EACH FILE is written by a separate AI call in isolation. Must be 400-800 words. Structure it as:\n\n1) APP OVERVIEW — what the app is and who it's for (2-3 sentences)\n2) VISUAL DESIGN — specific primary color hex code, accent color, overall feel (e.g. 'clean and minimal' or 'bold and playful'), key layout pattern (sidebar+main, tab bar, single scroll)\n3) CORE FEATURES — bulleted, each with specific behavior (inputs, outputs, interactions). Be precise enough that a developer who can't ask questions could build it\n4) SCREENS/VIEWS — describe EACH screen in its own paragraph: what components appear, what data is shown, what actions are available, how the user navigates to/from it. This is critical because each screen may be built by a different developer who cannot see the other screens\n5) DATA MODEL — the key entities, their fields, and relationships. Include sample mock data values so every file uses consistent fake data (same user names, same item names, same categories)\n6) BUSINESS RULES — validation rules, calculated fields, state transitions\n\nWrite it as a direct instruction starting with 'Build a [app name]...'. Focus on WHAT not HOW. Keep scope realistic for a client-side React app with mocked data.",
   "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
   "tech_stack": ["Technology 1", "Technology 2", "Technology 3"],
   "user_stories": ["As a [user type], I can [action] so that [benefit].", "..."],
@@ -136,7 +136,7 @@ Now generate the full build specification JSON.`
   try {
     const message = await client.messages.create({
       model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
-      max_tokens: 4096,
+      max_tokens: 5000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
     })
