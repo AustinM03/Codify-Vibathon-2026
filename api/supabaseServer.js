@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Uses anon key with permissive RLS policies — no service role key needed.
-// VITE_ prefix env vars are available server-side via dotenv / Vercel.
+// Service role key bypasses RLS — required for server-side/Inngest writes.
 export const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
