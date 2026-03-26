@@ -82,7 +82,9 @@ async function extractFallback(raw_idea, dev_mode) {
     messages: [{ role: 'user', content: `App idea: "${raw_idea.slice(0, 1000)}"` }],
   })
   const raw = message.content[0].text.trim()
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  const s = cleaned.indexOf('{'); const e = cleaned.lastIndexOf('}')
+  if (s !== -1 && e !== -1) cleaned = cleaned.slice(s, e + 1)
   return JSON.parse(cleaned)
 }
 
@@ -144,7 +146,12 @@ Now generate the full build specification JSON.`
     })
 
     const raw = message.content[0].text.trim()
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    // Strip any preamble text before the JSON object
+    const objStart = cleaned.indexOf('{')
+    const objEnd = cleaned.lastIndexOf('}')
+    if (objStart === -1 || objEnd === -1) throw new Error(`Model returned non-JSON: ${cleaned.slice(0, 200)}`)
+    cleaned = cleaned.slice(objStart, objEnd + 1)
     const result = JSON.parse(cleaned)
 
     const required = ['title', 'summary', 'prompt', 'features', 'tech_stack', 'user_stories']
