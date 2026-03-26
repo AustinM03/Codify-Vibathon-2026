@@ -104,7 +104,7 @@ RULES:
 - NEVER create a hooks/ directory or custom hooks — inline logic in components
 - NEVER make real API calls — all data comes from src/data.js
 - ALL state lives in App.jsx as useState. Pass everything down as props
-- dependencies array: ONLY charting/UI libs like "recharts" or "react-icons". No state libs
+- dependencies: root npm package names ONLY (e.g. "recharts", "react-icons" — NOT "react-icons/fi"). No state libs, no CSS frameworks
 - ONLY output the raw JSON array. No markdown, no explanation
 
 DESCRIPTION rules — descriptions are the ONLY context the file writer gets:
@@ -141,7 +141,11 @@ Return ONLY the JSON array.`,
     })
 
     const allDeps = {}
-    schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
+    schema.forEach(f => (f.dependencies ?? []).forEach(d => {
+      // Sanitize: "react-icons/fi" → "react-icons", "@foo/bar/baz" → "@foo/bar"
+      const clean = d.startsWith('@') ? d.split('/').slice(0, 2).join('/') : d.split('/')[0]
+      if (clean && !clean.includes(' ')) allDeps[clean] = 'latest'
+    }))
 
     const schemaContext = schema.map(f =>
       `- ${f.path} (exports: ${f.exports?.join(', ') ?? 'default'})`
