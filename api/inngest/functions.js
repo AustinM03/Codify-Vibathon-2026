@@ -198,7 +198,7 @@ Return ONLY the JSON array.`,
 
 This file is written in ISOLATION. Other files exist but you cannot see their code. Use ONLY the export names and prop signatures listed in the project file structure below.`
 
-    const BATCH_SIZE = 3
+    const BATCH_SIZE = 2
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -237,12 +237,105 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
       if (b + BATCH_SIZE < schema.length) {
-        await step.sleep(`batch-gap-${b}`, '10s')
+        await step.sleep(`batch-gap-${b}`, '20s')
       }
     }
 
     // -----------------------------------------------------------------------
-    // Step C — Assembly & Deploy to Vercel
+    // Step C — Quality checker: find broken files, auto-fix or re-generate
+    // -----------------------------------------------------------------------
+    const filesToRedo = await step.run('quality-check', async () => {
+      await updateJob(jobId, { status: 'Checking for issues...' })
+
+      const redo = [] // indices of files that need re-generation
+
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i]
+        const problems = []
+
+        // Strip markdown fences (auto-fix)
+        if (f.content.startsWith('```')) {
+          f.content = f.content.replace(/^```[\w]*\n?/, '').replace(/\n?```\s*$/, '')
+        }
+
+        // JSX in a .js file → fatal Vite build error
+        if (f.path.endsWith('.js') && /<\w/.test(f.content) && /return\s*\(?\s*</.test(f.content)) {
+          problems.push('Contains JSX in a .js file (must be .jsx or contain no JSX)')
+        }
+
+        // Banned patterns that cause white-page crashes
+        if (/from\s+['"]zustand['"]/.test(f.content)) problems.push('Uses zustand (banned)')
+        if (/from\s+['"]redux['"]/.test(f.content)) problems.push('Uses redux (banned)')
+        if (/createContext\s*\(/.test(f.content)) problems.push('Uses createContext (banned)')
+        if (/useReducer\s*\(/.test(f.content)) problems.push('Uses useReducer (banned)')
+        if (/from\s+['"]react-router/.test(f.content)) problems.push('Uses react-router-dom (banned)')
+        if (/\bfetch\s*\(/.test(f.content) && !f.path.includes('data')) problems.push('Uses fetch() (banned — use mock data)')
+
+        // data.js should have no React/JSX
+        if ((f.path.endsWith('data.js') || f.path.endsWith('data.jsx')) && /from\s+['"]react['"]/.test(f.content)) {
+          problems.push('data file imports React (must be plain JS only)')
+        }
+
+        // Missing default export in component files
+        if (f.path.endsWith('.jsx') && !/export\s+default/.test(f.content)) {
+          problems.push('Missing export default')
+        }
+
+        if (problems.length > 0) {
+          redo.push({ index: i, path: f.path, problems })
+        }
+      }
+
+      return redo
+    })
+
+    // Re-generate broken files
+    if (filesToRedo.length > 0) {
+      await step.run('redo-status', async () => {
+        await updateJob(jobId, { status: `Fixing ${filesToRedo.length} file(s)...` })
+      })
+
+      for (const item of filesToRedo) {
+        const fileSpec = schema[item.index] ?? { path: item.path, description: '', exports: ['default'] }
+        const fixMessage = `REDO — the previous version of this file had these problems:
+${item.problems.map(p => `- ${p}`).join('\n')}
+
+Write a FIXED version of: ${fileSpec.path}
+Description: ${fileSpec.description}
+Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
+
+## App
+${title}: ${prompt.slice(0, 300)}
+
+## Project File Structure
+${schemaContext}
+
+CRITICAL RULES FOR THIS FIX:
+- If this is a .js file, do NOT use any JSX (<tags>). Export only plain JS objects/arrays.
+- Do NOT use: zustand, redux, createContext, useReducer, react-router-dom, fetch()
+- Every component MUST have export default
+- Use ONLY useState and useEffect for state/lifecycle
+- Use inline styles only
+
+Write ONLY the fixed code. No markdown fences, no explanation.`
+
+        const fixRes = await step.ai.infer(`redo-file-${item.index}`, {
+          model: step.ai.models.anthropic({
+            model: MODELS.FAST,
+            defaultParameters: { max_tokens: 6000 },
+          }),
+          body: {
+            system: fileWriterSystem,
+            messages: [{ role: 'user', content: fixMessage }],
+            max_tokens: 6000,
+          },
+        })
+        files[item.index] = { path: item.path, content: stripFences(fixRes.content[0].text) }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Step D — Assembly & Deploy to Vercel
     // -----------------------------------------------------------------------
     const result = await step.run('assembly-deploy', async () => {
       await updateJob(jobId, { status: 'Deploying to Vercel...' })
