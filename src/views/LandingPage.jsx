@@ -99,20 +99,8 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
         textAlign: 'center',
         animation: 'fadeUp 0.6s ease both',
       }}>
-        {/* Accent pill */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-          background: 'rgba(0,149,255,0.1)', border: '1px solid rgba(0,149,255,0.25)',
-          borderRadius: '999px', padding: '0.3rem 1rem',
-          fontSize: '0.75rem', color: '#60c8ff', fontWeight: 600,
-          letterSpacing: '0.04em', marginBottom: '2rem',
-          animation: 'pulse 3s ease infinite',
-        }}>
-          <span>✦</span>
-          <span>AI-Powered App Planning — No Code Required</span>
-        </div>
 
-        {/* Headline */}
+        {/* Headline (moved up) */}
         <h1 style={{
           fontSize: 'clamp(2.4rem, 6vw, 4rem)',
           fontWeight: 800, lineHeight: 1.1,
