@@ -138,7 +138,7 @@ Return ONLY the JSON array.`,
     schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
 
     const schemaContext = schema.map(f =>
-      `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`
+      `- ${f.path} (exports: ${f.exports?.join(', ') ?? 'default'})`
     ).join('\n')
 
     const fileWriterSystem = `You are an expert React developer writing a single file for a larger project.
@@ -169,7 +169,7 @@ Design system — apply consistently since files are generated independently:
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
 
-    const BATCH_SIZE = 5
+    const BATCH_SIZE = 2
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -180,9 +180,8 @@ This file is generated in ISOLATION — you cannot see the code of sibling files
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
-## Full App Context
-App: ${title}
-Spec: ${prompt}
+## App
+${title}: ${prompt.slice(0, 300)}
 
 ## Project File Structure
 ${schemaContext}
@@ -208,6 +207,9 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
       await step.run(`progress-batch-${b}`, async () => {
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
+      if (b + BATCH_SIZE < schema.length) {
+        await step.sleep(`batch-gap-${b}`, '15s')
+      }
     }
 
     // -----------------------------------------------------------------------
