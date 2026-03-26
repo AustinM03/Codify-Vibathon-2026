@@ -106,6 +106,8 @@ Rules:
 - src/App.jsx is ALWAYS the first entry — it is the root component and router. Keep App.jsx THIN: only top-level state, routing logic, and composition of child components. No inline UI — delegate everything to named components
 - Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
 - No file count limit — let the app's complexity determine how many files are needed
+- NEVER create a large context file (e.g. DataContext.jsx) that combines data + actions + state. Instead split into: src/data.js (mock data only), src/hooks/useX.js (one hook per concern). Context files easily exceed the token limit and will be truncated
+- NEVER put more than one concern in a single file. If a file would need more than ~80 lines, split it
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
 - ONLY output the JSON array. No markdown, no explanation
 
@@ -201,7 +203,14 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
               }],
             })
 
-            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+            const content = stripFences(res.content[0].text)
+            // If the model hit max_tokens, the file is truncated — append a safe closing
+            // so the build doesn't fail with "Unexpected end of file"
+            const finishedCleanly = res.stop_reason === 'end_turn'
+            const safeContent = finishedCleanly
+              ? content
+              : content + '\n// [truncated — file too large, split into smaller modules]\nexport default function Placeholder() { return null; }\n'
+            return { path: fileSpec.path, content: safeContent }
           })
         })
       )
