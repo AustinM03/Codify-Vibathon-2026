@@ -181,20 +181,20 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
               <div key={s.id}
                 onClick={() => onOpenSession(s.id, s.raw_idea)}
                 style={{
-                  background: hasPlan ? 'rgba(34,197,94,0.04)' : '#111',
-                  backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'}`,
+                  background: hasPlan ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.03)',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'}`,
                   borderRadius: '12px',
                   padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : '#0095ff44'
-                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(0,149,255,0.08)'
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : 'rgba(124,91,240,0.3)'
+                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(124,91,240,0.08)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : '#1e1e1e'
+                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'
                   e.currentTarget.style.boxShadow = 'none'
                 }}>
 
@@ -246,7 +246,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                     ) : (
                       <>
                         <span style={{ fontSize: '0.8rem' }}>📝</span>
-                        <span style={{ fontSize: '0.72rem', color: '#333' }}>Not started</span>
+                        <span style={{ fontSize: '0.72rem', color: '#4a4458' }}>Not started</span>
                       </>
                     )}
                   </div>
@@ -268,19 +268,19 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                 ) : (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>Progress</span>
-                      <span style={{ fontSize: '0.62rem', color: '#2e2e2e' }}>{stepIdx} / 7</span>
+                      <span style={{ fontSize: '0.62rem', color: '#4a4458' }}>Progress</span>
+                      <span style={{ fontSize: '0.62rem', color: '#4a4458' }}>{stepIdx} / 7</span>
                     </div>
-                    <div style={{ height: 3, background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #0095ff, #00d4ff)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                    <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#22c55e' : 'linear-gradient(90deg, #7c5bf0, #5eead4)', borderRadius: '2px', transition: 'width 0.3s' }} />
                     </div>
                   </div>
                 )}
 
                 {/* CTA */}
-                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#2a2a2a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#6b6680', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <span>{hasPlan ? 'View Build Plan' : (progress === 100 ? '✓ Complete' : 'Continue building')}</span>
-                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#1e3a5a', fontSize: '0.8rem' }}>→</span>
+                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#6b6680', fontSize: '0.8rem' }}>→</span>
                 </div>
               </div>
             )

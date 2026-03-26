@@ -68,17 +68,18 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
         position: 'sticky', top: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 2.5rem', height: 60,
-        background: 'rgba(15,15,15,0.85)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(255,255,255,0.06)',
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(255,255,255,0.14)',
+        boxShadow: '0 4px 30px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{
             width: 30, height: 30,
-            background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
+            background: 'linear-gradient(135deg, #7c5bf0, #5eead4)',
             borderRadius: '8px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '0.9rem',
-          }}>🚀</div>
+            justifyContent: 'center', fontSize: '0.8rem', color: '#fff', fontWeight: 700,
+          }}>P</div>
           <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>PromptReady</span>
         </div>
         <button
@@ -356,7 +357,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
               className="feature-pill"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
-                background: '#111', border: '1px solid #1e1e1e',
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '999px', padding: '0.5rem 1.1rem',
                 fontSize: '0.82rem', color: '#888',
                 transition: 'all 0.15s', cursor: 'default',
@@ -405,10 +406,10 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
       }}>
         <div style={{
           width: 20, height: 20,
-          background: 'linear-gradient(135deg, #0095ff, #00d4ff)',
+          background: 'linear-gradient(135deg, #7c5bf0, #5eead4)',
           borderRadius: '5px', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '0.65rem',
-        }}>🚀</div>
+          justifyContent: 'center', fontSize: '0.55rem', color: '#fff', fontWeight: 700,
+        }}>P</div>
         <span style={{ fontSize: '0.75rem', color: '#2e2e2e' }}>© 2026 PromptReady. Built for builders.</span>
       </footer>
     </div>
