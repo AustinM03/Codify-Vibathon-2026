@@ -193,7 +193,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
           return step.ai.infer(`write-file-${i}`, {
             model: step.ai.models.anthropic({
-              model: MODELS.BALANCED,
+              model: MODELS.FAST,
               defaultParameters: { max_tokens: 4096 },
             }),
             body: {
