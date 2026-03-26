@@ -4,7 +4,7 @@
 
 Prism guides non-technical founders through a 7-step AI-powered questionnaire, generates a complete build specification, then writes every file and deploys the finished app to Vercel — all from a plain-English description.
 
-Built for the [Codify Vibathon 2026](https://codify.com).
+Built for the [codefi Vibathon 2026](https://codefi.com).
 
 ---
 
@@ -114,7 +114,7 @@ Vercel serverless functions have a 10-second timeout. Code generation takes 60-9
 ## Project Structure
 
 ```
-Codify-Vibathon-2026/
+codefi-Vibathon-2026/
 ├── api/                          # Node.js serverless functions
 │   ├── questionnaire.js          # Two-pass: Opus (questions) + Haiku (chips)
 │   ├── explain.js                # On-demand help explanations
@@ -251,7 +251,7 @@ Vercel handles:
 
 ## Team
 
-Built by Max, Austin, and Spring for the Codify Vibathon 2026.
+Built by Max, Austin, and Spring for the codefi Vibathon 2026.
 
 ---
 
