@@ -1457,24 +1457,37 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
                   </button>
                 </div>
               </div>
-              <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(34,197,94,0.25)', background: '#fff', position: 'relative' }}>
-                <div style={{ background: 'rgba(15,15,20,0.9)', padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(248,113,113,0.5)' }} />
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(251,191,36,0.5)' }} />
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(52,211,153,0.5)' }} />
+              {!(typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('mac')) ? (
+                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(34,197,94,0.25)', background: '#fff', position: 'relative' }}>
+                  <div style={{ background: 'rgba(15,15,20,0.9)', padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(248,113,113,0.5)' }} />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(251,191,36,0.5)' }} />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(52,211,153,0.5)' }} />
+                    </div>
+                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.7rem', color: '#6b6680', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {deployUrl}
+                    </div>
                   </div>
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.7rem', color: '#6b6680', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {deployUrl}
-                  </div>
+                  <iframe
+                    src={deployUrl}
+                    title="Live app preview"
+                    style={{ width: '100%', height: 480, border: 'none', display: 'block', background: '#fff' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                  />
                 </div>
-                <iframe
-                  src={deployUrl}
-                  title="Live app preview"
-                  style={{ width: '100%', height: 480, border: 'none', display: 'block', background: '#fff' }}
-                  sandbox="allow-scripts allow-same-origin allow-forms"
-                />
-              </div>
+              ) : (
+                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.05)', padding: '3rem 2rem', textAlign: 'center' }}>
+                  <div style={{ color: '#4ade80', fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: 600 }}>App Deployed Successfully! 🎉</div>
+                  <div style={{ color: '#9ca3af', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: 1.5, maxWidth: 400, margin: '0 auto 2rem' }}>
+                    Mac browsers often block live previews for security reasons. Click below to view your live app in a new tab.
+                  </div>
+                  <a href={deployUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-block', padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', textDecoration: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, boxShadow: '0 4px 14px rgba(16,185,129,0.3)', transition: 'transform 0.2s', alignSelf: 'center' }}>
+                    Open App in New Tab ↗
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
