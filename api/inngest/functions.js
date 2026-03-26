@@ -88,24 +88,30 @@ export const buildAppJob = inngest.createFunction(
         defaultParameters: { max_tokens: 4096 },
       }),
       body: {
-        system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
+        system: `You are a React architect. Output a JSON array of src/ files for a client-side React app.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
 
-Rules:
-- All files under src/
-- src/App.jsx is ALWAYS the first entry — it is the root component and router. Keep App.jsx THIN: only top-level state, routing logic, and composition of child components. No inline UI — delegate everything to named components
-- Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
-- No file count limit — let the app's complexity determine how many files are needed
-- NEVER create a large context file (e.g. DataContext.jsx) that combines data + actions + state. Instead split into: src/data.js (mock data only), src/hooks/useX.js (one hook per concern). Context files easily exceed the token limit and will be truncated
-- NEVER put more than one concern in a single file. If a file would need more than ~80 lines, split it
-- dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
-- ONLY output the JSON array. No markdown, no explanation
+FILE COUNT: 6–10 files maximum. Every extra file is a risk — keep it tight.
 
-Architecture constraint — each file will be generated independently by a separate AI call in parallel. The writer sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
-- Each component must be fully self-contained — one responsibility per file
-- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational
-- If a shared data model or theme is needed, make it its own file (e.g. src/theme.js, src/data.js) so every file can import it
-- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details`,
+REQUIRED structure (always include these in this order):
+1. src/data.js — ALL mock data as exported JS arrays/objects. No components. Just data.
+2. src/App.jsx — Root component. Owns ALL useState. Renders views conditionally based on a "currentView" state string. No react-router-dom. No useContext. Just props down.
+3. 1–2 view files (src/views/HomeView.jsx, src/views/DetailView.jsx, etc.) — each renders one screen, receives all data and callbacks as props from App
+4. 2–4 shared UI components (src/components/Card.jsx, etc.) — purely presentational, props only
+
+RULES:
+- NEVER use react-router-dom, useContext, createContext, useReducer, Zustand, Redux, or any state library
+- NEVER create a hooks/ directory or custom hooks — inline logic in components
+- NEVER make real API calls — all data comes from src/data.js
+- ALL state lives in App.jsx as useState. Pass everything down as props
+- dependencies array: ONLY charting/UI libs like "recharts" or "react-icons". No state libs
+- ONLY output the raw JSON array. No markdown, no explanation
+
+DESCRIPTION rules — descriptions are the ONLY context the file writer gets:
+- For src/data.js: list every exported variable name and its shape. E.g. "Exports: items (array of {id,name,price,category}), users (array of {id,name,email}). Seed with 5-8 realistic entries each."
+- For view files: list every prop name and type. E.g. "Props: items (array), onSelect(item), currentUser(object). Renders a grid of Cards..."
+- For App.jsx: list all useState variables with initial values. E.g. "useState: currentView('home'), selectedItem(null), items(imported from data.js)..."
+- Be specific enough that a developer with no other context can write the complete file`,
         messages: [{
           role: 'user',
           content: `Design the file structure for this app:
@@ -141,33 +147,52 @@ Return ONLY the JSON array.`,
       `- ${f.path} (exports: ${f.exports?.join(', ') ?? 'default'})`
     ).join('\n')
 
-    const fileWriterSystem = `You are an expert React developer writing a single file for a larger project.
-Rules:
-- Output ONLY the file contents — no markdown fences, no explanation
-- Use React 18 with functional components and hooks
-- Use inline styles — no CSS frameworks, no Tailwind
-- NO API keys or environment variables
-- Mock any backend/database with local state or localStorage
-- CRITICAL: Use correct relative import paths based on the file's location. For example, if writing src/App.jsx and importing src/components/Foo.jsx, use './components/Foo'. If writing src/components/Bar.jsx and importing src/hooks/useX.js, use '../hooks/useX'
-- CRITICAL: If using react-router-dom, ALWAYS wrap the root in <BrowserRouter> inside App.jsx. Never call useLocation() or useNavigate() outside a <Router> — this causes a fatal white-page crash
-- CRITICAL: Always declare variables before using them. Never reference an identifier that hasn't been initialized in the current scope
-- CRITICAL: For Zustand, use the named import: import { create } from 'zustand' — the default import is deprecated and will crash
-- CRITICAL: Every prop and callback referenced in JSX must be declared — never use an undeclared variable
-- CRITICAL: Keep each component concise. If a component would exceed ~120 lines, split logic into smaller helpers within the same file
+    const fileWriterSystem = `You are a React developer writing ONE file for a client-side app. Output ONLY raw file contents — no markdown fences, no explanation, no comments about what you're doing.
 
-The project already has these files (do NOT generate them):
-- index.html (mounts #root)
-- vite.config.js (React plugin)
-- src/main.jsx (renders <App /> into #root via ReactDOM.createRoot)
+═══ WHAT IS ALLOWED ═══
+- React 18 functional components with useState, useEffect
+- Inline styles only (no Tailwind, no CSS files, no CSS modules)
+- Import from src/data.js for mock data
+- localStorage for persistence (optional)
+- Props passed from parent — use exactly the prop names listed in the description
+- Libraries listed in the project dependencies (e.g. recharts)
 
-Design system — apply consistently since files are generated independently:
-- Use a cohesive color palette: one primary color, one accent, neutral grays for backgrounds/borders, white cards on light gray (#f5f5f5) backgrounds
-- Typography: system font stack (-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif), base 16px, headings bold
-- Spacing: 8px grid (padding/margins in multiples of 8)
-- Cards/containers: 8px border-radius, subtle box-shadow (0 2px 8px rgba(0,0,0,0.1))
-- Interactive elements: smooth transitions (0.2s ease), hover states, pointer cursor
+═══ WHAT IS BANNED (causes white-page crashes) ═══
+- useContext / createContext — BANNED
+- useReducer — BANNED
+- react-router-dom (BrowserRouter, useNavigate, Link) — BANNED. Use conditional rendering and props instead
+- Zustand / Redux / MobX / any state library — BANNED
+- fetch() / axios / API calls of any kind — BANNED. Use src/data.js
+- Dynamic import() — BANNED
+- process.env — BANNED
 
-This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
+═══ CRASH PREVENTION RULES ═══
+- Every variable used in JSX MUST be declared in the same scope. Never use a variable from a sibling file directly
+- Always check arrays before mapping: (items ?? []).map(...)
+- Always check objects before accessing: item?.name ?? 'Unknown'
+- Every prop used in JSX must be listed in the function signature: function MyComp({ items, onSelect }) {
+- If this is App.jsx: initialize ALL state with useState before any JSX. Never conditionally call hooks
+- If this is src/data.js: export plain JS arrays/objects only. No React, no imports
+
+═══ IMPORT PATH RULES ═══
+- From src/App.jsx importing src/components/Card.jsx → './components/Card'
+- From src/views/Home.jsx importing src/components/Card.jsx → '../components/Card'
+- From src/views/Home.jsx importing src/data.js → '../data'
+- From src/components/Card.jsx importing src/data.js → '../data'
+- Never use absolute paths. Always relative.
+
+═══ DESIGN SYSTEM (apply to every component) ═══
+- Background: #f5f5f5 page, #ffffff cards
+- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif — 16px base
+- Spacing: multiples of 8px
+- Cards: borderRadius 8px, boxShadow '0 2px 8px rgba(0,0,0,0.08)', padding 16px
+- Buttons: borderRadius 6px, padding '8px 16px', cursor pointer, no border
+- Primary color: use the one specified in the app spec, or default #4f46e5
+
+═══ ALREADY EXISTS — DO NOT GENERATE ═══
+- index.html, vite.config.js, src/main.jsx (these are provided automatically)
+
+This file is written in ISOLATION. Other files exist but you cannot see their code. Use ONLY the export names and prop signatures listed in the project file structure below.`
 
     const BATCH_SIZE = 2
     const files = []
@@ -283,29 +308,23 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 // generatePlanJob — runs Claude to produce a build spec, saves to build_plans
 // step.ai.infer() means Sonnet runs on Inngest's servers — no Vercel timeout
 // ---------------------------------------------------------------------------
-const GENERATE_SYSTEM_PROMPT = `You are a senior software architect and product strategist. Your job is to synthesize a user's app idea and their answers to 7 planning questions into a complete, actionable build specification.
+const GENERATE_SYSTEM_PROMPT = `You are a product strategist writing a build specification for an AI code generator. The generator builds client-side React apps where each file is written by a separate AI in isolation with no shared context.
 
 Return ONLY a valid JSON object with exactly these fields:
 {
-  "title": "3-5 word app name that captures the core value",
-  "summary": "2-3 sentences in plain English describing what the app does, who it's for, and what problem it solves. No jargon.",
-  "prompt": "A complete app specification used to generate a multi-file React+Vite project where EACH FILE is written by a separate AI call in isolation. Must be 400-800 words. Structure it as:\n\n1) APP OVERVIEW — what the app is and who it's for (2-3 sentences)\n2) VISUAL DESIGN — specific primary color hex code, accent color, overall feel (e.g. 'clean and minimal' or 'bold and playful'), key layout pattern (sidebar+main, tab bar, single scroll)\n3) CORE FEATURES — bulleted, each with specific behavior (inputs, outputs, interactions). Be precise enough that a developer who can't ask questions could build it\n4) SCREENS/VIEWS — describe EACH screen in its own paragraph: what components appear, what data is shown, what actions are available, how the user navigates to/from it. This is critical because each screen may be built by a different developer who cannot see the other screens\n5) DATA MODEL — the key entities, their fields, and relationships. Include sample mock data values so every file uses consistent fake data (same user names, same item names, same categories)\n6) BUSINESS RULES — validation rules, calculated fields, state transitions\n\nWrite it as a direct instruction starting with 'Build a [app name]...'. Focus on WHAT not HOW. Keep scope realistic for a client-side React app with mocked data.",
-  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
-  "tech_stack": ["Technology 1", "Technology 2", "Technology 3"],
-  "user_stories": ["As a [user type], I can [action] so that [benefit].", "..."],
-  "build_traps": ["Plain-English warning about a non-obvious build risk"],
-  "phases": { "phase1": ["Core feature A", "Core feature B"], "phase2": ["Enhancement D"] }
+  "title": "3-5 word app name, title case, no punctuation",
+  "summary": "2-3 plain-English sentences. What it does, who it's for, what problem it solves. No jargon.",
+  "prompt": "CRITICAL FIELD — the full spec the code generator receives. 300-500 words. Write it as direct instructions starting with 'Build a [name]...'. Structure:\n\n1) OVERVIEW: what the app is, who uses it, core value (2-3 sentences)\n2) VISUAL DESIGN: exact primary color hex, accent color, layout pattern (e.g. 'top nav + content area', 'sidebar + main', 'single scrolling page'), overall feel\n3) SCREENS: describe each view/screen separately. For each: what it shows, what the user can do, what data appears. Be specific — name the fields, buttons, and interactions\n4) MOCK DATA: list the exact entities with field names. E.g. 'Products: {id, name, price, category, inStock}. Seed with 6 realistic entries: [Apple Watch $399 Electronics, ...]'. Every screen that shows data must reference these same entities\n5) INTERACTIONS: which actions update state (add, delete, filter, select, toggle). State lives in App.jsx and is passed as props — keep it simple\n\nCONSTRAINTS TO INCLUDE IN THE PROMPT (copy these verbatim into the prompt field):\n- No routing library. Use a currentView state variable in App.jsx for navigation\n- All state in App.jsx as useState. Child components receive data and callbacks as props only\n- All backend is mocked with hardcoded data from src/data.js. No fetch, no API, no auth\n- Max 3 interactive features — keep scope tight so every feature works",
+  "features": ["4-6 plain-English feature names that map to the screens described in prompt"],
+  "tech_stack": ["React 18", "Vite", "Inline styles"],
+  "user_stories": ["As a [user], I can [action] so that [benefit]. — 3-5 stories"],
+  "build_traps": ["2-3 warnings about scope creep or complexity that would break the generator"],
+  "phases": { "phase1": ["must-have features"], "phase2": ["nice-to-have enhancements"] }
 }
 
 Rules:
-- title: no subtitle, no punctuation, title case
-- summary: completely jargon-free
-- prompt: this is the most important field — make it dense, specific, and immediately actionable
-- features: 4-8 items, plain-English noun phrases
-- tech_stack: realistic recommendations based on scale and features
-- user_stories: 4-6 stories in "As a X, I can Y so that Z" format
-- build_traps: always include 2-4 items flagging third-party setup, sync risks, or hosting misconceptions
-- phases: split into phase1 (minimal core loop) and phase2 (enhancements) if 5+ features; else null
+- prompt is the most important field. It determines whether the generated app works or crashes. Be specific, concrete, and scope-limited
+- Never suggest auth, payments, real APIs, or multi-user features — these cannot be faked cleanly
 - No markdown, no code fences, no explanation — only the JSON object`
 
 export const generatePlanJob = inngest.createFunction(
