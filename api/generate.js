@@ -15,6 +15,7 @@
 import crypto from 'crypto'
 import { inngest } from './inngest/client.js'
 import { supabase } from './supabaseServer.js'
+import { requireAuth } from './authMiddleware.js'
 
 export const config = { maxDuration: 10 }
 
@@ -22,6 +23,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   const { raw_idea, extracted, answers, session_id, dev_mode } = req.body ?? {}
 

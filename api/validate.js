@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { MODELS } from './models.js'
+import { requireAuth } from './authMiddleware.js'
 
 export const config = { maxDuration: 60 }
 
@@ -23,6 +24,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   const { answers, dev_mode } = req.body ?? {}
 

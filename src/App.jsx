@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PrismLoader from './components/PrismLoader'
-import { supabase } from './supabaseClient'
+import { supabase, authHeaders } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
@@ -418,7 +418,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     try {
       const res = await fetch('/api/explain', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ question, category }),
       })
       const json = await res.json()
@@ -556,7 +556,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
         const res = await fetch('/api/questionnaire', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({
             raw_idea: rawIdea,
             history: history ?? [],
@@ -925,7 +925,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
       try {
         const extRes = await fetch('/api/extract', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({ raw_idea: rawIdea }),
         })
         if (extRes.ok) extracted = await extRes.json()
@@ -934,7 +934,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
       // Dispatch to Inngest — returns immediately with job_id
       const genRes = await fetch('/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ raw_idea: rawIdea, extracted, answers, session_id: sessionId }),
       })
       const genText = await genRes.text()
@@ -1038,7 +1038,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           setStatus('validating')
           const valRes = await fetch('/api/validate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await authHeaders(),
             body: JSON.stringify({ answers, dev_mode: devMode }),
           })
           try { valJson = JSON.parse(await valRes.text()) } catch { valJson = { error: true } }
@@ -1071,7 +1071,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         setStatus('validating')
         const valRes = await fetch('/api/validate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({ answers, dev_mode: devMode }),
         })
         let validationJson
@@ -1125,7 +1125,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
     try {
       const res = await fetch('/api/build', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           session_id: sessionId,
           title: result.title,

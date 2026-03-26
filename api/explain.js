@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { MODELS, CATEGORY_MODELS } from './models.js'
+import { requireAuth } from './authMiddleware.js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -7,6 +8,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   const { question, category, dev_mode } = req.body ?? {}
 
