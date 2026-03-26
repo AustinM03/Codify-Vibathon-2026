@@ -669,8 +669,6 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         style={{
           width: '100%',
           maxWidth: 700,
-          minHeight: '70vh',
-          maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -1442,17 +1440,39 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           )}
 
           {deployUrl && /^https:\/\/.+\.vercel\.app/.test(deployUrl) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
-              <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>Deployed successfully!</div>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <a href={deployUrl} target="_blank" rel="noopener noreferrer"
-                  style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block', boxShadow: '0 0 15px rgba(34, 197, 94, 0.2)' }}>
-                  View Live App
-                </a>
-                <button onClick={() => { setDeployUrl(null); setBuildJobId(null); setBuildStatus(null); handleBuildAndDeploy() }}
-                  style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
-                  Rebuild
-                </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'stretch' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>
+                  🚀 Deployed successfully!
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <a href={deployUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '0.78rem', color: '#4ade80', textDecoration: 'none', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    Open in new tab ↗
+                  </a>
+                  <button onClick={() => { setDeployUrl(null); setBuildJobId(null); setBuildStatus(null); handleBuildAndDeploy() }}
+                    style={{ padding: '0.4rem 0.9rem', background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
+                    Rebuild
+                  </button>
+                </div>
+              </div>
+              <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(34,197,94,0.25)', background: '#fff', position: 'relative' }}>
+                <div style={{ background: 'rgba(15,15,20,0.9)', padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(248,113,113,0.5)' }} />
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(251,191,36,0.5)' }} />
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(52,211,153,0.5)' }} />
+                  </div>
+                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.7rem', color: '#6b6680', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {deployUrl}
+                  </div>
+                </div>
+                <iframe
+                  src={deployUrl}
+                  title="Live app preview"
+                  style={{ width: '100%', height: 480, border: 'none', display: 'block', background: '#fff' }}
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                />
               </div>
             </div>
           )}
