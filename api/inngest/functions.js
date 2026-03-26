@@ -147,54 +147,24 @@ Return ONLY the JSON array.`,
       `- ${f.path} (exports: ${f.exports?.join(', ') ?? 'default'})`
     ).join('\n')
 
-    const fileWriterSystem = `You are a React developer writing ONE file for a client-side app. Output ONLY raw file contents — no markdown fences, no explanation, no comments about what you're doing.
+    const fileWriterSystem = `You are a React developer writing ONE file. Output ONLY raw file contents — no markdown fences, no explanation.
 
-═══ WHAT IS ALLOWED ═══
-- React 18 functional components with useState, useEffect
-- Inline styles only (no Tailwind, no CSS files, no CSS modules)
-- Import from src/data.js for mock data
-- localStorage for persistence (optional)
-- Props passed from parent — use exactly the prop names listed in the description
-- Libraries listed in the project dependencies (e.g. recharts)
+RULES:
+- Functional components, useState/useEffect only. Inline styles only (no Tailwind/CSS files)
+- NEVER use: useContext, createContext, useReducer, react-router-dom, Zustand/Redux, fetch(), process.env
+- Navigation: use props like currentView/setCurrentView passed from App.jsx — never a router
+- Mock data: import from ../data or ./data — never hardcode data in components
+- Defensive JSX: always (items ?? []).map(...), always item?.name ?? 'Unknown'
+- Declare every prop in the function signature: function Foo({ items, onSelect }) {
+- src/data.js: export plain JS arrays/objects only. No React imports.
+- Import paths are RELATIVE to this file's location. src/App.jsx → './components/Foo'. src/views/Home.jsx → '../components/Foo', '../data'
+- DO NOT generate: index.html, vite.config.js, src/main.jsx
 
-═══ WHAT IS BANNED (causes white-page crashes) ═══
-- useContext / createContext — BANNED
-- useReducer — BANNED
-- react-router-dom (BrowserRouter, useNavigate, Link) — BANNED. Use conditional rendering and props instead
-- Zustand / Redux / MobX / any state library — BANNED
-- fetch() / axios / API calls of any kind — BANNED. Use src/data.js
-- Dynamic import() — BANNED
-- process.env — BANNED
+DESIGN: inline styles, #f5f5f5 page bg, #fff cards, 8px border-radius, 8px spacing grid, system font stack, use primary color from spec or #4f46e5.
 
-═══ CRASH PREVENTION RULES ═══
-- Every variable used in JSX MUST be declared in the same scope. Never use a variable from a sibling file directly
-- Always check arrays before mapping: (items ?? []).map(...)
-- Always check objects before accessing: item?.name ?? 'Unknown'
-- Every prop used in JSX must be listed in the function signature: function MyComp({ items, onSelect }) {
-- If this is App.jsx: initialize ALL state with useState before any JSX. Never conditionally call hooks
-- If this is src/data.js: export plain JS arrays/objects only. No React, no imports
+This file is written in ISOLATION — use only the export names and prop signatures from the file list below.`
 
-═══ IMPORT PATH RULES ═══
-- From src/App.jsx importing src/components/Card.jsx → './components/Card'
-- From src/views/Home.jsx importing src/components/Card.jsx → '../components/Card'
-- From src/views/Home.jsx importing src/data.js → '../data'
-- From src/components/Card.jsx importing src/data.js → '../data'
-- Never use absolute paths. Always relative.
-
-═══ DESIGN SYSTEM (apply to every component) ═══
-- Background: #f5f5f5 page, #ffffff cards
-- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif — 16px base
-- Spacing: multiples of 8px
-- Cards: borderRadius 8px, boxShadow '0 2px 8px rgba(0,0,0,0.08)', padding 16px
-- Buttons: borderRadius 6px, padding '8px 16px', cursor pointer, no border
-- Primary color: use the one specified in the app spec, or default #4f46e5
-
-═══ ALREADY EXISTS — DO NOT GENERATE ═══
-- index.html, vite.config.js, src/main.jsx (these are provided automatically)
-
-This file is written in ISOLATION. Other files exist but you cannot see their code. Use ONLY the export names and prop signatures listed in the project file structure below.`
-
-    const BATCH_SIZE = 2
+    const BATCH_SIZE = 3
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -233,7 +203,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
       if (b + BATCH_SIZE < schema.length) {
-        await step.sleep(`batch-gap-${b}`, '15s')
+        await step.sleep(`batch-gap-${b}`, '10s')
       }
     }
 
