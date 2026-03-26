@@ -15,7 +15,9 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { MODELS } from './models.js'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+export const config = { maxDuration: 60 }
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 50_000 })
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

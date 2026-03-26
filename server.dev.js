@@ -50,6 +50,6 @@ app.listen(PORT, () => {
   console.log(`   /api/validate       →  Opus 4.6`)
   console.log(`   /api/extract        →  Sonnet 4.6`)
   console.log(`   /api/generate       →  Opus 4.6`)
-  console.log(`   /api/build          →  Haiku 4.5 (Inngest worker)`)
+  console.log(`   /api/build          →  Haiku 4.5 (Inngest worker swarm)`)
   console.log(`   /api/test-claude    →  Haiku\n`)
 })
