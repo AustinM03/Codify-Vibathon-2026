@@ -139,11 +139,11 @@ export default function ShaderBackground() {
     const initScene = () => {
       refs.scene    = new THREE.Scene()
       refs.renderer = new THREE.WebGLRenderer({ canvas })
-      refs.renderer.setPixelRatio(window.devicePixelRatio)
+      refs.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1))
       refs.renderer.setClearColor(new THREE.Color(0x050505))
       refs.camera   = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, -1)
 
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, 1)
       refs.uniforms = {
         resolution: { value: [window.innerWidth, window.innerHeight] },
         dpr:        { value: dpr },
@@ -173,7 +173,7 @@ export default function ShaderBackground() {
     const handleResize = () => {
       if (!refs.renderer || !refs.uniforms) return
       refs.renderer.setSize(window.innerWidth, window.innerHeight, false)
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, 1)
       refs.uniforms.resolution.value = [window.innerWidth, window.innerHeight]
       refs.uniforms.dpr.value = dpr
     }
