@@ -81,14 +81,21 @@ export const buildAppJob = inngest.createFunction(
 
       const res = await client.messages.create({
         model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
+
 Rules:
-- 3-6 files max, all under src/
-- src/App.jsx is ALWAYS the first entry — it is the root component
+- 3-10 files, all under src/
+- src/App.jsx is ALWAYS the first entry — it is the root component and router
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
-- ONLY output the JSON array. No markdown, no explanation.`,
+- ONLY output the JSON array. No markdown, no explanation
+
+Architecture constraint — each file will be generated independently by a separate AI call that sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
+- Each component must be fully self-contained — no shared utility functions or shared constants unless explicitly listed as a file
+- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational when possible
+- If a shared data model or theme is needed, make it its own file (e.g. src/theme.js, src/data.js) so every file can import it
+- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details (layout, key visual elements)`,
         messages: [{
           role: 'user',
           content: `Design the file structure for this app:
@@ -110,33 +117,49 @@ Return ONLY the JSON array.`
     })
 
     // -----------------------------------------------------------------------
-    // Step B — Worker Swarm: write each file in parallel
+    // Step B — Worker Swarm: write each file as its own Inngest step
+    // Each step.run() gets its own serverless invocation (stays under 10s)
     // -----------------------------------------------------------------------
-    const generatedFiles = await step.run('worker-swarm', async () => {
+    await step.run('init-swarm', async () => {
       await updateJob(jobId, { status: 'Writing files...', total_files: schema.length })
+    })
 
-      // Collect extra dependencies from architect output
-      const allDeps = {}
-      schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
+    // Collect extra dependencies from architect output
+    const allDeps = {}
+    schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
 
-      // Build context string so each worker knows about sibling files
-      const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
+    // Build context string so each worker knows about sibling files
+    const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
-      let completed = 0
-      const files = await Promise.all(schema.map(async (fileSpec) => {
+    const files = []
+    for (let i = 0; i < schema.length; i++) {
+      const fileSpec = schema[i]
+      const file = await step.run(`write-file-${i}`, async () => {
         const res = await client.messages.create({
           model,
-          max_tokens: 4096,
+          max_tokens: 8000,
           system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
 - Use React 18 with functional components and hooks
 - Use inline styles — no CSS frameworks, no Tailwind
-- Make it visually polished with good spacing, colors, typography
 - NO API keys or environment variables
 - Mock any backend/database with local state or localStorage
-- Keep code concise — this is an MVP prototype
-- CRITICAL: Use correct relative import paths based on the file's location. For example, if you are writing src/App.jsx and importing src/components/Foo.jsx, use './components/Foo'. If writing src/components/Bar.jsx and importing src/hooks/useX.js, use '../hooks/useX'.`,
+- CRITICAL: Use correct relative import paths based on the file's location. For example, if writing src/App.jsx and importing src/components/Foo.jsx, use './components/Foo'. If writing src/components/Bar.jsx and importing src/hooks/useX.js, use '../hooks/useX'
+
+The project already has these files (do NOT generate them):
+- index.html (mounts #root)
+- vite.config.js (React plugin)
+- src/main.jsx (renders <App /> into #root via ReactDOM.createRoot)
+
+Design system — apply consistently since files are generated independently:
+- Use a cohesive color palette: one primary color, one accent, neutral grays for backgrounds/borders, white cards on light gray (#f5f5f5) backgrounds
+- Typography: system font stack (-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif), base 16px, headings bold
+- Spacing: 8px grid (padding/margins in multiples of 8)
+- Cards/containers: 8px border-radius, subtle box-shadow (0 2px 8px rgba(0,0,0,0.1))
+- Interactive elements: smooth transitions (0.2s ease), hover states, pointer cursor
+
+This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`,
           messages: [{
             role: 'user',
             content: `Write the complete code for: ${fileSpec.path}
@@ -156,14 +179,14 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           }],
         })
 
-        completed++
-        await updateJob(jobId, { progress: completed })
+        await updateJob(jobId, { progress: i + 1 })
 
         return { path: fileSpec.path, content: stripFences(res.content[0].text) }
-      }))
+      })
+      files.push(file)
+    }
 
-      return { files, extraDeps: allDeps }
-    })
+    const generatedFiles = { files, extraDeps: allDeps }
 
     // -----------------------------------------------------------------------
     // Step C — Assembly & Deploy to Vercel
