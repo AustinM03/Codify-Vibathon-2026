@@ -38,6 +38,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
   const [sessions, setSessions] = useState([])
   const [lastCategories, setLastCategories] = useState({}) // sessionId → category
   const [buildPlanIds, setBuildPlanIds] = useState(new Set()) // sessionIds with a saved build plan
+  const [deployedUrls, setDeployedUrls] = useState({}) // sessionId → deploy_url
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null) // sessionId being deleted
 
@@ -114,6 +115,17 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
         .in('session_id', ids)
       setBuildPlanIds(new Set(plans?.map(p => p.session_id) ?? []))
 
+      // Fetch latest deploy URL per session
+      const { data: jobs } = await supabase
+        .from('jobs')
+        .select('session_id, deploy_url, created_at')
+        .in('session_id', ids)
+        .not('deploy_url', 'is', null)
+        .order('created_at', { ascending: false })
+      const urlMap = {}
+      jobs?.forEach(j => { if (!urlMap[j.session_id]) urlMap[j.session_id] = j.deploy_url })
+      setDeployedUrls(urlMap)
+
       setLoading(false)
     }
     load()
@@ -176,30 +188,42 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
             const stepIdx = lastCat ? CATEGORY_ORDER.indexOf(lastCat) + 1 : 0
             const progress = Math.round((stepIdx / 7) * 100)
             const hasPlan = buildPlanIds.has(s.id)
+            const deployUrl = deployedUrls[s.id] ?? null
+            const isDeployed = !!deployUrl
 
             return (
               <div key={s.id}
                 onClick={() => onOpenSession(s.id, s.raw_idea)}
                 style={{
-                  background: hasPlan ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.03)',
+                  background: isDeployed ? 'rgba(99,102,241,0.06)' : hasPlan ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  border: `1px solid ${hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'}`,
+                  border: `1px solid ${isDeployed ? 'rgba(99,102,241,0.3)' : hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'}`,
                   borderRadius: '12px',
                   padding: '1.25rem 1.3rem', cursor: 'pointer', position: 'relative',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                   display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.55)' : 'rgba(124,91,240,0.3)'
-                  e.currentTarget.style.boxShadow = hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(124,91,240,0.08)'
+                  e.currentTarget.style.borderColor = isDeployed ? 'rgba(99,102,241,0.55)' : hasPlan ? 'rgba(34,197,94,0.55)' : 'rgba(124,91,240,0.3)'
+                  e.currentTarget.style.boxShadow = isDeployed ? '0 4px 24px rgba(99,102,241,0.15)' : hasPlan ? '0 4px 24px rgba(34,197,94,0.1)' : '0 4px 24px rgba(124,91,240,0.08)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'
+                  e.currentTarget.style.borderColor = isDeployed ? 'rgba(99,102,241,0.3)' : hasPlan ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.1)'
                   e.currentTarget.style.boxShadow = 'none'
                 }}>
 
-                {/* Build Plan Ready badge (top-left, replaces phase pill) */}
-                {hasPlan && (
+                {/* Status badge */}
+                {isDeployed ? (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                    fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em',
+                    color: '#a5b4fc', background: 'rgba(99,102,241,0.12)',
+                    border: '1px solid rgba(99,102,241,0.3)', borderRadius: '999px',
+                    padding: '0.2rem 0.6rem', alignSelf: 'flex-start',
+                  }}>
+                    <span>⚡</span><span>DEPLOYED</span>
+                  </div>
+                ) : hasPlan && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
                     fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em',
@@ -253,7 +277,19 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                 )}
 
                 {/* Progress bar — replaced by summary for completed plans */}
-                {hasPlan ? (
+                {isDeployed ? (
+                  <div style={{
+                    background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)',
+                    borderRadius: '8px', padding: '0.6rem 0.75rem',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  }}>
+                    <span style={{ fontSize: '1rem' }}>🚀</span>
+                    <div>
+                      <div style={{ fontSize: '0.73rem', fontWeight: 600, color: '#a5b4fc', lineHeight: 1.3 }}>Live on Vercel</div>
+                      <div style={{ fontSize: '0.66rem', color: '#4a4a8a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{deployUrl.replace('https://', '')}</div>
+                    </div>
+                  </div>
+                ) : hasPlan ? (
                   <div style={{
                     background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.15)',
                     borderRadius: '8px', padding: '0.6rem 0.75rem',
@@ -261,8 +297,8 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                   }}>
                     <span style={{ fontSize: '1rem' }}>📋</span>
                     <div>
-                      <div style={{ fontSize: '0.73rem', fontWeight: 600, color: '#4ade80', lineHeight: 1.3 }}>AI coding prompt ready</div>
-                      <div style={{ fontSize: '0.66rem', color: '#2a6a3a' }}>Paste into Cursor or ChatGPT to start building</div>
+                      <div style={{ fontSize: '0.73rem', fontWeight: 600, color: '#4ade80', lineHeight: 1.3 }}>Ready to build & deploy</div>
+                      <div style={{ fontSize: '0.66rem', color: '#2a6a3a' }}>Build plan complete</div>
                     </div>
                   </div>
                 ) : (
@@ -278,9 +314,9 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
                 )}
 
                 {/* CTA */}
-                <div style={{ fontSize: '0.72rem', color: hasPlan ? '#4ade80' : '#6b6680', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span>{hasPlan ? 'View Build Plan' : (progress === 100 ? '✓ Complete' : 'Continue building')}</span>
-                  <span style={{ marginLeft: 'auto', color: hasPlan ? '#4ade80' : '#6b6680', fontSize: '0.8rem' }}>→</span>
+                <div style={{ fontSize: '0.72rem', color: isDeployed ? '#a5b4fc' : hasPlan ? '#4ade80' : '#6b6680', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span>{isDeployed ? 'View app & rebuild' : hasPlan ? 'Build & Deploy' : (progress === 100 ? '✓ Complete' : 'Continue building')}</span>
+                  <span style={{ marginLeft: 'auto', color: isDeployed ? '#a5b4fc' : hasPlan ? '#4ade80' : '#6b6680', fontSize: '0.8rem' }}>→</span>
                 </div>
               </div>
             )
