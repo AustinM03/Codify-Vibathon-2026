@@ -193,7 +193,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
           return step.ai.infer(`write-file-${i}`, {
             model: step.ai.models.anthropic({
-              model: MODELS.FAST,
+              model: MODELS.BALANCED,
               defaultParameters: { max_tokens: 4096 },
             }),
             body: {
@@ -208,6 +208,12 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
       await step.run(`progress-batch-${b}`, async () => {
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
+      // Rate-limit: Sonnet has a 30k input token/min cap. Each file write is
+      // ~1,400 tokens, so 5 parallel = ~7k tokens. Sleep 15s between batches
+      // to stay well under the limit. Skip sleep after the final batch.
+      if (b + BATCH_SIZE < schema.length) {
+        await step.sleep(`rate-limit-${b}`, '15s')
+      }
     }
 
     // -----------------------------------------------------------------------
