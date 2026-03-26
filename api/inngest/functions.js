@@ -106,6 +106,8 @@ Rules:
 - src/App.jsx is ALWAYS the first entry — it is the root component and router. Keep App.jsx THIN: only top-level state, routing logic, and composition of child components. No inline UI — delegate everything to named components
 - Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
 - No file count limit — let the app's complexity determine how many files are needed
+- NEVER create a large context file (e.g. DataContext.jsx) that combines data + actions + state. Instead split into: src/data.js (mock data only), src/hooks/useX.js (one hook per concern). Context files easily exceed the token limit and will be truncated
+- NEVER put more than one concern in a single file. If a file would need more than ~80 lines, split it
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
 - ONLY output the JSON array. No markdown, no explanation
 
@@ -157,10 +159,7 @@ Return ONLY the JSON array.`
         batch.map((fileSpec, j) => {
           const i = b + j
           return step.run(`write-file-${i}`, async () => {
-            const res = await client.messages.create({
-              model: buildModel,
-              max_tokens: 4096,
-              system: `You are an expert React developer writing a single file for a larger project.
+            const fileWriterSystem = `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
 - Use React 18 with functional components and hooks
@@ -181,10 +180,9 @@ Design system — apply consistently since files are generated independently:
 - Cards/containers: 8px border-radius, subtle box-shadow (0 2px 8px rgba(0,0,0,0.1))
 - Interactive elements: smooth transitions (0.2s ease), hover states, pointer cursor
 
-This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`,
-              messages: [{
-                role: 'user',
-                content: `Write the complete code for: ${fileSpec.path}
+This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
+
+            const fileWriterMessage = `Write the complete code for: ${fileSpec.path}
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
@@ -198,10 +196,29 @@ ${schemaContext}
 IMPORTANT: This file is located at "${fileSpec.path}". Calculate all import paths relative to this file's directory.
 
 Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
-              }],
+
+            // Pass 1 — Haiku at 8192 tokens (fast, handles most files)
+            const res = await client.messages.create({
+              model: MODELS.FAST,
+              max_tokens: 8192,
+              system: fileWriterSystem,
+              messages: [{ role: 'user', content: fileWriterMessage }],
             })
 
-            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+            if (res.stop_reason === 'end_turn') {
+              return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+            }
+
+            // Pass 2 — Sonnet retry if Haiku was truncated (writes more concise code)
+            console.warn(`File truncated by Haiku: ${fileSpec.path} — retrying with Sonnet`)
+            const retry = await client.messages.create({
+              model: MODELS.BALANCED,
+              max_tokens: 8192,
+              system: fileWriterSystem,
+              messages: [{ role: 'user', content: fileWriterMessage }],
+            })
+
+            return { path: fileSpec.path, content: stripFences(retry.content[0].text) }
           })
         })
       )
