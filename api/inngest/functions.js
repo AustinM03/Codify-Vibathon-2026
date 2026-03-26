@@ -108,7 +108,7 @@ RULES:
 - ONLY output the raw JSON array. No markdown, no explanation
 
 DESCRIPTION rules — descriptions are the ONLY context the file writer gets:
-- For src/data.js: list every exported variable name and its shape. E.g. "Exports: items (array of {id,name,price,category}), users (array of {id,name,email}). Seed with 5-8 realistic entries each."
+- For src/data.js: list every exported variable name and its shape. E.g. "Exports: items (array of {id,name,price,category}), users (array of {id,name,email}). Seed with 5-8 realistic entries each." CRITICAL: this file must contain ONLY plain JS arrays/objects — no JSX, no React, no imports. JSX in a .js file breaks the Vite build.
 - For view files: list every prop name and type. E.g. "Props: items (array), onSelect(item), currentUser(object). Renders a grid of Cards..."
 - For App.jsx: list all useState variables with initial values. E.g. "useState: currentView('home'), selectedItem(null), items(imported from data.js)..."
 - Be specific enough that a developer with no other context can write the complete file`,
@@ -172,7 +172,7 @@ Return ONLY the JSON array.`,
 - Always check objects before accessing: item?.name ?? 'Unknown'
 - Every prop used in JSX must be listed in the function signature: function MyComp({ items, onSelect }) {
 - If this is App.jsx: initialize ALL state with useState before any JSX. Never conditionally call hooks
-- If this is src/data.js: export plain JS arrays/objects only. No React, no imports
+- CRITICAL — If writing src/data.js: output ONLY plain JavaScript. No JSX, no React, no import statements, no function components. Only export const arrays and objects. JSX in a .js file causes a fatal Vite build error.
 
 ═══ IMPORT PATH RULES ═══
 - From src/App.jsx importing src/components/Card.jsx → './components/Card'
