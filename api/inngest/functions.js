@@ -85,7 +85,7 @@ export const buildAppJob = inngest.createFunction(
     const architectRes = await step.ai.infer('architect', {
       model: step.ai.models.anthropic({
         model: MODELS.FAST,
-        defaultParameters: { max_tokens: 4096 },
+        defaultParameters: { max_tokens: 6000 },
       }),
       body: {
         system: `You are a React architect. Output a JSON array of src/ files for a client-side React app.
@@ -108,7 +108,7 @@ RULES:
 - ONLY output the raw JSON array. No markdown, no explanation
 
 DESCRIPTION rules — descriptions are the ONLY context the file writer gets:
-- For src/data.js: list every exported variable name and its shape. E.g. "Exports: items (array of {id,name,price,category}), users (array of {id,name,email}). Seed with 5-8 realistic entries each."
+- For src/data.js: list every exported variable name and its shape. E.g. "Exports: items (array of {id,name,price,category}), users (array of {id,name,email}). Seed with 5-8 realistic entries each." CRITICAL: this file must contain ONLY plain JS arrays/objects — no JSX, no React, no imports. JSX in a .js file breaks the Vite build.
 - For view files: list every prop name and type. E.g. "Props: items (array), onSelect(item), currentUser(object). Renders a grid of Cards..."
 - For App.jsx: list all useState variables with initial values. E.g. "useState: currentView('home'), selectedItem(null), items(imported from data.js)..."
 - Be specific enough that a developer with no other context can write the complete file`,
@@ -126,7 +126,7 @@ ${features?.length ? `## Features\n${features.map(f => `- ${f}`).join('\n')}` : 
 
 Return ONLY the JSON array.`,
         }],
-        max_tokens: 4096,
+        max_tokens: 6000,
       },
     })
 
@@ -172,7 +172,7 @@ Return ONLY the JSON array.`,
 - Always check objects before accessing: item?.name ?? 'Unknown'
 - Every prop used in JSX must be listed in the function signature: function MyComp({ items, onSelect }) {
 - If this is App.jsx: initialize ALL state with useState before any JSX. Never conditionally call hooks
-- If this is src/data.js: export plain JS arrays/objects only. No React, no imports
+- CRITICAL — If writing src/data.js: output ONLY plain JavaScript. No JSX, no React, no import statements, no function components. Only export const arrays and objects. JSX in a .js file causes a fatal Vite build error.
 
 ═══ IMPORT PATH RULES ═══
 - From src/App.jsx importing src/components/Card.jsx → './components/Card'
@@ -194,7 +194,7 @@ Return ONLY the JSON array.`,
 
 This file is written in ISOLATION. Other files exist but you cannot see their code. Use ONLY the export names and prop signatures listed in the project file structure below.`
 
-    const BATCH_SIZE = 2
+    const BATCH_SIZE = 3
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -218,12 +218,12 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           return step.ai.infer(`write-file-${i}`, {
             model: step.ai.models.anthropic({
               model: MODELS.FAST,
-              defaultParameters: { max_tokens: 4096 },
+              defaultParameters: { max_tokens: 6000 },
             }),
             body: {
               system: fileWriterSystem,
               messages: [{ role: 'user', content: fileWriterMessage }],
-              max_tokens: 4096,
+              max_tokens: 6000,
             },
           }).then(res => ({ path: fileSpec.path, content: stripFences(res.content[0].text) }))
         })
@@ -233,7 +233,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
       if (b + BATCH_SIZE < schema.length) {
-        await step.sleep(`batch-gap-${b}`, '15s')
+        await step.sleep(`batch-gap-${b}`, '10s')
       }
     }
 
