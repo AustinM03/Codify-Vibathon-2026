@@ -926,7 +926,11 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
       })
-      const json = await genRes.json()
+      const genText = await genRes.text()
+      let json
+      try { json = JSON.parse(genText) } catch {
+        throw new Error(`Generation failed (${genRes.status}): ${genText.slice(0, 200)}`)
+      }
       if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
 
       // Persist so we never regenerate
@@ -1009,7 +1013,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ answers, dev_mode: devMode }),
           })
-          valJson = await valRes.json()
+          try { valJson = JSON.parse(await valRes.text()) } catch { valJson = { error: true } }
 
           if (!valRes.ok || valJson.error) {
             // Validate failed — skip to generate rather than blocking the user
@@ -1042,7 +1046,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answers, dev_mode: devMode }),
         })
-        const validationJson = await valRes.json()
+        let validationJson
+        try { validationJson = JSON.parse(await valRes.text()) } catch { validationJson = { error: true } }
 
         if (!valRes.ok || validationJson.error) {
           // Validate failed — skip to generate rather than blocking the user
