@@ -6,7 +6,7 @@
  * deployment happen in the Inngest buildAppJob worker.
  *
  * Input:
- *   { session_id, title, prompt, tech_stack[], features[], dev_mode }
+ *   { session_id, title, prompt, tech_stack[], features[] }
  *
  * Output:
  *   { job_id: string }
@@ -15,6 +15,7 @@
 import crypto from 'crypto'
 import { inngest } from './inngest/client.js'
 import { supabase } from './supabaseServer.js'
+import { requireAuth } from './authMiddleware.js'
 
 export const config = { maxDuration: 10 }
 
@@ -23,7 +24,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { session_id, title, prompt, tech_stack, features, dev_mode } = req.body ?? {}
+  const user = await requireAuth(req, res)
+  if (!user) return
+
+  const { session_id, title, prompt, tech_stack, features } = req.body ?? {}
 
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'prompt is required' })
@@ -52,7 +56,7 @@ export default async function handler(req, res) {
     // Fire background event — does not block
     await inngest.send({
       name: 'app/build',
-      data: { jobId, session_id, title, prompt, tech_stack, features, dev_mode },
+      data: { jobId, session_id, title, prompt, tech_stack, features },
     })
 
     return res.status(200).json({ job_id: jobId })

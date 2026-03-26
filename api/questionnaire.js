@@ -15,6 +15,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { MODELS } from './models.js'
+import { requireAuth } from './authMiddleware.js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -23,7 +24,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea, history, dev_mode } = req.body ?? {}
+  const user = await requireAuth(req, res)
+  if (!user) return
+
+  const { raw_idea, history } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
@@ -126,7 +130,7 @@ Return ONLY a valid JSON array of arrays — one inner array per question, in th
   try {
     // Pass 1 — Opus (or Haiku in dev mode)
     const opusMsg = await client.messages.create({
-      model: dev_mode ? MODELS.FAST : MODELS.POWERFUL,
+      model: MODELS.POWERFUL,
       max_tokens: 4096,   // raised from 3000 to prevent mid-string truncation
       messages: [{ role: 'user', content: questionPrompt }],
     })

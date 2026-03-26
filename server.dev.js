@@ -13,7 +13,6 @@ import { serve } from 'inngest/express'
 
 import questionnaireHandler from './api/questionnaire.js'
 import explainHandler       from './api/explain.js'
-import testClaudeHandler    from './api/test-claude.js'
 import validateHandler      from './api/validate.js'
 import extractHandler       from './api/extract.js'
 import generateHandler      from './api/generate.js'
@@ -35,7 +34,6 @@ function route(handler) {
 
 app.all('/api/questionnaire', route(questionnaireHandler))
 app.all('/api/explain',       route(explainHandler))
-app.all('/api/test-claude',   route(testClaudeHandler))
 app.all('/api/validate',      route(validateHandler))
 app.all('/api/extract',       route(extractHandler))
 app.all('/api/generate',      route(generateHandler))
@@ -50,6 +48,5 @@ app.listen(PORT, () => {
   console.log(`   /api/validate       →  Opus 4.6`)
   console.log(`   /api/extract        →  Sonnet 4.6`)
   console.log(`   /api/generate       →  Opus 4.6`)
-  console.log(`   /api/build          →  Haiku 4.5 (Inngest worker swarm)`)
-  console.log(`   /api/test-claude    →  Haiku\n`)
+  console.log(`   /api/build          →  Haiku 4.5 (Inngest worker swarm)\n`)
 })

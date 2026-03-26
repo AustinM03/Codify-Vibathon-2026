@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PrismLoader from './components/PrismLoader'
-import { supabase } from './supabaseClient'
+import { supabase, authHeaders } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
-import OllamaSetup from './views/OllamaSetup'
 import AIGeneratedInput from './components/AIGeneratedInput.jsx'
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
@@ -418,7 +417,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
     try {
       const res = await fetch('/api/explain', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ question, category }),
       })
       const json = await res.json()
@@ -556,7 +555,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
         const res = await fetch('/api/questionnaire', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({
             raw_idea: rawIdea,
             history: history ?? [],
@@ -897,7 +896,7 @@ function hashAnswers(answers) {
   return JSON.stringify(sorted)
 }
 
-function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
+function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
   // status: 'loading' | 'validating' | 'gaps' | 'generating' | 'done' | 'error'
   const [status, setStatus] = useState('loading')
   const [result, setResult] = useState(null)
@@ -925,7 +924,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
       try {
         const extRes = await fetch('/api/extract', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({ raw_idea: rawIdea }),
         })
         if (extRes.ok) extracted = await extRes.json()
@@ -934,7 +933,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
       // Dispatch to Inngest — returns immediately with job_id
       const genRes = await fetch('/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ raw_idea: rawIdea, extracted, answers, session_id: sessionId }),
       })
       const genText = await genRes.text()
@@ -1038,8 +1037,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
           setStatus('validating')
           const valRes = await fetch('/api/validate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ answers, dev_mode: devMode }),
+            headers: await authHeaders(),
+            body: JSON.stringify({ answers }),
           })
           try { valJson = JSON.parse(await valRes.text()) } catch { valJson = { error: true } }
 
@@ -1071,8 +1070,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         setStatus('validating')
         const valRes = await fetch('/api/validate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers, dev_mode: devMode }),
+          headers: await authHeaders(),
+          body: JSON.stringify({ answers }),
         })
         let validationJson
         try { validationJson = JSON.parse(await valRes.text()) } catch { validationJson = { error: true } }
@@ -1125,14 +1124,13 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
     try {
       const res = await fetch('/api/build', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           session_id: sessionId,
           title: result.title,
           prompt: result.prompt,
           tech_stack: result.tech_stack,
           features: result.features,
-          dev_mode: devMode,
         }),
       })
       const data = await res.json()
@@ -1431,7 +1429,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             </div>
           )}
 
-          {deployUrl && (
+          {deployUrl && /^https:\/\/.+\.vercel\.app/.test(deployUrl) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
               <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>Deployed successfully!</div>
               <a href={deployUrl} target="_blank" rel="noopener noreferrer"
@@ -1485,7 +1483,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
-  const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'complete'
+  const [view, setView] = useState('dashboard')   // 'dashboard' | 'intake' | 'questionnaire' | 'result'
   const [sessionId, setSessionId] = useState(null)
   const [rawIdea, setRawIdea] = useState('')
   const [completedSteps, setCompletedSteps] = useState([])
@@ -1495,23 +1493,6 @@ export default function App() {
   const [jumpRequest, setJumpRequest] = useState({ category: null, nonce: 0 })
   const [categoryHealth, setCategoryHealth] = useState({})
 
-  const [useLocalAI, setUseLocalAI] = useState(() => localStorage.getItem('useLocalAI') === 'true')
-  const [localAISetupComplete, setLocalAISetupComplete] = useState(() => localStorage.getItem('localAISetupComplete') === 'true')
-
-  const toggleLocalAI = useCallback(() => {
-    const next = !useLocalAI
-    setUseLocalAI(next)
-    localStorage.setItem('useLocalAI', String(next))
-    if (!localAISetupComplete && next === true) {
-      setLocalAISetupComplete(true)
-      localStorage.setItem('localAISetupComplete', 'true')
-    }
-  }, [useLocalAI, localAISetupComplete])
-
-  const handleCompleteLocalAISetup = useCallback(() => {
-    setLocalAISetupComplete(true)
-    localStorage.setItem('localAISetupComplete', 'true')
-  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1523,13 +1504,6 @@ export default function App() {
       if (event === 'SIGNED_OUT') {
         setShowAuth(false)   // return to LandingPage, not LoginScreen
         setView('dashboard') // reset view for next login
-      }
-      if (event === 'SIGNED_IN') {
-        const intent = sessionStorage.getItem('postLoginRedirect')
-        if (intent === 'ollama-setup') {
-          setView('ollama-setup')
-          sessionStorage.removeItem('postLoginRedirect')
-        }
       }
     })
     return () => subscription.unsubscribe()
@@ -1636,15 +1610,12 @@ export default function App() {
 
   if (!user) {
     if (showAuth) return <><ShaderBackground /><LoginScreen /></>
-    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} onLearnOllama={() => { sessionStorage.setItem('postLoginRedirect', 'ollama-setup'); setShowAuth(true); }} /></>
+    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} /></>
   }
 
   return (
     <>
       <ShaderBackground />
-      {view === 'ollama-setup' ? (
-        <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
-      ) : (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
         <header style={{ flexShrink: 0, height: 52, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 4px 30px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
           <button onClick={handleGoToDashboard}
@@ -1658,32 +1629,6 @@ export default function App() {
           </div>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div 
-            onClick={() => !localAISetupComplete && setView('ollama-setup')}
-            style={{ 
-              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0.5rem', 
-              background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', 
-              opacity: localAISetupComplete ? 1 : 0.4,
-              cursor: localAISetupComplete ? 'default' : 'pointer',
-              transition: 'opacity 0.2s' 
-            }}>
-            <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>Local AI</span>
-            <div onClick={localAISetupComplete ? toggleLocalAI : undefined} style={{ width: 30, height: 16, borderRadius: '12px', background: useLocalAI ? '#10b981' : '#333', position: 'relative', cursor: localAISetupComplete ? 'pointer' : 'pointer', transition: 'background 0.2s' }}>
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: useLocalAI ? 16 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-            </div>
-          </div>
-          <button onClick={() => setView('ollama-setup')}
-            style={{ 
-              background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))', 
-              border: `1px solid rgba(16,185,129,0.3)`, 
-              borderRadius: '6px', color: '#10b981', 
-              cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.65rem', 
-              transition: 'all 0.15s', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem'
-            }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.6)'; e.currentTarget.style.background = 'rgba(16,185,129,0.2)' }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))' }}>
-            ⚡ Connect A Local AI
-          </button>
           <span style={{ fontSize: '0.72rem', color: T.textMuted, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
           <button onClick={handleLogout}
             style={{ background: 'none', border: `1px solid ${T.cardBorder}`, borderRadius: '6px', color: T.textMuted, cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
@@ -1710,11 +1655,10 @@ export default function App() {
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={useLocalAI} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
         </div>
-      )}
     </>
   )
 }

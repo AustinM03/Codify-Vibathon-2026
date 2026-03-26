@@ -6,7 +6,7 @@
  * in the Inngest generatePlanJob worker (no timeout risk).
  *
  * Input:
- *   { raw_idea, extracted, answers, dev_mode }
+ *   { raw_idea, extracted, answers }
  *
  * Output:
  *   { job_id: string }
@@ -15,6 +15,7 @@
 import crypto from 'crypto'
 import { inngest } from './inngest/client.js'
 import { supabase } from './supabaseServer.js'
+import { requireAuth } from './authMiddleware.js'
 
 export const config = { maxDuration: 10 }
 
@@ -23,7 +24,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { raw_idea, extracted, answers, session_id, dev_mode } = req.body ?? {}
+  const user = await requireAuth(req, res)
+  if (!user) return
+
+  const { raw_idea, extracted, answers, session_id } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string') {
     return res.status(400).json({ error: 'raw_idea is required' })
@@ -50,7 +54,7 @@ export default async function handler(req, res) {
 
     await inngest.send({
       name: 'app/generate',
-      data: { jobId, session_id, raw_idea, extracted, answers, dev_mode },
+      data: { jobId, session_id, raw_idea, extracted, answers },
     })
 
     return res.status(200).json({ job_id: jobId })
