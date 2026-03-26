@@ -228,9 +228,11 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
       }
       generatedFiles.files.forEach(f => { fileMap[f.path] = f.content })
 
-      const vercelToken = process.env.VERCEL_TOKEN
+      // Use DEPLOY_VERCEL_TOKEN (not VERCEL_TOKEN) because Vercel auto-injects
+      // VERCEL_TOKEN with the hosting account's OIDC token, overriding ours.
+      const vercelToken = process.env.DEPLOY_VERCEL_TOKEN
       if (!vercelToken) {
-        await updateJob(jobId, { status: 'Done!', deploy_url: null, error: 'No VERCEL_TOKEN configured' })
+        await updateJob(jobId, { status: 'Done!', deploy_url: null, error: 'No DEPLOY_VERCEL_TOKEN configured' })
         return { deploy_url: null }
       }
 
