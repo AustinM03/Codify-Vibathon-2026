@@ -352,8 +352,26 @@ function IntakeScreen({ onSuccess, user }) {
   }
 
   return (
-    <main style={{ flex: 1, height: '100%', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: 700, padding: '3.5rem 2.5rem 3rem', animation: 'fadeIn 0.4s ease', margin: '1.5rem auto' }}>
+    <main style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div
+        className="glass-card"
+        style={{
+          width: '100%',
+          maxWidth: 700,
+          minHeight: 'fit-content',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '3.5rem 2.5rem 3.5rem', // extra bottom padding
+          animation: 'fadeIn 0.4s ease',
+          margin: '1.5rem auto',
+          zIndex: 10,
+          background: 'rgba(15,15,20,0.36)',
+          border: '1.5px solid rgba(124,91,240,0.18)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+        }}
+      >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
           <span>🎯</span><span>Phase 1 — Problem Definition</span>
         </div>
