@@ -271,7 +271,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
       if (!deployRes.ok) {
         const errMsg = deployData.error?.message ?? 'Vercel deployment failed'
-        const debugInfo = `[${res.status}] token=${vercelToken?.slice(0,8)}... teamId=${teamId ?? 'none'} err=${errMsg}`
+        const debugInfo = `[${deployRes.status}] token=${vercelToken?.slice(0,8)}... teamId=${teamId ?? 'none'} err=${errMsg}`
         console.error('Deploy failed:', debugInfo, JSON.stringify(deployData))
         await updateJob(jobId, { status: 'Error', error: debugInfo })
         throw new Error(debugInfo)
