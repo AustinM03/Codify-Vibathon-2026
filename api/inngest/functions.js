@@ -134,13 +134,18 @@ Return ONLY the JSON array.`
     // Build context string so each worker knows about sibling files
     const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
-    const files = await Promise.all(
-      schema.map((fileSpec, i) =>
-        step.run(`write-file-${i}`, async () => {
-          const res = await client.messages.create({
-            model,
-            max_tokens: 2048,
-          system: `You are an expert React developer writing a single file for a larger project.
+    const BATCH_SIZE = 8
+    const files = []
+    for (let b = 0; b < schema.length; b += BATCH_SIZE) {
+      const batch = schema.slice(b, b + BATCH_SIZE)
+      const batchFiles = await Promise.all(
+        batch.map((fileSpec, j) => {
+          const i = b + j
+          return step.run(`write-file-${i}`, async () => {
+            const res = await client.messages.create({
+              model,
+              max_tokens: 2048,
+              system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
 - Use React 18 with functional components and hooks
@@ -162,9 +167,9 @@ Design system — apply consistently since files are generated independently:
 - Interactive elements: smooth transitions (0.2s ease), hover states, pointer cursor
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`,
-          messages: [{
-            role: 'user',
-            content: `Write the complete code for: ${fileSpec.path}
+              messages: [{
+                role: 'user',
+                content: `Write the complete code for: ${fileSpec.path}
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
@@ -178,15 +183,19 @@ ${schemaContext}
 IMPORTANT: This file is located at "${fileSpec.path}". Calculate all import paths relative to this file's directory.
 
 Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
-          }],
-        })
+              }],
+            })
 
-          await updateJob(jobId, { progress: i + 1 })
-
-          return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+          })
         })
       )
-    )
+      files.push(...batchFiles)
+      // Update progress after each batch completes — no race condition
+      await step.run(`progress-batch-${b}`, async () => {
+        await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
+      })
+    }
 
     const generatedFiles = { files, extraDeps: allDeps }
 
