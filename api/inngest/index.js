@@ -1,4 +1,4 @@
-import { serve } from 'inngest/vercel'
+import { serve } from 'inngest/node'
 import { inngest } from './client.js'
 import { buildAppJob } from './functions.js'
 
