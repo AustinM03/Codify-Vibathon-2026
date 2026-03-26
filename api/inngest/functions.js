@@ -85,7 +85,7 @@ export const buildAppJob = inngest.createFunction(
     const architectRes = await step.ai.infer('architect', {
       model: step.ai.models.anthropic({
         model: MODELS.FAST,
-        defaultParameters: { max_tokens: 4096 },
+        defaultParameters: { max_tokens: 6000 },
       }),
       body: {
         system: `You are a React architect. Output a JSON array of src/ files for a client-side React app.
@@ -126,7 +126,7 @@ ${features?.length ? `## Features\n${features.map(f => `- ${f}`).join('\n')}` : 
 
 Return ONLY the JSON array.`,
         }],
-        max_tokens: 4096,
+        max_tokens: 6000,
       },
     })
 
@@ -218,12 +218,12 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           return step.ai.infer(`write-file-${i}`, {
             model: step.ai.models.anthropic({
               model: MODELS.FAST,
-              defaultParameters: { max_tokens: 4096 },
+              defaultParameters: { max_tokens: 6000 },
             }),
             body: {
               system: fileWriterSystem,
               messages: [{ role: 'user', content: fileWriterMessage }],
-              max_tokens: 4096,
+              max_tokens: 6000,
             },
           }).then(res => ({ path: fileSpec.path, content: stripFences(res.content[0].text) }))
         })
