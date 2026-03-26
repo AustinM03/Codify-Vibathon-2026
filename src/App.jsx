@@ -992,6 +992,18 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
         if (existing) {
           setResult(existing)
           setStatus('done')
+
+          // Restore previous deploy URL if this session was already built
+          const { data: lastJob } = await supabase
+            .from('jobs')
+            .select('deploy_url')
+            .eq('session_id', sessionId)
+            .not('deploy_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          if (lastJob?.deploy_url) setDeployUrl(lastJob.deploy_url)
+
           return
         }
 
