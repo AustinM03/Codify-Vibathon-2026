@@ -3,7 +3,10 @@ import { inngest } from './client.js'
 import { supabase } from '../supabaseServer.js'
 import { MODELS } from '../models.js'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 45_000, // 45s — fail fast before Vercel's 60s kill, let Inngest retry cleanly
+})
 
 // ---------------------------------------------------------------------------
 // Static files that never touch Claude — keeps token budget for real code
@@ -68,11 +71,13 @@ async function updateJob(jobId, fields) {
 // buildAppJob — the Inngest function (3 sequential steps)
 // ---------------------------------------------------------------------------
 export const buildAppJob = inngest.createFunction(
-  { id: 'build-app-job', retries: 1, triggers: [{ event: 'app/build' }] },
+  { id: 'build-app-job', retries: 3, triggers: [{ event: 'app/build' }] },
   async ({ event, step }) => {
     const { jobId, session_id, title, prompt, tech_stack, features, dev_mode } = event.data
-    const model = dev_mode ? MODELS.FAST : MODELS.BALANCED
-    const fastModel = MODELS.FAST
+    // Haiku for all build steps — fast responses (3-10s) guarantee we stay
+    // well under Vercel's 60s timeout. Files are small (~50-80 lines) so
+    // Haiku quality is sufficient.
+    const buildModel = MODELS.FAST
 
     // -----------------------------------------------------------------------
     // Step A — Architect: design the file schema (Haiku for speed)
@@ -81,7 +86,7 @@ export const buildAppJob = inngest.createFunction(
       await updateJob(jobId, { status: 'Architecting codebase...' })
 
       const res = await client.messages.create({
-        model: fastModel,
+        model: buildModel,
         max_tokens: 4096,
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
@@ -134,7 +139,7 @@ Return ONLY the JSON array.`
     // Build context string so each worker knows about sibling files
     const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
-    const BATCH_SIZE = 8
+    const BATCH_SIZE = 5
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -143,7 +148,7 @@ Return ONLY the JSON array.`
           const i = b + j
           return step.run(`write-file-${i}`, async () => {
             const res = await client.messages.create({
-              model,
+              model: buildModel,
               max_tokens: 2048,
               system: `You are an expert React developer writing a single file for a larger project.
 Rules:
