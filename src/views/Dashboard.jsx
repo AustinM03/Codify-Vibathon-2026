@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PrismLoader from '../components/PrismLoader'
 import { supabase } from '../supabaseClient'
 
 const CATEGORY_ORDER = ['Problem', 'Features', 'Design', 'Auth', 'Data', 'Integrations', 'Logic']
@@ -120,9 +121,8 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
   if (loading) {
     return (
-      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ width: 28, height: 28, border: '3px solid rgba(255,255,255,0.04)', borderTopColor: '#7c5bf0', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ color: '#6b6680', fontSize: '0.8rem' }}>Loading your projects...</p>
+      <main className="flex flex-col items-center justify-center min-h-screen w-full" style={{ flex: 1 }}>
+        <PrismLoader text="Loading your projects..." />
       </main>
     )
   }

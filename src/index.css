@@ -1,3 +1,55 @@
+
+/* ─── PrismLoader Animation ──────────────────────────────────────────────────
+   Add this block to your index.css (or wherever your global styles live).
+   These keyframes replace any previous drawPrism / prismRainbowSmooth rules.
+─────────────────────────────────────────────────────────────────────────── */
+
+/* Keeps the 1.5-second linear drawing loop */
+@keyframes drawPrismLap {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Cycles all 7 colors across a total 10.5s duration (7 laps x 1.5s).        */
+/* Each color is held solid for ~90% of its lap, with a short fade at reset.  */
+@keyframes prismRainbowPerLap {
+  /* Lap 1: RED (solid until ~1.35s, then fades) */
+  0%,    13.0%  { stroke: #ef4444; }
+  14.28%         { stroke: #f97316; } /* → Orange at lap 1 reset (1.5s) */
+
+  /* Lap 2: ORANGE */
+  27.28%         { stroke: #f97316; }
+  28.57%         { stroke: #eab308; } /* → Yellow at lap 2 reset (3.0s) */
+
+  /* Lap 3: YELLOW */
+  41.57%         { stroke: #eab308; }
+  42.86%         { stroke: #22c55e; } /* → Green at lap 3 reset (4.5s) */
+
+  /* Lap 4: GREEN */
+  55.86%         { stroke: #22c55e; }
+  57.14%         { stroke: #3b82f6; } /* → Blue at lap 4 reset (6.0s) */
+
+  /* Lap 5: BLUE */
+  70.14%         { stroke: #3b82f6; }
+  71.43%         { stroke: #6366f1; } /* → Indigo at lap 5 reset (7.5s) */
+
+  /* Lap 6: INDIGO */
+  84.43%         { stroke: #6366f1; }
+  85.71%         { stroke: #a855f7; } /* → Violet at lap 6 reset (9.0s) */
+
+  /* Lap 7: VIOLET */
+  98.71%         { stroke: #a855f7; }
+  100%           { stroke: #ef4444; } /* → back to Red at lap 7 reset (10.5s) */
+}
+
+.prism-stroke {
+  stroke-dasharray: 100;
+  /* drawPrismLap   → 1.5s lap draw   (one full triangle trace per cycle) */
+  /* prismRainbowPerLap → 10.5s color cycle (7 colors × 1.5s per lap)     */
+  animation:
+    drawPrismLap       1.5s  linear infinite,
+    prismRainbowPerLap 10.5s linear infinite;
+}
 :root {
   /* Retaining spectral variables for the Shader Background */
   --c-red: #ff0000;

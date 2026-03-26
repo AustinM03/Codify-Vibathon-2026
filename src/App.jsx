@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import PrismLoader from './components/PrismLoader'
 import { supabase } from './supabaseClient'
 import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
@@ -300,14 +301,7 @@ function Sidebar({ activeStep, completedSteps, userEmail, onLogout, onDashboard,
   const progress = (completedSteps.length / STEPS.length) * 100
   return (
     <aside style={{ width: 232, minWidth: 232, height: '100%', background: 'rgba(8,8,12,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRight: `1px solid ${T.divider}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ padding: '0.6rem 0.7rem 0', borderBottom: `1px solid ${T.divider}` }}>
-        <button onClick={onDashboard}
-          style={{ width: '100%', background: 'none', border: 'none', borderRadius: '7px', color: T.textMuted, cursor: 'pointer', fontSize: '0.73rem', padding: '0.45rem 0.5rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'color 0.15s, background 0.15s' }}
-          onMouseOver={e => { e.currentTarget.style.color = T.accent2; e.currentTarget.style.background = 'rgba(124,91,240,0.06)' }}
-          onMouseOut={e => { e.currentTarget.style.color = T.textMuted; e.currentTarget.style.background = 'none' }}>
-          <span>◀</span><span>My Projects</span>
-        </button>
-      </div>
+      {/* Removed 'My Projects' button as requested */}
       <div style={{ padding: '1.1rem 0.7rem 0.5rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ fontSize: '0.61rem', fontWeight: 700, letterSpacing: '0.1em', color: T.textMuted, textTransform: 'uppercase', padding: '0 0.4rem', marginBottom: '0.6rem' }}>Build Phases</div>
         {STEPS.map(step => (
@@ -372,9 +366,6 @@ function IntakeScreen({ onSuccess, user }) {
           WebkitBackdropFilter: 'blur(18px)',
         }}
       >
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '1.4rem', letterSpacing: '0.02em' }}>
-          <span>🎯</span><span>Phase 1 — Problem Definition</span>
-        </div>
         <h1 style={{ fontSize: '2.1rem', fontWeight: 700, color: T.text, margin: '0 0 0.55rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>Project Initialization</h1>
         <p style={{ color: T.textSub, fontSize: '0.95rem', margin: '0 0 2rem', lineHeight: 1.65 }}>Describe your vision. We'll break it down into a complete build plan across all 7 phases.</p>
         <div style={{ height: '1px', background: T.divider, marginBottom: '2rem' }} />
@@ -591,8 +582,14 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   async function handleNext() {
     // Skipped category — just navigate forward, nothing to save
     if (catSkipped) {
-      if (nextCatName) setActiveCatName(nextCatName)
-      else onAllComplete()
+      if (nextCatName) {
+        setActiveCatName(nextCatName)
+        setTimeout(() => {
+          const main = document.querySelector('main');
+          if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 0)
+      } else onAllComplete()
       return
     }
     if (!currentCategory) return
@@ -622,6 +619,11 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
       onAllComplete()
     } else {
       setActiveCatName(nextCatName)
+      setTimeout(() => {
+        const main = document.querySelector('main');
+        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 0)
     }
   }
 
@@ -629,9 +631,8 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiLoading) {
     return (
-      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.5rem' }}>
-        <div className="spectral-loader" style={{ width: '200px' }} />
-        <p style={{ color: T.textSub, fontSize: '0.9rem', letterSpacing: '0.05em' }}>Generating your adaptive questionnaire...</p>
+      <main className="flex flex-col items-center justify-center w-full h-full min-h-screen" style={{ flex: 1 }}>
+        <PrismLoader text="Generating your adaptive questionnaire..." />
       </main>
     )
   }
@@ -680,8 +681,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.71rem', color: T.textSub, background: T.card, backdropFilter: T.blur, border: `1px solid ${T.cardBorder}`, borderRadius: '999px', padding: '0.25rem 0.8rem', letterSpacing: '0.02em' }}>
-            <span>📋</span>
-            <span>Phase {phaseNum} — {displayName(currentCategory.name)}</span>
+            <span>Phase {phaseNum}</span>
           </div>
           <span style={{ fontSize: '0.7rem', color: T.textMuted }}>{categoryIndex + 1} of {categories.length}</span>
         </div>
@@ -727,7 +727,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
                   <div style={{ flex: 1 }}>
                     {expl.loading ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#b4a0f4', fontSize: '0.78rem' }}>
-                        <div style={{ width: 12, height: 12, border: `2px solid rgba(124,91,240,0.2)`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                        <span style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <PrismLoader text="" />
+                        </span>
                         Thinking of a good analogy...
                       </div>
                     ) : (
@@ -1152,12 +1154,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   if (['loading', 'validating', 'generating'].includes(status)) {
     const msg = loadingMessages[status]
     return (
-      <main style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.25rem', fontFamily: T.ff }}>
-        <div style={{ width: 36, height: 36, border: `3px solid ${T.divider}`, borderTopColor: T.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite, glow 2s ease-in-out infinite' }} />
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ color: T.text, fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.35rem' }}>{msg.title}</p>
-          <p style={{ color: T.textMuted, fontSize: '0.78rem', margin: 0 }}>{msg.sub}</p>
-        </div>
+      <main className="flex flex-col items-center justify-center w-full h-full" style={{ flex: 1, gap: '1.25rem', fontFamily: T.ff }}>
+        <PrismLoader text={msg.title + (msg.sub ? `\n${msg.sub}` : '')} />
       </main>
     )
   }
@@ -1235,12 +1233,6 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
     <main style={{ flex: 1, height: '100%', overflowY: 'auto', fontFamily: T.ff }}>
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '3rem 2.5rem 4rem', animation: 'fadeIn 0.4s ease', background: 'radial-gradient(ellipse at center, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.85) 35%, rgba(5,5,5,0.5) 55%, rgba(5,5,5,0.0) 75%)', borderRadius: '20px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: T.success, textTransform: 'uppercase', background: T.successBg, border: `1px solid rgba(52,211,153,0.2)`, borderRadius: '999px', padding: '0.2rem 0.7rem', backdropFilter: T.blur }}>
-            Build Plan Ready
-          </div>
-        </div>
         <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: T.text, margin: '0 0 0.4rem', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
           {result.title}
         </h1>
@@ -1290,8 +1282,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {result.features.map((f, i) => (
                 <li key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: T.accent, flexShrink: 0, marginTop: '1px', fontSize: '0.75rem' }}>›</span>
-                  <span style={{ color: T.textSub, fontSize: '0.82rem', lineHeight: 1.55 }}>{f}</span>
+                  <span style={{ color: T.accent, flexShrink: 0, fontSize: '0.75rem', marginTop: '1px' }}>›</span>
+                  <span style={{ color: '#86efac', fontSize: '0.8rem', lineHeight: 1.5 }}>{f}</span>
                 </li>
               ))}
             </ul>
@@ -1426,15 +1418,23 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         </div>
 
         {/* Footer CTA */}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
           <button className={copied ? "" : "btn-primary"} onClick={copyPrompt}
-            style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : '', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+            style={{ padding: '0.8rem 1.75rem', background: copied ? T.success : 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
             {copied ? '✓ Copied!' : '⎘ Copy Build Prompt'}
           </button>
-          <button className="btn-ghost" onClick={onEdit}>
-            ✏️ Edit Responses
+          <button
+            className="btn-primary"
+            onClick={onEdit}
+            style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}
+          >
+            Edit Responses
           </button>
-          <button className="btn-ghost" onClick={onDashboard}>
+          <button
+            className="btn-primary"
+            onClick={onDashboard}
+            style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}
+          >
             Back to Projects
           </button>
         </div>
