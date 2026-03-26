@@ -87,16 +87,18 @@ export const buildAppJob = inngest.createFunction(
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
 
 Rules:
-- 3-10 files, all under src/
+- All files under src/
 - src/App.jsx is ALWAYS the first entry — it is the root component and router
+- Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
+- No file count limit — let the app's complexity determine how many files are needed
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
 - ONLY output the JSON array. No markdown, no explanation
 
-Architecture constraint — each file will be generated independently by a separate AI call that sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
-- Each component must be fully self-contained — no shared utility functions or shared constants unless explicitly listed as a file
-- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational when possible
+Architecture constraint — each file will be generated independently by a separate AI call in parallel. The writer sees ONLY the file list and the app spec, NOT the code of other files. Design for this:
+- Each component must be fully self-contained — one responsibility per file
+- Put ALL state management in App.jsx and pass data down via props. Child components should be pure/presentational
 - If a shared data model or theme is needed, make it its own file (e.g. src/theme.js, src/data.js) so every file can import it
-- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details (layout, key visual elements)`,
+- Write detailed descriptions — these are the ONLY instructions the file writer gets. Include: what the component renders, what props it expects (names and types), what callbacks it exposes, and any specific UI details`,
         messages: [{
           role: 'user',
           content: `Design the file structure for this app:
@@ -132,13 +134,12 @@ Return ONLY the JSON array.`
     // Build context string so each worker knows about sibling files
     const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
-    const files = []
-    for (let i = 0; i < schema.length; i++) {
-      const fileSpec = schema[i]
-      const file = await step.run(`write-file-${i}`, async () => {
-        const res = await client.messages.create({
-          model,
-          max_tokens: 8000,
+    const files = await Promise.all(
+      schema.map((fileSpec, i) =>
+        step.run(`write-file-${i}`, async () => {
+          const res = await client.messages.create({
+            model,
+            max_tokens: 2048,
           system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
@@ -180,12 +181,12 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           }],
         })
 
-        await updateJob(jobId, { progress: i + 1 })
+          await updateJob(jobId, { progress: i + 1 })
 
-        return { path: fileSpec.path, content: stripFences(res.content[0].text) }
-      })
-      files.push(file)
-    }
+          return { path: fileSpec.path, content: stripFences(res.content[0].text) }
+        })
+      )
+    )
 
     const generatedFiles = { files, extraDeps: allDeps }
 
