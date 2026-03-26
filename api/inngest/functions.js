@@ -169,7 +169,7 @@ Design system — apply consistently since files are generated independently:
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
 
-    const BATCH_SIZE = 5
+    const BATCH_SIZE = 3
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
