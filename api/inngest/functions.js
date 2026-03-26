@@ -290,3 +290,84 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
     return result
   }
 )
+
+// ---------------------------------------------------------------------------
+// generatePlanJob — runs Claude to produce a build spec, saves to build_plans
+// ---------------------------------------------------------------------------
+const GENERATE_SYSTEM_PROMPT = `You are a senior software architect and product strategist. Your job is to synthesize a user's app idea and their answers to 7 planning questions into a complete, actionable build specification.
+
+Return ONLY a valid JSON object with exactly these fields:
+{
+  "title": "3-5 word app name that captures the core value",
+  "summary": "2-3 sentences in plain English describing what the app does, who it's for, and what problem it solves. No jargon.",
+  "prompt": "A complete app specification used to generate a multi-file React+Vite project where EACH FILE is written by a separate AI call in isolation. Must be 400-800 words. Structure it as:\n\n1) APP OVERVIEW — what the app is and who it's for (2-3 sentences)\n2) VISUAL DESIGN — specific primary color hex code, accent color, overall feel (e.g. 'clean and minimal' or 'bold and playful'), key layout pattern (sidebar+main, tab bar, single scroll)\n3) CORE FEATURES — bulleted, each with specific behavior (inputs, outputs, interactions). Be precise enough that a developer who can't ask questions could build it\n4) SCREENS/VIEWS — describe EACH screen in its own paragraph: what components appear, what data is shown, what actions are available, how the user navigates to/from it. This is critical because each screen may be built by a different developer who cannot see the other screens\n5) DATA MODEL — the key entities, their fields, and relationships. Include sample mock data values so every file uses consistent fake data (same user names, same item names, same categories)\n6) BUSINESS RULES — validation rules, calculated fields, state transitions\n\nWrite it as a direct instruction starting with 'Build a [app name]...'. Focus on WHAT not HOW. Keep scope realistic for a client-side React app with mocked data.",
+  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
+  "tech_stack": ["Technology 1", "Technology 2", "Technology 3"],
+  "user_stories": ["As a [user type], I can [action] so that [benefit].", "..."],
+  "build_traps": ["Plain-English warning about a non-obvious build risk"],
+  "phases": { "phase1": ["Core feature A", "Core feature B"], "phase2": ["Enhancement D"] }
+}
+
+Rules:
+- title: no subtitle, no punctuation, title case
+- summary: completely jargon-free
+- prompt: this is the most important field — make it dense, specific, and immediately actionable
+- features: 4-8 items, plain-English noun phrases
+- tech_stack: realistic recommendations based on scale and features
+- user_stories: 4-6 stories in "As a X, I can Y so that Z" format
+- build_traps: always include 2-4 items flagging third-party setup, sync risks, or hosting misconceptions
+- phases: split into phase1 (minimal core loop) and phase2 (enhancements) if 5+ features; else null
+- No markdown, no code fences, no explanation — only the JSON object`
+
+export const generatePlanJob = inngest.createFunction(
+  { id: 'generate-plan-job', retries: 2, triggers: [{ event: 'app/generate' }] },
+  async ({ event, step }) => {
+    const { jobId, session_id, raw_idea, extracted, answers, dev_mode } = event.data
+
+    const result = await step.run('generate', async () => {
+      await updateJob(jobId, { status: 'Generating plan...' })
+
+      // Build context blocks
+      const extractedBlock = extracted
+        ? `## Extracted App Profile\nCore problem: ${extracted.core_problem ?? 'not specified'}\nTarget users: ${extracted.target_users ?? 'not specified'}\nKey features: ${Array.isArray(extracted.key_features) ? extracted.key_features.join(', ') : 'not specified'}\nDomain: ${extracted.domain ?? 'not specified'}\nScale: ${extracted.scale ?? 'not specified'}`
+        : `## Raw Idea\n"${raw_idea}"`
+
+      const answersBlock = answers
+        .map(a => `### ${a.category}\nQuestion: ${a.question}\nAnswer: ${a.answer}`)
+        .join('\n\n')
+
+      const userMessage = `Generate a complete build specification for this app.\n\n## Original Idea\n"${raw_idea.slice(0, 500)}"\n\n${extractedBlock}\n\n## User's Planning Answers (7 Categories)\n\n${answersBlock}\n\nNow generate the full build specification JSON.`
+
+      const message = await client.messages.create({
+        model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
+        max_tokens: 4000,
+        system: GENERATE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      })
+
+      let cleaned = message.content[0].text.trim()
+        .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+      const objStart = cleaned.indexOf('{')
+      const objEnd = cleaned.lastIndexOf('}')
+      if (objStart === -1 || objEnd === -1) throw new Error(`Model returned non-JSON: ${cleaned.slice(0, 200)}`)
+      cleaned = cleaned.slice(objStart, objEnd + 1)
+      const json = JSON.parse(cleaned)
+
+      // Save to build_plans
+      await supabase.from('build_plans').upsert({
+        session_id,
+        title: json.title,
+        summary: json.summary,
+        prompt: json.prompt,
+        features: json.features,
+        tech_stack: json.tech_stack,
+        user_stories: json.user_stories,
+      }, { onConflict: 'session_id' })
+
+      await updateJob(jobId, { status: 'Done!' })
+      return json
+    })
+
+    return result
+  }
+)
