@@ -925,7 +925,9 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           headers: await authHeaders(),
           body: JSON.stringify({ raw_idea: rawIdea }),
         })
-        if (extRes.ok) extracted = await extRes.json()
+        if (extRes.ok) {
+          try { extracted = JSON.parse(await extRes.text()) } catch { /* non-fatal, ignore */ }
+        }
       } catch { /* non-fatal */ }
 
       // Dispatch to Inngest — returns immediately with job_id
