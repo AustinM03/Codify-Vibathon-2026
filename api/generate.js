@@ -26,6 +26,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { MODELS } from './models.js'
 
+export const config = { maxDuration: 60 }
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 50_000 })
 
 const SYSTEM_PROMPT = `You are a senior software architect and product strategist. Your job is to synthesize a user's app idea and their answers to 7 planning questions into a complete, actionable build specification.
