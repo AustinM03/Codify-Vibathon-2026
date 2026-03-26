@@ -53,14 +53,24 @@ function stripFences(text) {
   return text.trim().replace(/^```[\w]*\s*/i, '').replace(/\s*```\s*$/i, '').trim()
 }
 
-// Robust JSON parse with truncation repair (from existing build.js)
+// Robust JSON parse — handles fences, preamble text, and truncation
 function safeParseJSON(raw) {
-  const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  // Strip markdown fences
+  let text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  // If Haiku added preamble text before the JSON array, extract it
+  const arrStart = text.indexOf('[')
+  if (arrStart > 0) text = text.slice(arrStart)
+  // Strip any trailing text after the JSON array
+  const arrEnd = text.lastIndexOf(']')
+  if (arrEnd > 0) text = text.slice(0, arrEnd + 1)
+
   try { return JSON.parse(text) } catch (_) { /* fall through */ }
+  // Truncation repairs
   try { return JSON.parse(text + '"]') } catch (_) {}
   try { return JSON.parse(text + '}]') } catch (_) {}
   try { return JSON.parse(text + '"}]') } catch (_) {}
-  throw new SyntaxError('Could not parse architect JSON')
+  try { return JSON.parse(text + '"}]') } catch (_) {}
+  throw new SyntaxError('Could not parse architect JSON: ' + text.slice(0, 200))
 }
 
 async function updateJob(jobId, fields) {
