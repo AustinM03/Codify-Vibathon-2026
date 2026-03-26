@@ -2,10 +2,18 @@ import React from 'react';
 
 export default function PrismLoader({ text = "Generating..." }) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 w-full h-full min-h-[300px]">
-      <svg width="100" height="100" viewBox="0 0 100 100" className="overflow-visible">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
+      minHeight: 300,
+      gap: '1.5rem',
+    }}>
+      <svg width="100" height="100" viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
         <defs>
-          {/* Outer Glow (Bloom) */}
           <filter id="prismGlow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
             <feMerge>
@@ -13,8 +21,6 @@ export default function PrismLoader({ text = "Generating..." }) {
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
-
-          {/* Glass body reflection gradient */}
           <linearGradient id="prismReflection" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%"   stopColor="white" stopOpacity="0.1" />
             <stop offset="50%"  stopColor="white" stopOpacity="0" />
@@ -22,17 +28,12 @@ export default function PrismLoader({ text = "Generating..." }) {
           </linearGradient>
         </defs>
 
-        {/* Glass prism body */}
         <polygon
           points="50,15 90,85 10,85"
           fill="url(#prismReflection)"
           stroke="rgba(255,255,255,0.1)"
           strokeWidth="1"
-          className="drop-shadow-xl"
-          style={{ backdropFilter: 'blur(6px)' }}
         />
-
-        {/* Animated rainbow stroke */}
         <polygon
           points="50,15 90,85 10,85"
           fill="none"
@@ -45,9 +46,20 @@ export default function PrismLoader({ text = "Generating..." }) {
         />
       </svg>
 
-      <p className="text-lg font-medium tracking-tight text-white/95 animate-pulse text-center whitespace-pre-line">
-        {text}
-      </p>
+      {text ? (
+        <p style={{
+          fontSize: '1.05rem',
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
+          color: 'rgba(255,255,255,0.95)',
+          textAlign: 'center',
+          whiteSpace: 'pre-line',
+          animation: 'pulse 2s ease-in-out infinite',
+          margin: 0,
+        }}>
+          {text}
+        </p>
+      ) : null}
     </div>
   );
 }
