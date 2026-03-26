@@ -336,6 +336,10 @@ function IntakeScreen({ onSuccess, user }) {
 
   const borderColor = error ? T.error : focused ? T.focusBorder : T.inputBorder
 
+  // Import the new input component
+  // eslint-disable-next-line
+  const AIGeneratedInput = require('./components/AIGeneratedInput.jsx').default;
+
   async function handleSubmit() {
     if (!idea.trim()) { setError('Please describe your app idea before continuing.'); return }
     setLoading(true); setError('')
@@ -360,9 +364,15 @@ function IntakeScreen({ onSuccess, user }) {
         <p style={{ color: T.textSub, fontSize: '0.95rem', margin: '0 0 2rem', lineHeight: 1.65 }}>Describe your vision. We'll break it down into a complete build plan across all 7 phases.</p>
         <div style={{ height: '1px', background: T.divider, marginBottom: '2rem' }} />
         <label style={{ display: 'block', fontSize: '0.71rem', fontWeight: 600, color: T.textSub, marginBottom: '0.55rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Your App Idea</label>
-        <textarea value={idea} onChange={e => { setIdea(e.target.value); if (error) setError('') }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          placeholder="Describe your app idea in as much detail as possible..." rows={9}
-          style={{ width: '100%', background: T.inputBg, border: `1.5px solid ${borderColor}`, borderRadius: '12px', color: T.text, padding: '1rem 1.1rem', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.7, display: 'block', transition: 'border-color 0.2s, box-shadow 0.2s', boxShadow: focused ? T.focusGlow : 'none' }} />
+        <AIGeneratedInput
+          value={idea}
+          onChange={e => { setIdea(e.target.value); if (error) setError('') }}
+          placeholder="Describe your app idea in as much detail as possible..."
+          rows={9}
+          style={{ marginBottom: '0.5rem' }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.45rem', marginBottom: '1.5rem', minHeight: '1.1rem' }}>
           {error ? <span style={{ fontSize: '0.78rem', color: T.error }}>{error}</span> : <span />}
           <span style={{ fontSize: '0.71rem', color: T.textMuted, marginLeft: 'auto' }}>{idea.length} chars</span>
