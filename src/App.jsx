@@ -937,7 +937,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
 
       const { job_id } = genJson
 
-      // Poll jobs table until done or error
+      // Poll jobs table until done or error (3 min timeout)
       await new Promise((resolve, reject) => {
         const interval = setInterval(async () => {
           try {
@@ -948,9 +948,10 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
               .maybeSingle()
             if (!job) return
             if (job.status === 'Done!') { clearInterval(interval); resolve() }
-            else if (job.status === 'Error') { clearInterval(interval); reject(new Error(job.error ?? 'Generation failed')) }
+            else if (job.status === 'Error' || job.error) { clearInterval(interval); reject(new Error(job.error ?? 'Generation failed')) }
           } catch { /* retry next tick */ }
         }, 2000)
+        setTimeout(() => { clearInterval(interval); reject(new Error('Generation timed out — please try again')) }, 3 * 60 * 1000)
       })
 
       // Read result from build_plans (saved by Inngest worker)
@@ -1155,8 +1156,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         setDeployUrl(job.deploy_url)
         clearInterval(interval)
       }
-      if (job.error) {
-        setBuildError(job.error)
+      if (job.status === 'Error' || job.error) {
+        setBuildError(job.error ?? 'Build failed')
         clearInterval(interval)
       }
       if (job.status === 'Done!') {
