@@ -1,12 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { inngest } from './client.js'
 import { supabase } from '../supabaseServer.js'
 import { MODELS } from '../models.js'
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-  timeout: 45_000, // 45s — fail fast before Vercel's 60s kill, let Inngest retry cleanly
-})
 
 // ---------------------------------------------------------------------------
 // Static files that never touch Claude — keeps token budget for real code
@@ -55,20 +49,15 @@ function stripFences(text) {
 
 // Robust JSON parse — handles fences, preamble text, and truncation
 function safeParseJSON(raw) {
-  // Strip markdown fences
   let text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-  // If Haiku added preamble text before the JSON array, extract it
   const arrStart = text.indexOf('[')
   if (arrStart > 0) text = text.slice(arrStart)
-  // Strip any trailing text after the JSON array
   const arrEnd = text.lastIndexOf(']')
   if (arrEnd > 0) text = text.slice(0, arrEnd + 1)
 
   try { return JSON.parse(text) } catch (_) { /* fall through */ }
-  // Truncation repairs
   try { return JSON.parse(text + '"]') } catch (_) {}
   try { return JSON.parse(text + '}]') } catch (_) {}
-  try { return JSON.parse(text + '"}]') } catch (_) {}
   try { return JSON.parse(text + '"}]') } catch (_) {}
   throw new SyntaxError('Could not parse architect JSON: ' + text.slice(0, 200))
 }
@@ -78,23 +67,27 @@ async function updateJob(jobId, fields) {
 }
 
 // ---------------------------------------------------------------------------
-// buildAppJob — the Inngest function (3 sequential steps)
+// buildAppJob — the Inngest function
+// step.ai.infer() offloads Claude calls to Inngest's servers — zero Vercel timeout risk
 // ---------------------------------------------------------------------------
 export const buildAppJob = inngest.createFunction(
   { id: 'build-app-job', retries: 3, triggers: [{ event: 'app/build' }] },
   async ({ event, step }) => {
-    const { jobId, session_id, title, prompt, tech_stack, features, dev_mode } = event.data
-    const buildModel = MODELS.FAST // Architect step only — Sonnet handles file writing
+    const { jobId, session_id, title, prompt, tech_stack, features } = event.data
 
     // -----------------------------------------------------------------------
-    // Step A — Architect: design the file schema (Haiku for speed)
+    // Step A — Architect: design the file schema (Haiku — simple JSON output)
     // -----------------------------------------------------------------------
-    const schema = await step.run('architect', async () => {
+    await step.run('architect-status', async () => {
       await updateJob(jobId, { status: 'Architecting codebase...' })
+    })
 
-      const res = await client.messages.create({
-        model: buildModel,
-        max_tokens: 4096,
+    const architectRes = await step.ai.infer('architect', {
+      model: step.ai.models.anthropic({
+        model: MODELS.FAST,
+        defaultParameters: { max_tokens: 4096 },
+      }),
+      body: {
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
 
@@ -124,39 +117,31 @@ ${title}
 ${prompt}
 
 ${features?.length ? `## Features\n${features.map(f => `- ${f}`).join('\n')}` : ''}
-${tech_stack?.length ? `## Tech Stack\n${tech_stack.map(t => `- ${t}`).join('\n')}` : ''}
 
-Return ONLY the JSON array.`
+Return ONLY the JSON array.`,
         }],
-      })
-
-      return safeParseJSON(res.content[0].text)
+        max_tokens: 4096,
+      },
     })
 
+    const schema = safeParseJSON(architectRes.content[0].text)
+
     // -----------------------------------------------------------------------
-    // Step B — Worker Swarm: write each file as its own Inngest step
-    // Each step.run() gets its own serverless invocation (stays under 10s)
+    // Step B — Worker Swarm: write each file via step.ai.infer (Sonnet quality,
+    // no timeout risk — Inngest makes the call, Vercel just collects the result)
     // -----------------------------------------------------------------------
     await step.run('init-swarm', async () => {
       await updateJob(jobId, { status: 'Writing files...', total_files: schema.length })
     })
 
-    // Collect extra dependencies from architect output
     const allDeps = {}
     schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
 
-    // Build context string so each worker knows about sibling files
-    const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
+    const schemaContext = schema.map(f =>
+      `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`
+    ).join('\n')
 
-    const BATCH_SIZE = 5
-    const files = []
-    for (let b = 0; b < schema.length; b += BATCH_SIZE) {
-      const batch = schema.slice(b, b + BATCH_SIZE)
-      const batchFiles = await Promise.all(
-        batch.map((fileSpec, j) => {
-          const i = b + j
-          return step.run(`write-file-${i}`, async () => {
-            const fileWriterSystem = `You are an expert React developer writing a single file for a larger project.
+    const fileWriterSystem = `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
 - Use React 18 with functional components and hooks
@@ -184,7 +169,14 @@ Design system — apply consistently since files are generated independently:
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
 
-            const fileWriterMessage = `Write the complete code for: ${fileSpec.path}
+    const BATCH_SIZE = 5
+    const files = []
+    for (let b = 0; b < schema.length; b += BATCH_SIZE) {
+      const batch = schema.slice(b, b + BATCH_SIZE)
+      const batchFiles = await Promise.all(
+        batch.map((fileSpec, j) => {
+          const i = b + j
+          const fileWriterMessage = `Write the complete code for: ${fileSpec.path}
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
@@ -199,25 +191,24 @@ IMPORTANT: This file is located at "${fileSpec.path}". Calculate all import path
 
 Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
-            const res = await client.messages.create({
+          return step.ai.infer(`write-file-${i}`, {
+            model: step.ai.models.anthropic({
               model: MODELS.BALANCED,
-              max_tokens: 4096,
+              defaultParameters: { max_tokens: 4096 },
+            }),
+            body: {
               system: fileWriterSystem,
               messages: [{ role: 'user', content: fileWriterMessage }],
-            })
-
-            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
-          })
+              max_tokens: 4096,
+            },
+          }).then(res => ({ path: fileSpec.path, content: stripFences(res.content[0].text) }))
         })
       )
       files.push(...batchFiles)
-      // Update progress after each batch completes — no race condition
       await step.run(`progress-batch-${b}`, async () => {
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
     }
-
-    const generatedFiles = { files, extraDeps: allDeps }
 
     // -----------------------------------------------------------------------
     // Step C — Assembly & Deploy to Vercel
@@ -225,16 +216,13 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
     const result = await step.run('assembly-deploy', async () => {
       await updateJob(jobId, { status: 'Deploying to Vercel...' })
 
-      // Merge base template + generated files
       const slugName = (title || 'app').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)
       const fileMap = {
         ...BASE_TEMPLATE,
-        'package.json': buildPackageJson(slugName, generatedFiles.extraDeps),
+        'package.json': buildPackageJson(slugName, allDeps),
       }
-      generatedFiles.files.forEach(f => { fileMap[f.path] = f.content })
+      files.forEach(f => { fileMap[f.path] = f.content })
 
-      // Use DEPLOY_VERCEL_TOKEN (not VERCEL_TOKEN) because Vercel auto-injects
-      // VERCEL_TOKEN with the hosting account's OIDC token, overriding ours.
       const vercelToken = process.env.DEPLOY_VERCEL_TOKEN
       if (!vercelToken) {
         await updateJob(jobId, { status: 'Done!', deploy_url: null, error: 'No DEPLOY_VERCEL_TOKEN configured' })
@@ -247,8 +235,6 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
         encoding: 'base64',
       }))
 
-      // Use DEPLOY_TEAM_ID (not VERCEL_TEAM_ID) because Vercel auto-injects
-      // VERCEL_TEAM_ID with the hosting team's ID, which is not where we deploy user apps.
       const teamId = process.env.DEPLOY_TEAM_ID
       const vercelUrl = teamId
         ? `https://api.vercel.com/v13/deployments?teamId=${teamId}`
@@ -293,6 +279,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
 // ---------------------------------------------------------------------------
 // generatePlanJob — runs Claude to produce a build spec, saves to build_plans
+// step.ai.infer() means Sonnet runs on Inngest's servers — no Vercel timeout
 // ---------------------------------------------------------------------------
 const GENERATE_SYSTEM_PROMPT = `You are a senior software architect and product strategist. Your job is to synthesize a user's app idea and their answers to 7 planning questions into a complete, actionable build specification.
 
@@ -322,31 +309,39 @@ Rules:
 export const generatePlanJob = inngest.createFunction(
   { id: 'generate-plan-job', retries: 2, triggers: [{ event: 'app/generate' }] },
   async ({ event, step }) => {
-    const { jobId, session_id, raw_idea, extracted, answers, dev_mode } = event.data
+    const { jobId, session_id, raw_idea, extracted, answers } = event.data
 
-    let result
     try {
-      result = await step.run('generate', async () => {
+      await step.run('generate-status', async () => {
         await updateJob(jobId, { status: 'Generating plan...' })
+      })
 
-        const extractedBlock = extracted
-          ? `## Extracted App Profile\nCore problem: ${extracted.core_problem ?? 'not specified'}\nTarget users: ${extracted.target_users ?? 'not specified'}\nKey features: ${Array.isArray(extracted.key_features) ? extracted.key_features.join(', ') : 'not specified'}\nDomain: ${extracted.domain ?? 'not specified'}\nScale: ${extracted.scale ?? 'not specified'}`
-          : `## Raw Idea\n"${raw_idea}"`
+      const extractedBlock = extracted
+        ? `## Extracted App Profile\nCore problem: ${extracted.core_problem ?? 'not specified'}\nTarget users: ${extracted.target_users ?? 'not specified'}\nKey features: ${Array.isArray(extracted.key_features) ? extracted.key_features.join(', ') : 'not specified'}\nDomain: ${extracted.domain ?? 'not specified'}\nScale: ${extracted.scale ?? 'not specified'}`
+        : `## Raw Idea\n"${raw_idea}"`
 
-        const answersBlock = answers
-          .map(a => `### ${a.category}\nQuestion: ${a.question}\nAnswer: ${a.answer}`)
-          .join('\n\n')
+      const answersBlock = answers
+        .map(a => `### ${a.category}\nQuestion: ${a.question}\nAnswer: ${a.answer}`)
+        .join('\n\n')
 
-        const userMessage = `Generate a complete build specification for this app.\n\n## Original Idea\n"${raw_idea.slice(0, 500)}"\n\n${extractedBlock}\n\n## User's Planning Answers (7 Categories)\n\n${answersBlock}\n\nNow generate the full build specification JSON.`
+      const userMessage = `Generate a complete build specification for this app.\n\n## Original Idea\n"${raw_idea.slice(0, 500)}"\n\n${extractedBlock}\n\n## User's Planning Answers (7 Categories)\n\n${answersBlock}\n\nNow generate the full build specification JSON.`
 
-        const message = await client.messages.create({
-          model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
-          max_tokens: 4000,
+      // step.ai.infer — Inngest calls Anthropic on their servers, Vercel function
+      // returns immediately and is re-invoked with the result. No timeout risk.
+      const aiRes = await step.ai.infer('generate', {
+        model: step.ai.models.anthropic({
+          model: MODELS.BALANCED,
+          defaultParameters: { max_tokens: 4000 },
+        }),
+        body: {
           system: GENERATE_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userMessage }],
-        })
+          max_tokens: 4000,
+        },
+      })
 
-        let cleaned = message.content[0].text.trim()
+      const result = await step.run('save-plan', async () => {
+        let cleaned = aiRes.content[0].text.trim()
           .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
         const objStart = cleaned.indexOf('{')
         const objEnd = cleaned.lastIndexOf('}')
@@ -367,11 +362,11 @@ export const generatePlanJob = inngest.createFunction(
         await updateJob(jobId, { status: 'Done!' })
         return json
       })
+
+      return result
     } catch (err) {
       await updateJob(jobId, { status: 'Error', error: err.message ?? 'Plan generation failed' })
       throw err
     }
-
-    return result
   }
 )
