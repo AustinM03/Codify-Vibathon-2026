@@ -1090,7 +1090,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         .maybeSingle()
       if (!job) return
       setBuildStatus(job.status)
-      setBuildProgress(job.progress ?? 0)
+      setBuildProgress(prev => Math.max(prev, job.progress ?? 0))
       setBuildTotal(job.total_files ?? 0)
       if (job.deploy_url) {
         setDeployUrl(job.deploy_url)
@@ -1360,8 +1360,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
                     <span style={{ fontSize: '0.7rem', color: T.textSub }}>Files written</span>
                     <span style={{ fontSize: '0.7rem', color: T.textSub }}>{buildProgress} / {buildTotal}</span>
                   </div>
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.round((buildProgress / buildTotal) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #7c5bf0, #a78bfa)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.round((buildProgress / buildTotal) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #7c5bf0, #a78bfa)', borderRadius: '3px', transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                   </div>
                 </div>
               )}
