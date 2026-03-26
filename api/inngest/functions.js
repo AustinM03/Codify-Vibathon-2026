@@ -84,10 +84,7 @@ export const buildAppJob = inngest.createFunction(
   { id: 'build-app-job', retries: 3, triggers: [{ event: 'app/build' }] },
   async ({ event, step }) => {
     const { jobId, session_id, title, prompt, tech_stack, features, dev_mode } = event.data
-    // Haiku for all build steps — fast responses (3-10s) guarantee we stay
-    // well under Vercel's 60s timeout. Files are small (~50-80 lines) so
-    // Haiku quality is sufficient.
-    const buildModel = MODELS.FAST
+    const buildModel = MODELS.FAST // Architect step only — Sonnet handles file writing
 
     // -----------------------------------------------------------------------
     // Step A — Architect: design the file schema (Haiku for speed)
@@ -167,6 +164,11 @@ Rules:
 - NO API keys or environment variables
 - Mock any backend/database with local state or localStorage
 - CRITICAL: Use correct relative import paths based on the file's location. For example, if writing src/App.jsx and importing src/components/Foo.jsx, use './components/Foo'. If writing src/components/Bar.jsx and importing src/hooks/useX.js, use '../hooks/useX'
+- CRITICAL: If using react-router-dom, ALWAYS wrap the root in <BrowserRouter> inside App.jsx. Never call useLocation() or useNavigate() outside a <Router> — this causes a fatal white-page crash
+- CRITICAL: Always declare variables before using them. Never reference an identifier that hasn't been initialized in the current scope
+- CRITICAL: For Zustand, use the named import: import { create } from 'zustand' — the default import is deprecated and will crash
+- CRITICAL: Every prop and callback referenced in JSX must be declared — never use an undeclared variable
+- CRITICAL: Keep each component concise. If a component would exceed ~120 lines, split logic into smaller helpers within the same file
 
 The project already has these files (do NOT generate them):
 - index.html (mounts #root)
@@ -197,28 +199,14 @@ IMPORTANT: This file is located at "${fileSpec.path}". Calculate all import path
 
 Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
-            // Pass 1 — Haiku at 8192 tokens (fast, handles most files)
             const res = await client.messages.create({
-              model: MODELS.FAST,
-              max_tokens: 8192,
-              system: fileWriterSystem,
-              messages: [{ role: 'user', content: fileWriterMessage }],
-            })
-
-            if (res.stop_reason === 'end_turn') {
-              return { path: fileSpec.path, content: stripFences(res.content[0].text) }
-            }
-
-            // Pass 2 — Sonnet retry if Haiku was truncated (writes more concise code)
-            console.warn(`File truncated by Haiku: ${fileSpec.path} — retrying with Sonnet`)
-            const retry = await client.messages.create({
               model: MODELS.BALANCED,
-              max_tokens: 8192,
+              max_tokens: 4096,
               system: fileWriterSystem,
               messages: [{ role: 'user', content: fileWriterMessage }],
             })
 
-            return { path: fileSpec.path, content: stripFences(retry.content[0].text) }
+            return { path: fileSpec.path, content: stripFences(res.content[0].text) }
           })
         })
       )
