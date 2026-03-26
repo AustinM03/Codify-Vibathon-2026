@@ -169,7 +169,7 @@ Design system — apply consistently since files are generated independently:
 
 This file is generated in ISOLATION — you cannot see the code of sibling files. Use the file descriptions and export lists in the project structure below to determine the correct import names, prop interfaces, and callback signatures. Match them exactly.`
 
-    const BATCH_SIZE = 5
+    const BATCH_SIZE = 3
     const files = []
     for (let b = 0; b < schema.length; b += BATCH_SIZE) {
       const batch = schema.slice(b, b + BATCH_SIZE)
@@ -193,7 +193,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
 
           return step.ai.infer(`write-file-${i}`, {
             model: step.ai.models.anthropic({
-              model: MODELS.FAST,
+              model: MODELS.BALANCED,
               defaultParameters: { max_tokens: 4096 },
             }),
             body: {
@@ -208,6 +208,12 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
       await step.run(`progress-batch-${b}`, async () => {
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
+      // Rate-limit: Sonnet has a 30k input token/min cap. Each file write is
+      // ~1,400 tokens, so 5 parallel = ~7k tokens. Sleep 15s between batches
+      // to stay well under the limit. Skip sleep after the final batch.
+      if (b + BATCH_SIZE < schema.length) {
+        await step.sleep(`rate-limit-${b}`, '15s')
+      }
     }
 
     // -----------------------------------------------------------------------
