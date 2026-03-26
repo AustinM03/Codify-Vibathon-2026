@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: 'user',
-          content: 'Please say exactly: "PromptReady AI connection successful!"',
+          content: 'Please say exactly: "Prism AI connection successful!"',
         },
       ],
     })

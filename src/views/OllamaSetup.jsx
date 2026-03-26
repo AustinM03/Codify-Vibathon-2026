@@ -58,7 +58,7 @@ export default function OllamaSetup({ onBack, useLocalAI, toggleLocalAI, onCompl
             borderRadius: '8px', display: 'flex', alignItems: 'center',
             justifyContent: 'center', fontSize: '0.9rem',
           }}>🚀</div>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>PromptReady</span>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>Prism</span>
         </div>
         <button
           className="btn-ghost"

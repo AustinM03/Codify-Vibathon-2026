@@ -14,9 +14,9 @@ const STEPS_PREVIEW = [
   },
   {
     icon: '✨',
-    label: 'Step 2',
+    label: 'Step 2', 
     title: 'The Blueprint',
-    desc: 'Answer simple, jargon-free questions about your App Connections, Information, and Policies. We handle all the technical translations behind the scenes.',
+    desc: 'Answer simple, jargon-free questions about your idea. We handle all the technical translations behind the scenes.',
     accent: '#0095ff',
     accentBg: 'rgba(0,149,255,0.08)',
     accentBorder: 'rgba(0,149,255,0.2)',
@@ -25,7 +25,7 @@ const STEPS_PREVIEW = [
     icon: '🚀',
     label: 'Step 3',
     title: 'The Build',
-    desc: 'Watch as your complete application blueprint is generated right before your eyes — ready to hand to any AI coding tool and start building immediately.',
+    desc: 'Watch as your complete blueprint is generated right before your eyes, then handed to an AI coding tool and built immediately.',
     accent: '#22c55e',
     accentBg: 'rgba(34,197,94,0.08)',
     accentBorder: 'rgba(34,197,94,0.2)',
@@ -80,7 +80,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
             borderRadius: '8px', display: 'flex', alignItems: 'center',
             justifyContent: 'center', fontSize: '0.8rem', color: '#fff', fontWeight: 700,
           }}>P</div>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>PromptReady</span>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ebebeb', letterSpacing: '-0.01em' }}>Prism</span>
         </div>
         <button
           className="btn-ghost"
@@ -284,7 +284,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
               lineHeight: 1.75, margin: '0 0 2rem',
               maxWidth: 520,
             }}>
-              Unlike other platforms that charge you per generation, PromptReady lets you plug in your own local AI models using <strong style={{ color: '#aaa' }}>Ollama</strong>. Download a model once, run it on your own computer, and generate unlimited apps with <strong style={{ color: '#aaa' }}>zero cloud costs</strong> and <strong style={{ color: '#aaa' }}>total privacy</strong>.
+              Unlike other platforms that charge you per generation, Prism gives you the option to plug in your own local AI models using <strong style={{ color: '#aaa' }}>Ollama</strong>. Download a model once, run it on your own computer, and generate unlimited apps with <strong style={{ color: '#aaa' }}>zero cloud costs</strong> and <strong style={{ color: '#aaa' }}>total privacy</strong>.
             </p>
 
             <button
@@ -332,7 +332,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
             }}>
               <div style={{ color: '#555' }}>$ ollama run llama3</div>
               <div style={{ color: '#10b981' }}>✓ Model loaded locally</div>
-              <div style={{ color: '#555', marginTop: '0.2rem' }}>$ promptready generate</div>
+              <div style={{ color: '#555', marginTop: '0.2rem' }}>$ prism generate</div>
               <div style={{ color: '#06b6d4' }}>→ Generating build plan...</div>
               <div style={{ color: '#4ade80', marginTop: '0.2rem' }}>✓ Done. Zero API cost.</div>
               <div style={{ color: '#0095ff', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
@@ -382,7 +382,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
             Your idea deserves to exist.
           </h2>
           <p style={{ color: '#555', fontSize: '0.9rem', lineHeight: 1.65, margin: '0 0 2rem', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-            Thousands of great ideas never get built because people don't know where to start. PromptReady changes that.
+            Thousands of great ideas never get built because people don't know where to start. Prism changes that.
           </p>
           <button
             className="landing-cta btn-primary"
@@ -410,7 +410,7 @@ export default function LandingPage({ onGetStarted, onLearnOllama }) {
           borderRadius: '5px', display: 'flex', alignItems: 'center',
           justifyContent: 'center', fontSize: '0.55rem', color: '#fff', fontWeight: 700,
         }}>P</div>
-        <span style={{ fontSize: '0.75rem', color: '#2e2e2e' }}>© 2026 PromptReady. Built for builders.</span>
+        <span style={{ fontSize: '0.75rem', color: '#2e2e2e' }}>© 2026 Prism. Built for builders.</span>
       </footer>
     </div>
   )

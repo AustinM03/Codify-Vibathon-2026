@@ -247,7 +247,7 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: slugName || 'promptready-app',
+          name: slugName || 'prism-app',
           files: vercelFiles,
           projectSettings: {
             framework: 'vite',

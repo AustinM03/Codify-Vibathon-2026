@@ -169,13 +169,13 @@ function LoginScreen() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem' }}>
           <div style={{ width: 32, height: 32, background: T.gradient, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>P</div>
-          <div style={{ color: T.text, fontWeight: 700, fontSize: '0.95rem' }}>PromptReady</div>
+          <div style={{ color: T.text, fontWeight: 700, fontSize: '0.95rem' }}>Prism</div>
         </div>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: T.text, margin: '0 0 0.4rem', letterSpacing: '-0.02em' }}>
           {mode === 'signin' ? 'Welcome back' : 'Create your account'}
         </h1>
         <p style={{ color: T.textSub, fontSize: '0.85rem', margin: '0 0 1.75rem' }}>
-          {mode === 'signin' ? 'Sign in to continue building.' : 'Get started with PromptReady AI.'}
+          {mode === 'signin' ? 'Sign in to continue building.' : 'Get started with Prism AI.'}
         </p>
         <form onSubmit={handleSubmit}>
           <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: T.textSub, marginBottom: '0.4rem', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Email</label>
@@ -1640,7 +1640,7 @@ export default function App() {
             onMouseOut={e => (e.currentTarget.style.background = 'none')}>
             <div style={{ width: 28, height: 28, background: T.gradient, borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff', fontWeight: 700 }}>P</div>
             <div style={{ textAlign: 'left' }}>
-            <div style={{ color: T.text, fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
+            <div style={{ color: T.text, fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>Prism</div>
             <div style={{ color: T.textMuted, fontSize: '0.62rem' }}>AI App Builder</div>
           </div>
         </button>
