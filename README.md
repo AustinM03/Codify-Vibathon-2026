@@ -7,7 +7,7 @@ Prism guides non-technical founders through a 7-step AI-powered questionnaire, g
 Built for the [codefi Vibathon 2026](https://codefi.com).
 
 For Website Testing (if not wanting to simple signup and bypass Auth):
-- Username: tester1@gmail.com | Password: Test1234 (1 Live Project, 1 Ready to go live project)
+- Username: tester1@test.com | Password: Test1234 (1 Live Project, 1 Ready to go live project)
 - Username: tester2@gmail.com | Password: Test1234 (No Currently live projects)
 - Username: tester3@gmail.com | Password: Test1234 (No Currently live projects)
 - Username: tester4@gmail.com | Password: Test1234 (No Currently live projects)
