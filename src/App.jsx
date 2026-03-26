@@ -903,13 +903,13 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   const [deployUrl, setDeployUrl] = useState(null)
   const [buildError, setBuildError] = useState(null)
 
-  // Runs extract + generate using cached answers
+  // Runs extract + generate using cached answers (Inngest background job)
   async function runGenerate() {
     try {
       setStatus('generating')
       const answers = answersRef.current
 
-      // Extract structured signal from raw idea (Sonnet) — non-fatal
+      // Extract structured signal from raw idea — non-fatal
       let extracted = null
       try {
         const extRes = await fetch('/api/extract', {
@@ -920,31 +920,47 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         if (extRes.ok) extracted = await extRes.json()
       } catch { /* non-fatal */ }
 
-      // Generate full build artifact (Opus)
+      // Dispatch to Inngest — returns immediately with job_id
       const genRes = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw_idea: rawIdea, extracted, answers }),
+        body: JSON.stringify({ raw_idea: rawIdea, extracted, answers, session_id: sessionId }),
       })
       const genText = await genRes.text()
-      let json
-      try { json = JSON.parse(genText) } catch {
+      let genJson
+      try { genJson = JSON.parse(genText) } catch {
         throw new Error(`Generation failed (${genRes.status}): ${genText.slice(0, 200)}`)
       }
-      if (!genRes.ok) throw new Error(json.error ?? `Generation failed (${genRes.status})`)
+      if (!genRes.ok) throw new Error(genJson.error ?? `Generation failed (${genRes.status})`)
 
-      // Persist so we never regenerate
-      await supabase.from('build_plans').upsert({
-        session_id: sessionId,
-        title: json.title,
-        summary: json.summary,
-        prompt: json.prompt,
-        features: json.features,
-        tech_stack: json.tech_stack,
-        user_stories: json.user_stories,
-      }, { onConflict: 'session_id' })
+      const { job_id } = genJson
 
-      setResult(json)
+      // Poll jobs table until done or error
+      await new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+          try {
+            const { data: job } = await supabase
+              .from('jobs')
+              .select('status, error')
+              .eq('id', job_id)
+              .maybeSingle()
+            if (!job) return
+            if (job.status === 'Done!') { clearInterval(interval); resolve() }
+            else if (job.status === 'Error') { clearInterval(interval); reject(new Error(job.error ?? 'Generation failed')) }
+          } catch { /* retry next tick */ }
+        }, 2000)
+      })
+
+      // Read result from build_plans (saved by Inngest worker)
+      const { data: plan } = await supabase
+        .from('build_plans')
+        .select('title, summary, prompt, features, tech_stack, user_stories')
+        .eq('session_id', sessionId)
+        .maybeSingle()
+
+      if (!plan) throw new Error('Plan not found after generation')
+
+      setResult(plan)
       setStatus('done')
     } catch (err) {
       setError(err.message)
