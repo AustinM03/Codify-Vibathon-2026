@@ -1431,7 +1431,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             </div>
           )}
 
-          {deployUrl && (
+          {deployUrl && /^https:\/\/.+\.vercel\.app/.test(deployUrl) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
               <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>Deployed successfully!</div>
               <a href={deployUrl} target="_blank" rel="noopener noreferrer"

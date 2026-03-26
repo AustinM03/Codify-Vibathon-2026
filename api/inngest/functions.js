@@ -386,9 +386,9 @@ Write ONLY the fixed code. No markdown fences, no explanation.`
 
       if (!deployRes.ok) {
         const errMsg = deployData.error?.message ?? 'Vercel deployment failed'
-        const debugInfo = `[${deployRes.status}] token=${vercelToken?.slice(0,8)}... teamId=${teamId ?? 'none'} err=${errMsg}`
-        console.error('Deploy failed:', debugInfo, JSON.stringify(deployData))
-        await updateJob(jobId, { status: 'Error', error: debugInfo })
+        const debugInfo = `[${deployRes.status}] teamId=${teamId ? 'set' : 'none'} err=${errMsg}`
+        console.error('Deploy failed:', debugInfo)
+        await updateJob(jobId, { status: 'Error', error: `Deployment failed: ${errMsg}` })
         throw new Error(debugInfo)
       }
 
