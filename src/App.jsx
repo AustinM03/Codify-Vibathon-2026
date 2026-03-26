@@ -4,6 +4,7 @@ import Dashboard from './views/Dashboard'
 import ShaderBackground from './components/ShaderBackground'
 import LandingPage from './views/LandingPage'
 import OllamaSetup from './views/OllamaSetup'
+import TopNavBar from './components/TopNavBar'
 const STEPS = [
   { id: 'problem',      label: 'Problem',      phase: 1 },
   { id: 'features',     label: 'Features',     phase: 2 },
@@ -1557,28 +1558,13 @@ export default function App() {
   }
 
   if (!user) {
-    if (showAuth) return <><ShaderBackground /><LoginScreen /></>
-    return <><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} onLearnOllama={() => { sessionStorage.setItem('postLoginRedirect', 'ollama-setup'); setShowAuth(true); }} /></>
+    if (showAuth) return <><TopNavBar user={null} onLogin={() => setShowAuth(true)} /><ShaderBackground /><LoginScreen /></>
+    return <><TopNavBar user={null} onLogin={() => setShowAuth(true)} /><ShaderBackground /><LandingPage onGetStarted={() => setShowAuth(true)} onLearnOllama={() => { sessionStorage.setItem('postLoginRedirect', 'ollama-setup'); setShowAuth(true); }} /></>
   }
 
   return (
     <>
-      <ShaderBackground />
-      {view === 'ollama-setup' ? (
-        <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: T.ff, position: 'relative', zIndex: 1 }}>
-        <header style={{ flexShrink: 0, height: 52, background: 'rgba(8,8,12,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${T.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem' }}>
-          <button onClick={handleGoToDashboard}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.5rem', borderRadius: '8px', transition: 'background 0.15s' }}
-            onMouseOver={e => (e.currentTarget.style.background = 'rgba(124,91,240,0.06)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-            <div style={{ width: 28, height: 28, background: T.gradient, borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#fff', fontWeight: 700 }}>P</div>
-            <div style={{ textAlign: 'left' }}>
-            <div style={{ color: T.text, fontWeight: 700, fontSize: '0.875rem', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PromptReady</div>
-            <div style={{ color: T.textMuted, fontSize: '0.62rem' }}>AI App Builder</div>
-          </div>
-        </button>
+      <TopNavBar user={user} onLogout={handleLogout} onGoToDashboard={handleGoToDashboard}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div 
             onClick={() => !localAISetupComplete && setView('ollama-setup')}
@@ -1606,37 +1592,36 @@ export default function App() {
             onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.1))' }}>
             ⚡ Connect A Local AI
           </button>
-          <span style={{ fontSize: '0.72rem', color: T.textMuted, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
-          <button onClick={handleLogout}
-            style={{ background: 'none', border: `1px solid ${T.cardBorder}`, borderRadius: '6px', color: T.textMuted, cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.55rem', transition: 'all 0.15s' }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(248,113,113,0.3)'; e.currentTarget.style.color = T.error }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = T.cardBorder; e.currentTarget.style.color = T.textMuted }}>
-            Sign out
-          </button>
         </div>
-      </header>
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
-        {view === 'dashboard' && <Dashboard user={user} onOpenSession={handleOpenSession} onNewProject={handleNewProject} />}
-        {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
-        {view === 'questionnaire' && (
-          <>
-            <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} onStepClick={handleStepClick} categoryHealth={categoryHealth} />
-            <QuestionnaireScreen
-              key={sessionId}
-              sessionId={sessionId}
-              rawIdea={rawIdea}
-              user={user}
-              onStepComplete={handleStepComplete}
-              onAllComplete={handleAllComplete}
-              jumpRequest={jumpRequest}
-            />
-          </>
+      </TopNavBar>
+
+      <ShaderBackground />
+      <div style={{ paddingTop: 60, height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+        {view === 'ollama-setup' ? (
+          <OllamaSetup onBack={handleGoToDashboard} useLocalAI={useLocalAI} toggleLocalAI={toggleLocalAI} onCompleteSetup={handleCompleteLocalAISetup} />
+        ) : (
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1, fontFamily: T.ff }}>
+            {view === 'dashboard' && <Dashboard user={user} onOpenSession={handleOpenSession} onNewProject={handleNewProject} />}
+            {view === 'intake' && <IntakeScreen onSuccess={handleIntakeSuccess} user={user} />}
+            {view === 'questionnaire' && (
+              <>
+                <Sidebar activeStep={activeStep} completedSteps={completedSteps} userEmail={user.email} onLogout={handleLogout} onDashboard={handleGoToDashboard} onStepClick={handleStepClick} categoryHealth={categoryHealth} />
+                <QuestionnaireScreen
+                  key={sessionId}
+                  sessionId={sessionId}
+                  rawIdea={rawIdea}
+                  user={user}
+                  onStepComplete={handleStepComplete}
+                  onAllComplete={handleAllComplete}
+                  jumpRequest={jumpRequest}
+                />
+              </>
+            )}
+            {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
+          </div>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
+        {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
       </div>
-      {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
-        </div>
-      )}
     </>
   )
 }
