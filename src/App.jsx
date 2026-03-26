@@ -1432,19 +1432,25 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit }) {
           {deployUrl && /^https:\/\/.+\.vercel\.app/.test(deployUrl) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
               <div style={{ color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>Deployed successfully!</div>
-              <a href={deployUrl} target="_blank" rel="noopener noreferrer"
-                style={{ padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block' }}>
-                View Live App
-              </a>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <a href={deployUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block', boxShadow: '0 0 15px rgba(34, 197, 94, 0.2)' }}>
+                  View Live App
+                </a>
+                <button onClick={() => { setDeployUrl(null); setBuildJobId(null); setBuildStatus(null); handleBuildAndDeploy() }}
+                  style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
+                  Rebuild
+                </button>
+              </div>
             </div>
           )}
 
           {buildError && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
               <div style={{ color: '#f87171', fontSize: '0.82rem' }}>{buildError}</div>
-              <button onClick={() => { setBuildError(null); setBuildJobId(null); setBuildStatus(null) }}
-                style={{ padding: '0.6rem 1.25rem', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                Retry
+              <button onClick={() => { setBuildError(null); setBuildJobId(null); setBuildStatus(null); handleBuildAndDeploy() }}
+                style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
+                Retry Build
               </button>
             </div>
           )}
