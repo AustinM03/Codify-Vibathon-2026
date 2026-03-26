@@ -180,9 +180,8 @@ This file is generated in ISOLATION — you cannot see the code of sibling files
 Description: ${fileSpec.description}
 Exports: ${fileSpec.exports?.join(', ') ?? 'default'}
 
-## Full App Context
-App: ${title}
-Spec: ${prompt}
+## App
+${title}: ${prompt.slice(0, 300)}
 
 ## Project File Structure
 ${schemaContext}
@@ -208,6 +207,9 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
       await step.run(`progress-batch-${b}`, async () => {
         await updateJob(jobId, { progress: Math.min(b + batch.length, schema.length) })
       })
+      if (b + BATCH_SIZE < schema.length) {
+        await step.sleep(`batch-gap-${b}`, '8s')
+      }
     }
 
     // -----------------------------------------------------------------------
