@@ -6,7 +6,7 @@
  * deployment happen in the Inngest buildAppJob worker.
  *
  * Input:
- *   { session_id, title, prompt, tech_stack[], features[], dev_mode }
+ *   { session_id, title, prompt, tech_stack[], features[] }
  *
  * Output:
  *   { job_id: string }
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const user = await requireAuth(req, res)
   if (!user) return
 
-  const { session_id, title, prompt, tech_stack, features, dev_mode } = req.body ?? {}
+  const { session_id, title, prompt, tech_stack, features } = req.body ?? {}
 
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'prompt is required' })
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     // Fire background event — does not block
     await inngest.send({
       name: 'app/build',
-      data: { jobId, session_id, title, prompt, tech_stack, features, dev_mode },
+      data: { jobId, session_id, title, prompt, tech_stack, features },
     })
 
     return res.status(200).json({ job_id: jobId })

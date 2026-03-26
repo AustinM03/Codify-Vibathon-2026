@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   const user = await requireAuth(req, res)
   if (!user) return
 
-  const { raw_idea, dev_mode } = req.body ?? {}
+  const { raw_idea } = req.body ?? {}
 
   if (!raw_idea || typeof raw_idea !== 'string' || raw_idea.trim().length < 5) {
     return res.status(400).json({ error: 'raw_idea is required (min 5 chars)' })
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
   try {
     const message = await client.messages.create({
-      model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
+      model: MODELS.BALANCED,
       max_tokens: 512,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],

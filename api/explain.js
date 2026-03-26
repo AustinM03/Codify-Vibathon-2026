@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const user = await requireAuth(req, res)
   if (!user) return
 
-  const { question, category, dev_mode } = req.body ?? {}
+  const { question, category } = req.body ?? {}
 
   if (!question || typeof question !== 'string') {
     return res.status(400).json({ error: 'question is required' })
@@ -37,7 +37,7 @@ Return ONLY the plain text explanation. No JSON, no formatting, no quotes around
 
   try {
     const message = await client.messages.create({
-      model: dev_mode ? MODELS.FAST : (CATEGORY_MODELS[category] ?? MODELS.BALANCED),
+      model: CATEGORY_MODELS[category] ?? MODELS.BALANCED,
       max_tokens: 256,
       messages: [{ role: 'user', content: prompt }],
     })
