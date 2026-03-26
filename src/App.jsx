@@ -1657,7 +1657,7 @@ export default function App() {
             />
           </>
         )}
-        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={devMode} />}
+        {view === 'result' && <ResultScreen sessionId={sessionId} rawIdea={rawIdea} onDashboard={handleGoToDashboard} onEdit={handleEditResult} devMode={useLocalAI} />}
       </div>
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
         </div>
