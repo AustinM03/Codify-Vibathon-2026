@@ -72,15 +72,16 @@ export const buildAppJob = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, session_id, title, prompt, tech_stack, features, dev_mode } = event.data
     const model = dev_mode ? MODELS.FAST : MODELS.BALANCED
+    const fastModel = MODELS.FAST
 
     // -----------------------------------------------------------------------
-    // Step A — Architect: design the file schema
+    // Step A — Architect: design the file schema (Haiku for speed)
     // -----------------------------------------------------------------------
     const schema = await step.run('architect', async () => {
       await updateJob(jobId, { status: 'Architecting codebase...' })
 
       const res = await client.messages.create({
-        model,
+        model: fastModel,
         max_tokens: 4096,
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
