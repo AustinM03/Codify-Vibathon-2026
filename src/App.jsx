@@ -164,8 +164,15 @@ function LoginScreen() {
       fontFamily: T.ff,
     }}>
       <div className="glass-card" style={{
-        width: '100%', maxWidth: 420, padding: '2.5rem',
+        width: '100%',
+        maxWidth: 420,
+        minHeight: '70vh',
+        maxHeight: '90vh',
+        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
         animation: 'fadeIn 0.4s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem' }}>
           <div style={{ width: 32, height: 32, background: T.gradient, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>P</div>
@@ -663,10 +670,12 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
         style={{
           width: '100%',
           maxWidth: 700,
-          minHeight: 'fit-content',
+          minHeight: '70vh',
+          maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          padding: '3.5rem 2.5rem 3.5rem', // extra bottom padding
+          justifyContent: 'center',
+          padding: 'clamp(1.5rem, 4vw, 3.5rem)',
           animation: 'fadeIn 0.3s ease',
           margin: '1.5rem auto',
           zIndex: 10,
