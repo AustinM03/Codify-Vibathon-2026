@@ -81,7 +81,7 @@ export const buildAppJob = inngest.createFunction(
 
       const res = await client.messages.create({
         model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: `You are a senior React architect. Given an app specification, output a JSON array describing the src/ files to create.
 Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default Foo"], "dependencies": [] }
 Rules:
@@ -110,23 +110,27 @@ Return ONLY the JSON array.`
     })
 
     // -----------------------------------------------------------------------
-    // Step B — Worker Swarm: write each file in parallel
+    // Step B — Worker Swarm: write each file as its own Inngest step
+    // Each step.run() gets its own serverless invocation (stays under 10s)
     // -----------------------------------------------------------------------
-    const generatedFiles = await step.run('worker-swarm', async () => {
+    await step.run('init-swarm', async () => {
       await updateJob(jobId, { status: 'Writing files...', total_files: schema.length })
+    })
 
-      // Collect extra dependencies from architect output
-      const allDeps = {}
-      schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
+    // Collect extra dependencies from architect output
+    const allDeps = {}
+    schema.forEach(f => (f.dependencies ?? []).forEach(d => { allDeps[d] = 'latest' }))
 
-      // Build context string so each worker knows about sibling files
-      const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
+    // Build context string so each worker knows about sibling files
+    const schemaContext = schema.map(f => `- ${f.path}: ${f.description} (exports: ${f.exports?.join(', ') ?? 'default'})`).join('\n')
 
-      let completed = 0
-      const files = await Promise.all(schema.map(async (fileSpec) => {
+    const files = []
+    for (let i = 0; i < schema.length; i++) {
+      const fileSpec = schema[i]
+      const file = await step.run(`write-file-${i}`, async () => {
         const res = await client.messages.create({
           model,
-          max_tokens: 4096,
+          max_tokens: 8000,
           system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
@@ -156,14 +160,14 @@ Write ONLY the code for ${fileSpec.path}. No explanation, no markdown fences.`
           }],
         })
 
-        completed++
-        await updateJob(jobId, { progress: completed })
+        await updateJob(jobId, { progress: i + 1 })
 
         return { path: fileSpec.path, content: stripFences(res.content[0].text) }
-      }))
+      })
+      files.push(file)
+    }
 
-      return { files, extraDeps: allDeps }
-    })
+    const generatedFiles = { files, extraDeps: allDeps }
 
     // -----------------------------------------------------------------------
     // Step C — Assembly & Deploy to Vercel
