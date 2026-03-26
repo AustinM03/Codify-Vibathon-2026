@@ -663,7 +663,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
   const phaseNum = STEPS.findIndex(s => s.id === CATEGORY_TO_STEP[currentCategory.name]) + 1
 
   return (
-    <main style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+    <main style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1.5rem 1rem 3rem' }}>
       <div
         className="glass-card"
         style={{
@@ -671,10 +671,9 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
           maxWidth: 700,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
           padding: 'clamp(1.5rem, 4vw, 3.5rem)',
           animation: 'fadeIn 0.3s ease',
-          margin: '1.5rem auto',
+          margin: '0 auto',
           zIndex: 10,
           background: 'rgba(15,15,20,0.36)',
           border: '1.5px solid rgba(124,91,240,0.18)',
