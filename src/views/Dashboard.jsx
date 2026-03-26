@@ -121,7 +121,7 @@ export default function Dashboard({ user, onOpenSession, onNewProject }) {
 
   if (loading) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen w-full" style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%' }}>
         <PrismLoader text="Loading your projects..." />
       </main>
     )

@@ -638,7 +638,7 @@ function QuestionnaireScreen({ sessionId, rawIdea, user, onStepComplete, onAllCo
 
   if (apiLoading) {
     return (
-      <main className="flex flex-col items-center justify-center w-full h-full min-h-screen" style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', minHeight: '100vh' }}>
         <PrismLoader text="Generating your adaptive questionnaire..." />
       </main>
     )
@@ -1185,7 +1185,7 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
   if (['loading', 'validating', 'generating'].includes(status)) {
     const msg = loadingMessages[status]
     return (
-      <main className="flex flex-col items-center justify-center w-full h-full" style={{ flex: 1, gap: '1.25rem', fontFamily: T.ff }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: '1.25rem', fontFamily: T.ff }}>
         <PrismLoader text={msg.title + (msg.sub ? `\n${msg.sub}` : '')} />
       </main>
     )
@@ -1230,14 +1230,17 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
-            <button className="btn-ghost" onClick={onDashboard}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2rem' }}>
+            <button onClick={onDashboard}
+              style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
               Back to Dashboard
             </button>
-            <button className="btn-ghost" onClick={onEdit}>
+            <button onClick={onEdit}
+              style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
               ← Go back and improve
             </button>
-            <button className="btn-primary" onClick={runGenerate}>
+            <button onClick={runGenerate}
+              style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
               Generate anyway →
             </button>
           </div>
@@ -1252,7 +1255,8 @@ function ResultScreen({ sessionId, rawIdea, onDashboard, onEdit, devMode }) {
         <div style={{ textAlign: 'center', maxWidth: 440, padding: '2rem' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚠</div>
           <p style={{ color: T.error, fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{error}</p>
-          <button className="btn-primary" onClick={onDashboard}>
+          <button onClick={onDashboard}
+            style={{ padding: '0.8rem 1.75rem', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: '11px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
             Back to Dashboard
           </button>
         </div>
