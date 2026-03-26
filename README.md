@@ -1,4 +1,4 @@
-# Prism - AI App Builder
+# [Prism - AI App Builder](https://codify-vibathon-2026.vercel.app/)
 
 **Turn a raw idea into a live, deployed React app in minutes. No coding required.**
 
