@@ -324,49 +324,53 @@ export const generatePlanJob = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, session_id, raw_idea, extracted, answers, dev_mode } = event.data
 
-    const result = await step.run('generate', async () => {
-      await updateJob(jobId, { status: 'Generating plan...' })
+    let result
+    try {
+      result = await step.run('generate', async () => {
+        await updateJob(jobId, { status: 'Generating plan...' })
 
-      // Build context blocks
-      const extractedBlock = extracted
-        ? `## Extracted App Profile\nCore problem: ${extracted.core_problem ?? 'not specified'}\nTarget users: ${extracted.target_users ?? 'not specified'}\nKey features: ${Array.isArray(extracted.key_features) ? extracted.key_features.join(', ') : 'not specified'}\nDomain: ${extracted.domain ?? 'not specified'}\nScale: ${extracted.scale ?? 'not specified'}`
-        : `## Raw Idea\n"${raw_idea}"`
+        const extractedBlock = extracted
+          ? `## Extracted App Profile\nCore problem: ${extracted.core_problem ?? 'not specified'}\nTarget users: ${extracted.target_users ?? 'not specified'}\nKey features: ${Array.isArray(extracted.key_features) ? extracted.key_features.join(', ') : 'not specified'}\nDomain: ${extracted.domain ?? 'not specified'}\nScale: ${extracted.scale ?? 'not specified'}`
+          : `## Raw Idea\n"${raw_idea}"`
 
-      const answersBlock = answers
-        .map(a => `### ${a.category}\nQuestion: ${a.question}\nAnswer: ${a.answer}`)
-        .join('\n\n')
+        const answersBlock = answers
+          .map(a => `### ${a.category}\nQuestion: ${a.question}\nAnswer: ${a.answer}`)
+          .join('\n\n')
 
-      const userMessage = `Generate a complete build specification for this app.\n\n## Original Idea\n"${raw_idea.slice(0, 500)}"\n\n${extractedBlock}\n\n## User's Planning Answers (7 Categories)\n\n${answersBlock}\n\nNow generate the full build specification JSON.`
+        const userMessage = `Generate a complete build specification for this app.\n\n## Original Idea\n"${raw_idea.slice(0, 500)}"\n\n${extractedBlock}\n\n## User's Planning Answers (7 Categories)\n\n${answersBlock}\n\nNow generate the full build specification JSON.`
 
-      const message = await client.messages.create({
-        model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
-        max_tokens: 4000,
-        system: GENERATE_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
+        const message = await client.messages.create({
+          model: dev_mode ? MODELS.FAST : MODELS.BALANCED,
+          max_tokens: 4000,
+          system: GENERATE_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userMessage }],
+        })
+
+        let cleaned = message.content[0].text.trim()
+          .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+        const objStart = cleaned.indexOf('{')
+        const objEnd = cleaned.lastIndexOf('}')
+        if (objStart === -1 || objEnd === -1) throw new Error(`Model returned non-JSON: ${cleaned.slice(0, 200)}`)
+        cleaned = cleaned.slice(objStart, objEnd + 1)
+        const json = JSON.parse(cleaned)
+
+        await supabase.from('build_plans').upsert({
+          session_id,
+          title: json.title,
+          summary: json.summary,
+          prompt: json.prompt,
+          features: json.features,
+          tech_stack: json.tech_stack,
+          user_stories: json.user_stories,
+        }, { onConflict: 'session_id' })
+
+        await updateJob(jobId, { status: 'Done!' })
+        return json
       })
-
-      let cleaned = message.content[0].text.trim()
-        .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-      const objStart = cleaned.indexOf('{')
-      const objEnd = cleaned.lastIndexOf('}')
-      if (objStart === -1 || objEnd === -1) throw new Error(`Model returned non-JSON: ${cleaned.slice(0, 200)}`)
-      cleaned = cleaned.slice(objStart, objEnd + 1)
-      const json = JSON.parse(cleaned)
-
-      // Save to build_plans
-      await supabase.from('build_plans').upsert({
-        session_id,
-        title: json.title,
-        summary: json.summary,
-        prompt: json.prompt,
-        features: json.features,
-        tech_stack: json.tech_stack,
-        user_stories: json.user_stories,
-      }, { onConflict: 'session_id' })
-
-      await updateJob(jobId, { status: 'Done!' })
-      return json
-    })
+    } catch (err) {
+      await updateJob(jobId, { status: 'Error', error: err.message ?? 'Plan generation failed' })
+      throw err
+    }
 
     return result
   }
