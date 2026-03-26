@@ -103,7 +103,7 @@ Each item: { "path": "src/Foo.jsx", "description": "...", "exports": ["default F
 
 Rules:
 - All files under src/
-- src/App.jsx is ALWAYS the first entry — it is the root component and router
+- src/App.jsx is ALWAYS the first entry — it is the root component and router. Keep App.jsx THIN: only top-level state, routing logic, and composition of child components. No inline UI — delegate everything to named components
 - Prefer MANY small files over few large ones — each file should be a single component, hook, or utility (~50-80 lines max)
 - No file count limit — let the app's complexity determine how many files are needed
 - dependencies = npm packages beyond react/react-dom (e.g. "recharts", "date-fns")
@@ -159,7 +159,7 @@ Return ONLY the JSON array.`
           return step.run(`write-file-${i}`, async () => {
             const res = await client.messages.create({
               model: buildModel,
-              max_tokens: 2048,
+              max_tokens: 4096,
               system: `You are an expert React developer writing a single file for a larger project.
 Rules:
 - Output ONLY the file contents — no markdown fences, no explanation
