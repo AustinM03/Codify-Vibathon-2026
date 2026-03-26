@@ -19,7 +19,7 @@ import extractHandler       from './api/extract.js'
 import generateHandler      from './api/generate.js'
 import buildHandler         from './api/build.js'
 import { inngest }          from './api/inngest/client.js'
-import { buildAppJob }      from './api/inngest/functions.js'
+import { buildAppJob, generatePlanJob } from './api/inngest/functions.js'
 
 const app  = express()
 const PORT = 3001
@@ -27,7 +27,7 @@ const PORT = 3001
 app.use(express.json())
 
 // Inngest dev server route — communicates with `npx inngest-cli dev`
-app.use('/api/inngest', serve({ client: inngest, functions: [buildAppJob] }))
+app.use('/api/inngest', serve({ client: inngest, functions: [buildAppJob, generatePlanJob] }))
 
 function route(handler) {
   return (req, res) => handler(req, res)

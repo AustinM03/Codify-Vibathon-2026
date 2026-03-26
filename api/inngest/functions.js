@@ -349,7 +349,7 @@ export const generatePlanJob = inngest.createFunction(
         cleaned = cleaned.slice(objStart, objEnd + 1)
         const json = JSON.parse(cleaned)
 
-        await supabase.from('build_plans').upsert({
+        const { error: upsertErr } = await supabase.from('build_plans').upsert({
           session_id,
           title: json.title,
           summary: json.summary,
@@ -358,6 +358,8 @@ export const generatePlanJob = inngest.createFunction(
           tech_stack: json.tech_stack,
           user_stories: json.user_stories,
         }, { onConflict: 'session_id' })
+
+        if (upsertErr) throw new Error('Failed to save plan: ' + upsertErr.message)
 
         await updateJob(jobId, { status: 'Done!' })
         return json
